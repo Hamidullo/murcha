@@ -7,6 +7,7 @@ import {
   NotFoundError,
   ConflictError,
   InsufficientStockError,
+  TooManyRequestsError,
 } from "./errors.js";
 
 describe("AppError ierarxiyasi", () => {
@@ -24,6 +25,7 @@ describe("AppError ierarxiyasi", () => {
     [NotFoundError, 404, "not_found"],
     [ConflictError, 409, "conflict"],
     [InsufficientStockError, 409, "insufficient_stock"],
+    [TooManyRequestsError, 429, "too_many_requests"],
   ])("%s to'g'ri statusCode/code o'rnatadi", (ErrorClass, statusCode, code) => {
     const err = new ErrorClass();
     expect(err).toBeInstanceOf(AppError);

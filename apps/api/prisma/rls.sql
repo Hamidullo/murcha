@@ -25,7 +25,7 @@ DECLARE
   t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
-    'company_members', 'audit_logs', 'warehouses', 'counterparties', 'sale_points',
+    'audit_logs', 'warehouses', 'counterparties', 'sale_points',
     'categories', 'products', 'price_types', 'product_barcodes', 'batches', 'stock',
     'warehouse_docs', 'stock_movements', 'purchase_orders', 'inventory_counts',
     'doc_counters', 'orders', 'deliveries', 'courier_locations', 'leads',
@@ -40,6 +40,17 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- --- company_members — istisno: foydalanuvchi o'z a'zolik qatorlarini HAR
+-- DOIM ko'radi, company kontekst tanlanmagan bo'lsa ham (Faza 1 auth
+-- kashfiyoti: login paytida "bu user qaysi kompaniyaga a'zo" so'rovi hali
+-- app.company_id yo'q holatda ishlaydi — withUserContext() shu uchun) ---
+ALTER TABLE company_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON company_members
+  USING (
+    company_id = current_setting('app.company_id', true)::uuid
+    OR user_id = current_setting('app.user_id', true)::uuid
+  );
 
 -- --- company_id NULL bo'lishi mumkin bo'lgan jadvallar (tizim qatorlari + tenant) ---
 DO $$

@@ -10,6 +10,8 @@ export default [
       "**/build/**",
       "**/coverage/**",
       "**/graphify-out/**",
+      "**/.agents/**",
+      "**/.claude/skills/**",
     ],
   },
   js.configs.recommended,
@@ -34,9 +36,11 @@ export default [
     },
   },
   {
-    // Qatlam qoidasi (CLAUDE.md): controller/routes Prisma'ni to'g'ridan-to'g'ri
-    // chaqirmaydi — faqat service orqali.
-    files: ["apps/api/src/modules/**/*.controller.js", "apps/api/src/modules/**/*.routes.js"],
+    // Qatlam qoidasi (CLAUDE.md): controller Prisma'ni to'g'ridan-to'g'ri
+    // chaqirmaydi — faqat service orqali. `*.routes.js` bundan istisno —
+    // yengil DI kompozitsiya ildizi shu yerda ("qo'lda factory", CLAUDE.md),
+    // repository/service klasslarini import qilib bog'laydi.
+    files: ["apps/api/src/modules/**/*.controller.js"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -45,14 +49,13 @@ export default [
             {
               name: "@prisma/client",
               message:
-                "Controller/routes Prisma'ni to'g'ridan-to'g'ri chaqirmaydi — service orqali ishlang.",
+                "Controller Prisma'ni to'g'ridan-to'g'ri chaqirmaydi — service orqali ishlang.",
             },
           ],
           patterns: [
             {
               group: ["**/lib/prisma.js", "**/lib/tenant-context.js", "**/*.repository.js"],
-              message:
-                "Controller/routes faqat service orqali ishlaydi (CLAUDE.md qatlam qoidasi).",
+              message: "Controller faqat service orqali ishlaydi (CLAUDE.md qatlam qoidasi).",
             },
           ],
         },

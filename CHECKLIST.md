@@ -3,7 +3,7 @@
 > Reja: [PLAN.md](PLAN.md). Har bajarilgan band `[x]` qilinadi. Faza "Natija" mezoni bajarilmaguncha yopilmaydi.
 > Vazifa darajasidagi mayda bo'linish har faza boshida `TASKS.md`da qilinadi (PLAN.md 8.0).
 
-**Holat:** 🟡 Faza 0 boshlandi | Oxirgi yangilanish: 2026-07-11
+**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) | Oxirgi yangilanish: 2026-07-11
 
 ---
 
@@ -32,18 +32,20 @@
 - [x] Seed data + RLS siyosatlari (`apps/api/prisma/seed.js`, `rls.sql`, `checks.sql`, `immutable.sql`)
 - [x] CI (GitHub Actions): lint + format + prisma validate + test har push/PR'da (`.github/workflows/ci.yml`)
 - [x] pino log, /healthz (DB+Redis), Sentry ulanishi — `apps/api/src`
-- [ ] Dizayn skill'lar: Impeccable (`npx impeccable install` + init), taste-skill, emilkowalski animations, Graphify
+- [x] Dizayn skill'lar: Impeccable (`.claude/skills/impeccable`, loyiha ichida), taste-skill (13) + emilkowalski animatsiya skill'i (5) `npx skills` orqali (`skills-lock.json` commit qilinadi), Graphify ishga tushirildi (`graphify-out/GRAPH_REPORT.md` — 329 tugun/59 hamjamiyat)
 - [ ] ✅ **Natija: `docker compose up` → bo'sh ilova ochiladi, API /healthz javob beradi, CI yashil**
+      — barcha kod tayyor va lokal (Docker'siz) tekshirildi: `pnpm test`/`pnpm lint` yashil, `node apps/api/src/index.js` bilan `/healthz` qo'lda ishlatib ko'rildi. Faqat `docker compose up`ning o'zi mahalliy Docker o'rnatilmagani sababli sinalmagan — birinchi marta Docker mavjud mashinada tasdiqlanishi kerak
 
 ## Faza 1 — Auth va kompaniya (1 hafta)
 
-- [ ] Ro'yxatdan o'tish (telefon + kompaniya), login
-- [ ] JWT + refresh token rotation (Redis)
-- [ ] RBAC middleware + tayyor rollar
-- [ ] company_members (bir user — bir nechta kompaniya)
-- [ ] Rate-limit, brute-force bloklash
-- [ ] Sessiyalar ro'yxati / uzish
+- [x] Ro'yxatdan o'tish (telefon + kompaniya), login (`POST /auth/register`, `/auth/login`, `/auth/select-company`)
+- [x] JWT (access, 15 daq) + refresh token rotation (Redis, opaque token, reuse detection)
+- [x] RBAC middleware + tayyor rollar (`requireAuth`, `requirePermission`, Faza 0 seed rollari)
+- [x] company_members (bir user — bir nechta kompaniya) — RLS `user_id` o'z-egalik istisnosi bilan
+- [x] Rate-limit (IP, Redis), brute-force bloklash (telefon, 5 urinish/15 daq)
+- [x] Sessiyalar ro'yxati / uzish (`GET/DELETE /auth/sessions`, `POST /auth/logout`)
 - [ ] ✅ **Natija: kompaniya ochib kirib-chiqib bo'ladi; RLS izolyatsiya testi o'tadi**
+      — barcha kod yozilgan va testlangan (115/115 test yashil, mock Prisma/Redis bilan — real DB'ga ulanish mahalliy Postgres yo'qligi sababli hali sinalmagan, Faza 0'dagi bilan bir xil cheklov). Haqiqiy RLS izolyatsiyasi (ikkinchi kompaniya ma'lumoti ko'rinmasligi) Postgres mavjud mashinada birinchi marta tasdiqlanishi kerak
 
 ## Faza 2 — Mahsulot katalogi (1–2 hafta)
 

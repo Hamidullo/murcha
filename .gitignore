@@ -20,3 +20,11 @@ Thumbs.db
 .idea/
 
 graphify-out/
+
+# Dizayn skill'lar — `npx impeccable install` / `npx skills experimental_install`
+# bilan qayta o'rnatiladi (README.md). Symlink'lar absolyut yo'l ishlatadi —
+# boshqa mashinada buziladi, shuning uchun commit qilinmaydi (node_modules kabi).
+# skills-lock.json commit qilinadi — shu orqali qayta tiklanadi.
+.agents/
+.claude/skills/
+.claude/settings.local.json

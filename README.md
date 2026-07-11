@@ -46,3 +46,18 @@ docker compose up --build
 pnpm --filter @murcha/api start   # http://localhost:3000/healthz
 pnpm --filter @murcha/api test    # Vitest + Supertest
 ```
+
+### Dizayn skill'lar (Claude Code)
+
+O'rnatilgan fayllar `.claude/skills/`/`.agents/skills/` — absolyut symlink ishlatgani
+uchun **commit qilinmaydi** (`.gitignore`), faqat `skills-lock.json` commit qilinadi.
+Yangi clone'da/mashinada bir marta ishga tushiring:
+
+```
+npx impeccable install     # Impeccable — 24 dizayn buyruq (/polish, /audit, /critique...)
+npx skills experimental_install   # skills-lock.json'dagi hammasi: taste-skill (13) + emilkowalski animatsiya skill'i (5)
+```
+
+`/impeccable init` — birinchi marta PRODUCT.md/DESIGN.md yaratish uchun (auditoriya,
+brend, ranglar). Graphify alohida o'rnatilmaydi — global skill sifatida allaqachon
+mavjud, `/graphify` bilan chaqiriladi (natija `graphify-out/`, commit qilinmaydi).

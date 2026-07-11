@@ -58,3 +58,10 @@ export class InsufficientStockError extends AppError {
     super(message, 409, "insufficient_stock");
   }
 }
+
+export class TooManyRequestsError extends AppError {
+  /** @param {string} [message] */
+  constructor(message = "Juda ko'p so'rov — birozdan keyin urinib ko'ring") {
+    super(message, 429, "too_many_requests");
+  }
+}
