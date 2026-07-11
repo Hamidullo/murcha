@@ -1,0 +1,1064 @@
+// MURCHA — Prisma sxema. To'liq spetsifikatsiya: DATABASE.md
+//
+// Kelishuvlar (DATABASE.md 10-bo'lim):
+// - id: UUID v7, DEFAULT YO'Q — app darajasida `uuidv7` bilan generatsiya qilinadi (repository qatlamida)
+// - Pul: Decimal(18,2), miqdor: Decimal(18,3) — hech qachon Float
+// - Enum emas: text + CHECK. CHECK cheklovlar Prisma schema'da yo'q — birinchi migratsiya
+//   generatsiya qilingach (`prisma migrate dev --create-only`) migration.sql'ga qo'lda qo'shiladi
+//   (ro'yxat: prisma/checks.sql). RLS policy'lar prisma/rls.sql'da, migratsiyadan keyin qo'llaniladi.
+// - onDelete: spravochniklarga Restrict (tarix buzilmaydi), hujjat-item'lariga Cascade
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =========================================================================
+// 2. Tashkilot va foydalanuvchilar
+// =========================================================================
+
+model Company {
+  id               String    @id @db.Uuid
+  name             String
+  slug             String?   @unique
+  logoPath         String?   @map("logo_path")
+  brandColor       String?   @map("brand_color")
+  showcaseSettings Json      @default("{}") @map("showcase_settings")
+  settings         Json      @default("{}")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz
+
+  members           CompanyMember[]
+  roles             Role[]
+  auditLogs         AuditLog[]
+  warehouses        Warehouse[]
+  counterparties    Counterparty[]
+  salePoints        SalePoint[]
+  categories        Category[]
+  products          Product[]
+  units             Unit[]
+  priceTypes        PriceType[]
+  productBarcodes   ProductBarcode[]
+  batches           Batch[]
+  stock             Stock[]
+  warehouseDocs     WarehouseDoc[]
+  stockMovements    StockMovement[]
+  purchaseOrders    PurchaseOrder[]
+  inventoryCounts   InventoryCount[]
+  docCounters       DocCounter[]
+  orders            Order[]
+  deliveries        Delivery[]
+  courierLocations  CourierLocation[]
+  leads             Lead[]
+  cashRegisters     CashRegister[]
+  expenseCategories ExpenseCategory[]
+  transactions      Transaction[]
+  debtMovements     DebtMovement[]
+  payments          Payment[]
+  exchangeRates     ExchangeRate[]
+  notifications     Notification[]
+  subscription      Subscription?
+
+  @@map("companies")
+}
+
+model User {
+  id           String    @id @db.Uuid
+  phone        String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String    @map("full_name")
+  locale       String    @default("uz")
+  status       String    @default("active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  companyMembers CompanyMember[]
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+
+  @@map("users")
+}
+
+model CompanyMember {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company           Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role              Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  userAssignments   UserAssignment[]
+  courierDeliveries Delivery[]
+  courierLocations  CourierLocation[]
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("company_members")
+}
+
+model Role {
+  id        String   @id @db.Uuid
+  companyId String?  @map("company_id") @db.Uuid
+  name      String
+  isSystem  Boolean  @default(false) @map("is_system")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company         Company?         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  companyMembers  CompanyMember[]
+  rolePermissions RolePermission[]
+
+  @@index([companyId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @db.Uuid
+  code        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserAssignment {
+  id              String   @id @db.Uuid
+  companyMemberId String   @map("company_member_id") @db.Uuid
+  targetType      String   @map("target_type")
+  targetId        String   @map("target_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  companyMember CompanyMember @relation(fields: [companyMemberId], references: [id], onDelete: Cascade)
+
+  @@index([companyMemberId])
+  @@index([targetType, targetId])
+  @@map("user_assignments")
+}
+
+/// Immutable — INSERT only, UPDATE/DELETE DB darajasida taqiqlangan (prisma/rls.sql).
+model AuditLog {
+  id         String   @id @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id") @db.Uuid
+  before     Json?
+  after      Json?
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, entityType, entityId])
+  @@index([companyId, createdAt])
+  @@map("audit_logs")
+}
+
+// =========================================================================
+// 3. Tuzilma
+// =========================================================================
+
+model Warehouse {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  address   String?
+  lat       Decimal? @db.Decimal(9, 6)
+  lng       Decimal? @db.Decimal(9, 6)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  stock           Stock[]
+  docsFrom        WarehouseDoc[]   @relation("WarehouseDocFrom")
+  docsTo          WarehouseDoc[]   @relation("WarehouseDocTo")
+  stockMovements  StockMovement[]
+  purchaseOrders  PurchaseOrder[]
+  inventoryCounts InventoryCount[]
+  orders          Order[]
+
+  @@index([companyId])
+  @@map("warehouses")
+}
+
+model Counterparty {
+  id              String    @id @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  type            String
+  name            String
+  phone           String?
+  tin             String?
+  creditLimit     Decimal?  @map("credit_limit") @db.Decimal(18, 2)
+  paymentTermDays Int       @default(0) @map("payment_term_days")
+  isActive        Boolean   @default(true) @map("is_active")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salePoints     SalePoint[]
+  warehouseDocs  WarehouseDoc[]
+  purchaseOrders PurchaseOrder[]
+  debtMovements  DebtMovement[]
+  payments       Payment[]
+  transactions   Transaction[]
+
+  @@index([companyId])
+  @@map("counterparties")
+}
+
+model SalePoint {
+  id             String   @id @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  counterpartyId String   @map("counterparty_id") @db.Uuid
+  priceTypeId    String   @map("price_type_id") @db.Uuid
+  name           String
+  address        String?
+  lat            Decimal? @db.Decimal(9, 6)
+  lng            Decimal? @db.Decimal(9, 6)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  priceType    PriceType    @relation(fields: [priceTypeId], references: [id], onDelete: Restrict)
+  orders       Order[]
+
+  @@index([companyId])
+  @@index([counterpartyId])
+  @@index([priceTypeId])
+  @@map("sale_points")
+}
+
+// =========================================================================
+// 4. Katalog
+// =========================================================================
+
+model Category {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  nameUz    String   @map("name_uz")
+  nameRu    String?  @map("name_ru")
+  sort      Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company  Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@index([companyId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id            String    @id @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  sku           String
+  nameUz        String    @map("name_uz")
+  nameRu        String?   @map("name_ru")
+  description   String?
+  categoryId    String?   @map("category_id") @db.Uuid
+  brand         String?
+  country       String?
+  baseUnitId    String    @map("base_unit_id") @db.Uuid
+  vatRate       Decimal?  @map("vat_rate") @db.Decimal(5, 2)
+  ikpuCode      String?   @map("ikpu_code")
+  minOrderQty   Decimal?  @map("min_order_qty") @db.Decimal(18, 3)
+  orderMultiple Decimal?  @map("order_multiple") @db.Decimal(18, 3)
+  weightKg      Decimal?  @map("weight_kg") @db.Decimal(18, 3)
+  volumeM3      Decimal?  @map("volume_m3") @db.Decimal(18, 6)
+  trackBatches  Boolean   @default(false) @map("track_batches")
+  custom        Json      @default("{}")
+  status        String    @default("active")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category            Category?            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  baseUnit            Unit                 @relation(fields: [baseUnitId], references: [id], onDelete: Restrict)
+  productUnits        ProductUnit[]
+  barcodes            ProductBarcode[]
+  images              ProductImage[]
+  prices              ProductPrice[]
+  variants            ProductVariant[]
+  batches             Batch[]
+  stock               Stock[]
+  warehouseDocItems   WarehouseDocItem[]
+  stockMovements      StockMovement[]
+  purchaseOrderItems  PurchaseOrderItem[]
+  inventoryCountItems InventoryCountItem[]
+  orderItems          OrderItem[]
+
+  @@unique([companyId, sku])
+  @@index([companyId, categoryId])
+  @@index([baseUnitId])
+  @@map("products")
+}
+
+/// company_id null = tizim birligi (dona, kg, litr...)
+model Unit {
+  id        String   @id @db.Uuid
+  companyId String?  @map("company_id") @db.Uuid
+  name      String
+  short     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company            Company?            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  products           Product[]
+  productUnits       ProductUnit[]
+  productBarcodes    ProductBarcode[]
+  warehouseDocItems  WarehouseDocItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  orderItems         OrderItem[]
+
+  @@index([companyId])
+  @@map("units")
+}
+
+/// 1 shu birlik = factor × asosiy birlik (masalan 1 blok = 20 dona)
+model ProductUnit {
+  id        String  @id @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  unitId    String  @map("unit_id") @db.Uuid
+  factor    Decimal @db.Decimal(18, 6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unit    Unit    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, unitId])
+  @@index([unitId])
+  @@map("product_units")
+}
+
+model ProductBarcode {
+  id        String  @id @db.Uuid
+  companyId String  @map("company_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  variantId String? @map("variant_id") @db.Uuid
+  unitId    String? @map("unit_id") @db.Uuid
+  barcode   String
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  unit    Unit?           @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, barcode])
+  @@index([productId])
+  @@index([variantId])
+  @@map("product_barcodes")
+}
+
+model ProductImage {
+  id        String   @id @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  path      String
+  thumbPath String?  @map("thumb_path")
+  isMain    Boolean  @default(false) @map("is_main")
+  sort      Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model PriceType {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salePoints    SalePoint[]
+  productPrices ProductPrice[]
+
+  @@index([companyId])
+  @@map("price_types")
+}
+
+/// UPDATE yo'q — yangi narx = yangi qator; joriy narx = eng oxirgi validFrom
+model ProductPrice {
+  id          String   @id @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  variantId   String?  @map("variant_id") @db.Uuid
+  priceTypeId String   @map("price_type_id") @db.Uuid
+  price       Decimal  @db.Decimal(18, 2)
+  currency    String
+  validFrom   DateTime @map("valid_from") @db.Timestamptz
+  createdBy   String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  priceType PriceType       @relation(fields: [priceTypeId], references: [id], onDelete: Restrict)
+
+  @@index([productId, priceTypeId, validFrom(sort: Desc)])
+  @@index([variantId])
+  @@map("product_prices")
+}
+
+model ProductVariant {
+  id         String    @id @db.Uuid
+  productId  String    @map("product_id") @db.Uuid
+  sku        String?
+  name       String
+  attributes Json      @default("{}")
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  barcodes            ProductBarcode[]
+  prices              ProductPrice[]
+  stock               Stock[]
+  warehouseDocItems   WarehouseDocItem[]
+  stockMovements      StockMovement[]
+  inventoryCountItems InventoryCountItem[]
+  orderItems          OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+/// FEFO: chiqimda expiryDate ASC tartibda tanlanadi
+model Batch {
+  id         String    @id @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  productId  String    @map("product_id") @db.Uuid
+  batchNo    String?   @map("batch_no")
+  expiryDate DateTime? @map("expiry_date") @db.Date
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  product             Product              @relation(fields: [productId], references: [id], onDelete: Restrict)
+  stock               Stock[]
+  warehouseDocItems   WarehouseDocItem[]
+  stockMovements      StockMovement[]
+  inventoryCountItems InventoryCountItem[]
+
+  @@index([companyId])
+  @@index([productId, expiryDate])
+  @@map("batches")
+}
+
+// =========================================================================
+// 5. Sklad harakati
+// =========================================================================
+
+/// Joriy qoldiq — hisoblanadigan kesh. O'zgartirish faqat `SELECT ... FOR UPDATE`
+/// qulfli tranzaksiyada (CLAUDE.md). CHECK (quantity >= 0 AND reserved >= 0 AND
+/// reserved <= quantity) — prisma/checks.sql.
+model Stock {
+  id          String   @id @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  warehouseId String   @map("warehouse_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  variantId   String?  @map("variant_id") @db.Uuid
+  batchId     String?  @map("batch_id") @db.Uuid
+  quantity    Decimal  @default(0) @db.Decimal(18, 3)
+  reserved    Decimal  @default(0) @db.Decimal(18, 3)
+  minQty      Decimal? @map("min_qty") @db.Decimal(18, 3)
+  location    String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company   Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  batch     Batch?          @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@unique([warehouseId, productId, variantId, batchId])
+  @@index([companyId])
+  @@map("stock")
+}
+
+/// Yagona sklad hujjati (kirim/chiqim/spisaniye/ko'chirish). Tasdiqlangach
+/// item'lar o'zgarmas — tuzatish faqat storno orqali.
+model WarehouseDoc {
+  id              String    @id @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  type            String
+  number          String
+  warehouseId     String    @map("warehouse_id") @db.Uuid
+  toWarehouseId   String?   @map("to_warehouse_id") @db.Uuid
+  counterpartyId  String?   @map("counterparty_id") @db.Uuid
+  purchaseOrderId String?   @map("purchase_order_id") @db.Uuid
+  status          String    @default("draft")
+  currency        String    @default("UZS")
+  exchangeRate    Decimal?  @map("exchange_rate") @db.Decimal(18, 4)
+  reason          String?
+  total           Decimal   @default(0) @db.Decimal(18, 2)
+  confirmedAt     DateTime? @map("confirmed_at") @db.Timestamptz
+  confirmedBy     String?   @map("confirmed_by") @db.Uuid
+  createdBy       String?   @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company        Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse      Warehouse          @relation("WarehouseDocFrom", fields: [warehouseId], references: [id], onDelete: Restrict)
+  toWarehouse    Warehouse?         @relation("WarehouseDocTo", fields: [toWarehouseId], references: [id], onDelete: Restrict)
+  counterparty   Counterparty?      @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  purchaseOrder  PurchaseOrder?     @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  items          WarehouseDocItem[]
+  stockMovements StockMovement[]
+
+  @@unique([companyId, type, number])
+  @@index([companyId, status])
+  @@index([warehouseId])
+  @@index([toWarehouseId])
+  @@index([counterpartyId])
+  @@index([purchaseOrderId])
+  @@map("warehouse_docs")
+}
+
+model WarehouseDocItem {
+  id        String   @id @db.Uuid
+  docId     String   @map("doc_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  variantId String?  @map("variant_id") @db.Uuid
+  batchId   String?  @map("batch_id") @db.Uuid
+  unitId    String   @map("unit_id") @db.Uuid
+  qty       Decimal  @db.Decimal(18, 3)
+  qtyBase   Decimal  @map("qty_base") @db.Decimal(18, 3)
+  price     Decimal? @db.Decimal(18, 2)
+  total     Decimal? @db.Decimal(18, 2)
+
+  doc     WarehouseDoc    @relation(fields: [docId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  batch   Batch?          @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  unit    Unit            @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([docId])
+  @@index([productId])
+  @@map("warehouse_doc_items")
+}
+
+/// Immutable jurnal. Invariant (test): SUM(qty) per (warehouse, product,
+/// variant, batch) = stock.quantity.
+model StockMovement {
+  id          String   @id @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  warehouseId String   @map("warehouse_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  variantId   String?  @map("variant_id") @db.Uuid
+  batchId     String?  @map("batch_id") @db.Uuid
+  docType     String   @map("doc_type")
+  docId       String   @map("doc_id") @db.Uuid
+  docItemId   String?  @map("doc_item_id") @db.Uuid
+  qty         Decimal  @db.Decimal(18, 3)
+  costPrice   Decimal? @map("cost_price") @db.Decimal(18, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdBy   String?  @map("created_by") @db.Uuid
+
+  company   Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  batch     Batch?          @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  doc       WarehouseDoc    @relation(fields: [docId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, productId, createdAt])
+  @@index([warehouseId, productId])
+  @@index([docId])
+  @@map("stock_movements")
+}
+
+model PurchaseOrder {
+  id           String    @id @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  supplierId   String    @map("supplier_id") @db.Uuid
+  warehouseId  String    @map("warehouse_id") @db.Uuid
+  number       String
+  status       String    @default("draft")
+  expectedAt   DateTime? @map("expected_at") @db.Timestamptz
+  currency     String    @default("UZS")
+  exchangeRate Decimal?  @map("exchange_rate") @db.Decimal(18, 4)
+  total        Decimal   @default(0) @db.Decimal(18, 2)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  supplier      Counterparty        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  warehouse     Warehouse           @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items         PurchaseOrderItem[]
+  warehouseDocs WarehouseDoc[]
+
+  @@unique([companyId, number])
+  @@index([supplierId])
+  @@index([warehouseId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String  @id @db.Uuid
+  purchaseOrderId String  @map("purchase_order_id") @db.Uuid
+  productId       String  @map("product_id") @db.Uuid
+  unitId          String  @map("unit_id") @db.Uuid
+  qty             Decimal @db.Decimal(18, 3)
+  qtyReceived     Decimal @default(0) @map("qty_received") @db.Decimal(18, 3)
+  price           Decimal @db.Decimal(18, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  unit          Unit          @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_order_items")
+}
+
+model InventoryCount {
+  id          String    @id @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  warehouseId String    @map("warehouse_id") @db.Uuid
+  status      String    @default("in_progress")
+  startedBy   String?   @map("started_by") @db.Uuid
+  startedAt   DateTime? @map("started_at") @db.Timestamptz
+  approvedBy  String?   @map("approved_by") @db.Uuid
+  approvedAt  DateTime? @map("approved_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company   Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse Warehouse            @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items     InventoryCountItem[]
+
+  @@index([companyId])
+  @@index([warehouseId])
+  @@map("inventory_counts")
+}
+
+/// diff — app/service qatlamida hisoblanadi (countedQty - systemQty)
+model InventoryCountItem {
+  id         String   @id @db.Uuid
+  countId    String   @map("count_id") @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  variantId  String?  @map("variant_id") @db.Uuid
+  batchId    String?  @map("batch_id") @db.Uuid
+  systemQty  Decimal  @map("system_qty") @db.Decimal(18, 3)
+  countedQty Decimal? @map("counted_qty") @db.Decimal(18, 3)
+  diff       Decimal? @db.Decimal(18, 3)
+
+  count   InventoryCount  @relation(fields: [countId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  batch   Batch?          @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@index([countId])
+  @@index([productId])
+  @@map("inventory_count_items")
+}
+
+/// Raqam olish UPDATE ... RETURNING bilan (race yo'q) — repository qatlamida.
+model DocCounter {
+  companyId String @map("company_id") @db.Uuid
+  docType   String @map("doc_type")
+  year      Int
+  counter   Int    @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@id([companyId, docType, year])
+  @@map("doc_counters")
+}
+
+// =========================================================================
+// 6. Savdo va dostavka
+// =========================================================================
+
+/// B2B zakaz. Confirmed'da kredit limit tekshiruvi + stock.reserved ortadi
+/// (Faza 8/5). Shipped'da reserved kamayadi + chiqim movements. Accepted'da
+/// farqlar + debt_movement yoziladi. idempotencyKey — dublikat zakaz yo'q.
+model Order {
+  id              String    @id @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  number          String
+  salePointId     String    @map("sale_point_id") @db.Uuid
+  warehouseId     String    @map("warehouse_id") @db.Uuid
+  status          String    @default("new")
+  paymentTermDays Int?      @map("payment_term_days")
+  dueDate         DateTime? @map("due_date") @db.Date
+  currency        String    @default("UZS")
+  subtotal        Decimal   @default(0) @db.Decimal(18, 2)
+  discount        Decimal   @default(0) @db.Decimal(18, 2)
+  total           Decimal   @default(0) @db.Decimal(18, 2)
+  idempotencyKey  String    @map("idempotency_key")
+  comment         String?
+  createdBy       String?   @map("created_by") @db.Uuid
+  confirmedAt     DateTime? @map("confirmed_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salePoint          SalePoint            @relation(fields: [salePointId], references: [id], onDelete: Restrict)
+  warehouse          Warehouse            @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items              OrderItem[]
+  statusHistory      OrderStatusHistory[]
+  deliveryOrders     DeliveryOrder[]
+  debtMovements      DebtMovement[]
+  paymentAllocations PaymentAllocation[]
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, status])
+  @@index([salePointId, createdAt(sort: Desc)])
+  @@index([warehouseId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String  @id @db.Uuid
+  orderId         String  @map("order_id") @db.Uuid
+  productId       String  @map("product_id") @db.Uuid
+  variantId       String? @map("variant_id") @db.Uuid
+  unitId          String  @map("unit_id") @db.Uuid
+  qtyOrdered      Decimal @map("qty_ordered") @db.Decimal(18, 3)
+  qtyShipped      Decimal @default(0) @map("qty_shipped") @db.Decimal(18, 3)
+  qtyAccepted     Decimal @default(0) @map("qty_accepted") @db.Decimal(18, 3)
+  qtyBaseOrdered  Decimal @map("qty_base_ordered") @db.Decimal(18, 3)
+  qtyBaseShipped  Decimal @default(0) @map("qty_base_shipped") @db.Decimal(18, 3)
+  qtyBaseAccepted Decimal @default(0) @map("qty_base_accepted") @db.Decimal(18, 3)
+  price           Decimal @db.Decimal(18, 2)
+  discountPct     Decimal @default(0) @map("discount_pct") @db.Decimal(5, 2)
+  total           Decimal @db.Decimal(18, 2)
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  unit    Unit            @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+/// Immutable
+model OrderStatusHistory {
+  id         String   @id @db.Uuid
+  orderId    String   @map("order_id") @db.Uuid
+  fromStatus String?  @map("from_status")
+  toStatus   String   @map("to_status")
+  byUser     String?  @map("by_user") @db.Uuid
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_status_history")
+}
+
+model Delivery {
+  id              String    @id @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  courierMemberId String    @map("courier_member_id") @db.Uuid
+  date            DateTime  @db.Date
+  status          String    @default("assigned")
+  cashExpected    Decimal   @default(0) @map("cash_expected") @db.Decimal(18, 2)
+  cashCollected   Decimal   @default(0) @map("cash_collected") @db.Decimal(18, 2)
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  courierMember CompanyMember   @relation(fields: [courierMemberId], references: [id], onDelete: Restrict)
+  orders        DeliveryOrder[]
+  payments      Payment[]
+
+  @@index([companyId])
+  @@index([courierMemberId])
+  @@map("deliveries")
+}
+
+model DeliveryOrder {
+  id          String    @id @db.Uuid
+  deliveryId  String    @map("delivery_id") @db.Uuid
+  orderId     String    @map("order_id") @db.Uuid
+  sortOrder   Int       @default(0) @map("sort_order")
+  deliveredAt DateTime? @map("delivered_at") @db.Timestamptz
+  acceptCode  String?   @map("accept_code")
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([deliveryId])
+  @@index([orderId])
+  @@map("delivery_orders")
+}
+
+/// Retention: 30 kun — kunlik BullMQ job eski yozuvlarni o'chiradi.
+model CourierLocation {
+  id              String   @id @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  courierMemberId String   @map("courier_member_id") @db.Uuid
+  lat             Decimal  @db.Decimal(9, 6)
+  lng             Decimal  @db.Decimal(9, 6)
+  recordedAt      DateTime @map("recorded_at") @db.Timestamptz
+
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  courierMember CompanyMember @relation(fields: [courierMemberId], references: [id], onDelete: Restrict)
+
+  @@index([courierMemberId, recordedAt(sort: Desc)])
+  @@index([companyId])
+  @@map("courier_locations")
+}
+
+model Lead {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  phone     String
+  message   String?
+  items     Json?
+  status    String   @default("new")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@index([companyId])
+  @@map("leads")
+}
+
+// =========================================================================
+// 7. Moliya
+// =========================================================================
+
+model CashRegister {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  type      String
+  currency  String   @default("UZS")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  shifts       CashShift[]
+  transactions Transaction[]
+  payments     Payment[]
+
+  @@index([companyId])
+  @@map("cash_registers")
+}
+
+model CashShift {
+  id              String    @id @db.Uuid
+  cashRegisterId  String    @map("cash_register_id") @db.Uuid
+  openedBy        String?   @map("opened_by") @db.Uuid
+  openedAt        DateTime? @map("opened_at") @db.Timestamptz
+  openingBalance  Decimal   @default(0) @map("opening_balance") @db.Decimal(18, 2)
+  expectedBalance Decimal?  @map("expected_balance") @db.Decimal(18, 2)
+  countedBalance  Decimal?  @map("counted_balance") @db.Decimal(18, 2)
+  diff            Decimal?  @db.Decimal(18, 2)
+  closedBy        String?   @map("closed_by") @db.Uuid
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz
+  comment         String?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+
+  @@index([cashRegisterId])
+  @@map("cash_shifts")
+}
+
+model ExpenseCategory {
+  id        String   @id @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([companyId])
+  @@map("expense_categories")
+}
+
+model Transaction {
+  id             String   @id @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  cashRegisterId String   @map("cash_register_id") @db.Uuid
+  type           String
+  categoryId     String?  @map("category_id") @db.Uuid
+  counterpartyId String?  @map("counterparty_id") @db.Uuid
+  paymentId      String?  @map("payment_id") @db.Uuid
+  amount         Decimal  @db.Decimal(18, 2)
+  currency       String
+  exchangeRate   Decimal? @map("exchange_rate") @db.Decimal(18, 4)
+  comment        String?
+  createdBy      String?  @map("created_by") @db.Uuid
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz
+
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  cashRegister CashRegister     @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+  category     ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  counterparty Counterparty?    @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  payment      Payment?         @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, occurredAt])
+  @@index([cashRegisterId, occurredAt])
+  @@index([counterpartyId])
+  @@map("transactions")
+}
+
+/// Immutable qarz jurnali. Invariant: SUM(amount) per (counterparty, currency)
+/// = joriy balans. Aging: dueDate bo'yicha 0-15/16-30/31-60/60+.
+model DebtMovement {
+  id             String    @id @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  counterpartyId String    @map("counterparty_id") @db.Uuid
+  type           String
+  orderId        String?   @map("order_id") @db.Uuid
+  paymentId      String?   @map("payment_id") @db.Uuid
+  docId          String?   @map("doc_id") @db.Uuid
+  amount         Decimal   @db.Decimal(18, 2)
+  currency       String
+  dueDate        DateTime? @map("due_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdBy      String?   @map("created_by") @db.Uuid
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  order        Order?       @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([counterpartyId, createdAt])
+  @@index([companyId, currency])
+  @@index([orderId])
+  @@map("debt_movements")
+}
+
+model Payment {
+  id             String   @id @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  counterpartyId String   @map("counterparty_id") @db.Uuid
+  amount         Decimal  @db.Decimal(18, 2)
+  currency       String
+  method         String
+  cashRegisterId String?  @map("cash_register_id") @db.Uuid
+  receivedBy     String?  @map("received_by") @db.Uuid
+  deliveryId     String?  @map("delivery_id") @db.Uuid
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company      Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  counterparty Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  cashRegister CashRegister?       @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+  delivery     Delivery?           @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  allocations  PaymentAllocation[]
+  transactions Transaction[]
+
+  @@index([companyId])
+  @@index([counterpartyId])
+  @@index([cashRegisterId])
+  @@index([deliveryId])
+  @@map("payments")
+}
+
+/// SUM(allocations.amount) <= payment.amount — service qatlamida tekshiriladi.
+model PaymentAllocation {
+  id        String  @id @db.Uuid
+  paymentId String  @map("payment_id") @db.Uuid
+  orderId   String  @map("order_id") @db.Uuid
+  amount    Decimal @db.Decimal(18, 2)
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([orderId])
+  @@map("payment_allocations")
+}
+
+/// companyId null = CBU rasmiy kurs. CBU — kunlik BullMQ job (cbu.uz API).
+model ExchangeRate {
+  id        String   @id @db.Uuid
+  companyId String?  @map("company_id") @db.Uuid
+  currency  String
+  rate      Decimal  @db.Decimal(18, 4)
+  rateDate  DateTime @map("rate_date") @db.Date
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, currency, rateDate])
+  @@map("exchange_rates")
+}
+
+// =========================================================================
+// 8. Tizim
+// =========================================================================
+
+model Notification {
+  id        String    @id @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String?
+  data      Json?
+  channel   String
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([companyId])
+  @@map("notifications")
+}
+
+model Subscription {
+  id        String    @id @db.Uuid
+  companyId String    @unique @map("company_id") @db.Uuid
+  plan      String    @default("free")
+  status    String    @default("trial")
+  paidUntil DateTime? @map("paid_until") @db.Date
+  limits    Json      @default("{}")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@map("subscriptions")
+}
