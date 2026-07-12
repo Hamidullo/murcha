@@ -11,3 +11,7 @@ export const queueConnection = new IORedis(env.redisUrl, { maxRetriesPerRequest:
 export const THUMBNAIL_QUEUE_NAME = "product-image-thumbnail";
 
 export const thumbnailQueue = new Queue(THUMBNAIL_QUEUE_NAME, { connection: queueConnection });
+
+export const IMPORT_QUEUE_NAME = "excel-import";
+
+export const importQueue = new Queue(IMPORT_QUEUE_NAME, { connection: queueConnection });

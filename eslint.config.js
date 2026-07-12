@@ -51,6 +51,11 @@ export default [
         clearTimeout: "readonly",
         FormData: "readonly",
         confirm: "readonly",
+        URL: "readonly",
+        navigator: "readonly",
+        requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly",
+        BarcodeDetector: "readonly",
       },
     },
     rules: {

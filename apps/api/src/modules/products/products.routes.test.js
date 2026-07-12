@@ -661,3 +661,29 @@ describe("GET /api/v1/products/:id/images/:imageId/url", () => {
     expect(res.body).toEqual({ url: "https://minio.example/signed-url" });
   });
 });
+
+describe("GET /api/v1/products/by-barcode/:barcode", () => {
+  it("topilmasa 404 qaytaradi", async () => {
+    fakeTx.productBarcode.findFirst.mockReset().mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .get("/api/v1/products/by-barcode/4780000000017")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("topsa mahsulotni qaytaradi", async () => {
+    fakeTx.productBarcode.findFirst.mockReset().mockResolvedValue({ id: "b1", productId: "p1" });
+    fakeTx.product.findUnique
+      .mockReset()
+      .mockResolvedValue({ id: "p1", nameUz: "Non", deletedAt: null });
+
+    const res = await request(createApp())
+      .get("/api/v1/products/by-barcode/4780000000017")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: "p1", nameUz: "Non" });
+  });
+});

@@ -38,6 +38,7 @@ productsRouter.post(
   productsController.create,
 );
 productsRouter.get("/", productsController.list);
+productsRouter.get("/by-barcode/:barcode", productsController.getByBarcode);
 productsRouter.get("/:id", productsController.getById);
 productsRouter.patch(
   "/:id",

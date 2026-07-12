@@ -2,16 +2,17 @@
 
 > Har faza boshida shu fayl qayta yoziladi (PLAN.md 8.0). Bitta sessiya = bitta vazifa = bitta PR.
 
-## Faza 3 — Sklad operatsiyalari
+## Faza 4 — Shtrix-kod, Excel, inventarizatsiya
 
-Prisma sxemasi bu faza uchun kerakli barcha modellarni Faza 0'da o'z ichiga oladi (`Stock`, `WarehouseDoc`, `WarehouseDocItem`, `StockMovement`, `PurchaseOrder`, `PurchaseOrderItem`, `InventoryCount`, `InventoryCountItem`, `DocCounter`) — sxema o'zgarmaydi, faqat modul kodi yoziladi. Arxitektura qarorlari (qulflash texnikasi, deadlock oldini olish, storno, o'rtacha tannarx, hujjat raqamlash) — Task 1/2 boshida plan-rejimda kelishilgan, qisqacha bayoni PROGRESS.md 2026-07-12 yozuvida.
+Kerakli Prisma modellar (`InventoryCount`, `InventoryCountItem`) Faza 0'da tayyor — sxema o'zgarmaydi. `ProductBarcode`/`ProductBarcodesRepository.findByBarcode` Faza 2'da yozilgan. Arxitektura qarorlari (BarcodeDetector API+USB skaner, jsbarcode yorliq, exceljs export/BullMQ import, inventarizatsiya tasdiqlashda darhol-confirmed tuzatish hujjati) — Task 1 boshida plan-rejimda kelishilgan.
 
-- [x] **Task 1 — Warehouse-docs qoralama**: `warehouse-docs` moduli — CRUD (`status: draft`), item qo'shish/o'chirish, `doc_counters` orqali raqamlash (`KIR/CHIQ/SPIS/KOCH-YYYY-NNNNN`), `qtyBase` hisoblash (`ProductUnit.factor`)
-- [x] **Task 2 — Tasdiqlash oqimi**: `confirm(docId)` — turga qarab signed `qty`, `Stock` atomik upsert (`increment`), `StockMovement` yozuvlari, `InsufficientStockError`, transfer uchun deadlock-xavfsiz qulflash tartibi
-- [x] **Task 3 — Storno**: `cancel(docId)` — faqat `confirmed`dan, teskari harakatlar, `status: cancelled`
-- [x] **Task 4 — Stock moduli**: qoldiq ro'yxati (sklad/mahsulot kesimida), low-stock (`quantity <= minQty`) ro'yxati, o'rtacha tannarx hisoblash endpointi
-- [x] **Task 5 — Purchase orders**: `purchase-orders` moduli — CRUD, PO asosida kirim (`WarehouseDoc` yaratish + `qtyReceived` yangilash)
-- [x] **Task 6 — Invariant + race-condition testlar**: `SUM(stock_movements.qty) = stock.quantity` invariant testi, ikki parallel chiqim/tasdiqlash race-condition testi
-- [x] **Task 7 — Frontend**: sklad hujjatlar ro'yxati + yaratish/tasdiqlash/bekor qilish UI (kirim/chiqim minimal ko'lamda)
+- [x] **Task 1 — Counterparties CRUD**: `counterparties` moduli (standart CRUD, `warehouses` qolipi) — PO/hujjat yaratishda yetkazib beruvchi tanlash va Excel kontragent import/export uchun prerequisite
+- [x] **Task 2 — Shtrix-kod qidiruv**: `GET /api/v1/products/by-barcode/:barcode` — mavjud `ProductBarcodesRepository.findByBarcode` qayta ishlatiladi
+- [x] **Task 3 — Excel export**: `GET /api/v1/exports/products|stock|counterparties` — `exceljs` bilan `.xlsx` generatsiya
+- [x] **Task 4 — Excel import**: `POST /api/v1/imports/:type` (BullMQ job) + `GET /api/v1/imports/:jobId` (holat+hisobot)
+- [x] **Task 5 — Inventarizatsiya boshlash + sanoq**: `inventory-counts` moduli — boshlash (`systemQty` suratga olinadi), `countedQty` kiritish
+- [x] **Task 6 — Inventarizatsiya tasdiqlash**: farqlar uchun avtomatik tasdiqlangan tuzatish hujjatlari (kirim/spisaniye)
+- [x] **Task 7 — Frontend: shtrix-kod/yorliq/Excel**: skaner sahifasi (kamera+USB), yorliq chop etish, Excel import/export UI
+- [x] **Task 8 — Frontend: inventarizatsiya**: boshlash → sanoq kiritish → farqlar → tasdiqlash
 
-Faza 3 "Natija" mezoni (PLAN.md): invariant test o'tadi; ikki parallel chiqim race-condition testi o'tadi.
+Faza 4 "Natija" mezoni (PLAN.md): telefon kamerasi bilan mahsulot topiladi; 1000 qatorli Excel import qilinadi.

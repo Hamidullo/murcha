@@ -334,4 +334,33 @@ describe("ProductsService", () => {
       expect(productBarcodesRepository.delete).toHaveBeenCalledWith(fakeTx, "b1");
     });
   });
+
+  describe("getByBarcode", () => {
+    it("shtrix-kod topilmasa NotFoundError otadi", async () => {
+      productBarcodesRepository.findByBarcode.mockResolvedValue(null);
+
+      await expect(service.getByBarcode(auth, "4780000000017")).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
+    });
+
+    it("mahsulot arxivlangan bo'lsa NotFoundError otadi", async () => {
+      productBarcodesRepository.findByBarcode.mockResolvedValue({ productId: "p1" });
+      productsRepository.findById.mockResolvedValue({ id: "p1", deletedAt: new Date() });
+
+      await expect(service.getByBarcode(auth, "4780000000017")).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
+    });
+
+    it("topsa mahsulotni qaytaradi", async () => {
+      productBarcodesRepository.findByBarcode.mockResolvedValue({ productId: "p1" });
+      productsRepository.findById.mockResolvedValue({ id: "p1", nameUz: "Non", deletedAt: null });
+
+      const result = await service.getByBarcode(auth, "4780000000017");
+
+      expect(productBarcodesRepository.findByBarcode).toHaveBeenCalledWith(fakeTx, "4780000000017");
+      expect(result).toEqual({ id: "p1", nameUz: "Non", deletedAt: null });
+    });
+  });
 });

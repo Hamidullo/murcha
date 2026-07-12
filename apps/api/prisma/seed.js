@@ -21,6 +21,7 @@ const PERMISSIONS = [
   "employees.manage",
   "products.manage",
   "warehouse.manage",
+  "counterparties.manage",
   "orders.view",
   "orders.confirm",
   "debts.view",

@@ -18,6 +18,29 @@ export function getProduct(id) {
 }
 
 /** @returns {Promise<object>} */
+export function getProductByBarcode(barcode) {
+  return apiFetch(`/products/by-barcode/${encodeURIComponent(barcode)}`);
+}
+
+/** @returns {Promise<{ barcodes: object[] }>} */
+export function listBarcodes(productId) {
+  return apiFetch(`/products/${productId}/barcodes`);
+}
+
+/** @returns {Promise<object>} */
+export function addBarcode(productId, dto) {
+  return apiFetch(`/products/${productId}/barcodes`, {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+/** @returns {Promise<void>} */
+export function removeBarcode(productId, barcodeId) {
+  return apiFetch(`/products/${productId}/barcodes/${barcodeId}`, { method: "DELETE" });
+}
+
+/** @returns {Promise<object>} */
 export function createProduct(dto) {
   return apiFetch("/products", { method: "POST", body: JSON.stringify(dto) });
 }

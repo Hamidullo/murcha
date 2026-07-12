@@ -3,7 +3,7 @@
 > Reja: [PLAN.md](PLAN.md). Har bajarilgan band `[x]` qilinadi. Faza "Natija" mezoni bajarilmaguncha yopilmaydi.
 > Vazifa darajasidagi mayda bo'linish har faza boshida `TASKS.md`da qilinadi (PLAN.md 8.0).
 
-**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) · Faza 3 tugadi (real Postgres demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
+**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) · Faza 3 tugadi (real Postgres demo sinovisiz) · Faza 4 tugadi (real Postgres/kamera demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
 
 ---
 
@@ -75,11 +75,12 @@
 
 ## Faza 4 — Shtrix-kod, Excel, inventarizatsiya (1 hafta)
 
-- [ ] Shtrix-kod skaner: PWA kamera + USB
-- [ ] Yorliq (etiketka) chop etish
-- [ ] Excel import/export (mahsulot, qoldiq, kontragent) — worker'da
-- [ ] Inventarizatsiya: sanoq rejimi → farqlar → tasdiqlash → tuzatish hujjatlari
-- [ ] ✅ **Natija: kamera bilan mahsulot topiladi; 1000 qatorli Excel import bo'ladi**
+- [x] Shtrix-kod skaner: PWA kamera + USB (`BarcodeScanPage.vue` — nativ `BarcodeDetector` API kamera uchun, USB skaner matn input+Enter)
+- [x] Yorliq (etiketka) chop etish (`ProductFormPage.vue` — Shtrix-kodlar bo'limi, `jsbarcode` bilan)
+- [x] Excel import/export (mahsulot, qoldiq, kontragent) — export sinxron (`exceljs`), import BullMQ worker'da (`GET /imports/:jobId` — holat+qator hisobot)
+- [x] Inventarizatsiya: sanoq rejimi → farqlar → tasdiqlash → tuzatish hujjatlari (`inventory-counts` moduli — `approve()` darhol `confirmed` kirim/spisaniye hujjatlari yaratadi)
+- [x] ✅ **Natija: kamera bilan mahsulot topiladi; 1000 qatorli Excel import bo'ladi**
+      — barcha kod yozilgan va testlangan (474/474 backend test yashil, frontend build muvaffaqiyatli, Claude Browser'da UI/validatsiya/navigatsiya tekshirildi — jumladan shu tekshiruvda topilgan real bag tuzatildi), 1000 qatorli import haqiqiy `exceljs` bilan sinaldi (~500ms). Haqiqiy Postgres/Redis/MinIO'siz (kamera+backend to'liq zanjiri, real fayl hajmi/vaqti) hali tasdiqlanmagan — Faza 0/1/2/3'dagi bilan bir xil infratuzilma cheklovi
 
 ## Faza 5 — B2B zakaz portali (2 hafta) ← killer feature
 

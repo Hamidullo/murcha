@@ -39,7 +39,8 @@ async function throwApiError(res) {
  * qayta urinadi (token muddati o'tgan bo'lishi mumkin).
  * @param {string} path — `/auth/login` kabi, `BASE_URL`ga qo'shiladi
  * @param {RequestInit} [options]
- * @param {{ skipAuthRetry?: boolean }} [config]
+ * @param {{ skipAuthRetry?: boolean, raw?: boolean }} [config] — `raw: true` bo'lsa
+ *   JSON parslanmaydi, xom `Response` qaytadi (masalan `.xlsx` yuklab olish).
  * @returns {Promise<unknown>}
  */
 export async function apiFetch(path, options = {}, config = {}) {
@@ -63,7 +64,7 @@ export async function apiFetch(path, options = {}, config = {}) {
   if (res.status === 401 && !config.skipAuthRetry) {
     const refreshed = await authStore.refresh().catch(() => false);
     if (refreshed) {
-      return apiFetch(path, options, { skipAuthRetry: true });
+      return apiFetch(path, options, { ...config, skipAuthRetry: true });
     }
   }
 
@@ -71,6 +72,9 @@ export async function apiFetch(path, options = {}, config = {}) {
     await throwApiError(res);
   }
 
+  if (config.raw) {
+    return res;
+  }
   if (res.status === 204) {
     return null;
   }

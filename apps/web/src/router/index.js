@@ -48,6 +48,26 @@ const routes = [
         name: "warehouse-doc-edit",
         component: () => import("../pages/WarehouseDocFormPage.vue"),
       },
+      {
+        path: "barcode-scan",
+        name: "barcode-scan",
+        component: () => import("../pages/BarcodeScanPage.vue"),
+      },
+      {
+        path: "inventory-counts",
+        name: "inventory-counts",
+        component: () => import("../pages/InventoryCountListPage.vue"),
+      },
+      {
+        path: "inventory-counts/new",
+        name: "inventory-count-new",
+        component: () => import("../pages/InventoryCountNewPage.vue"),
+      },
+      {
+        path: "inventory-counts/:id",
+        name: "inventory-count-detail",
+        component: () => import("../pages/InventoryCountDetailPage.vue"),
+      },
     ],
   },
 ];

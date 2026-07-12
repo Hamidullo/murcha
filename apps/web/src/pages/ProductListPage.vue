@@ -1,13 +1,17 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import * as productsApi from "../api/products.api.js";
 import * as categoriesApi from "../api/categories.api.js";
+import * as exportsApi from "../api/exports.api.js";
+import * as importsApi from "../api/imports.api.js";
+import { ApiError } from "../api/client.js";
 import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
 
 const router = useRouter();
+const queryClient = useQueryClient();
 
 const search = ref("");
 const debouncedSearch = ref("");
@@ -49,14 +53,106 @@ const products = computed(() => productsData.value?.products ?? []);
 function goToEdit(productId) {
   router.push({ name: "product-edit", params: { id: productId } });
 }
+
+// --- Excel export/import ---
+const isExporting = ref(false);
+const importState = ref(""); // "" | "uploading" | "processing" | "done" | "error"
+const importResult = ref(null);
+const importError = ref("");
+const fileInputRef = ref(null);
+
+/** @returns {Promise<void>} */
+async function onExport() {
+  isExporting.value = true;
+  try {
+    await exportsApi.downloadExport("products", "mahsulotlar.xlsx");
+  } catch (err) {
+    importState.value = "error";
+    importError.value = err instanceof ApiError ? err.message : "Yuklab bo'lmadi";
+  } finally {
+    isExporting.value = false;
+  }
+}
+
+/**
+ * @param {Event} event
+ * @returns {Promise<void>}
+ */
+async function onImportFileSelected(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+
+  importError.value = "";
+  importResult.value = null;
+  importState.value = "uploading";
+  try {
+    const { jobId } = await importsApi.uploadImport("products", file);
+    importState.value = "processing";
+    await pollImportStatus(jobId);
+  } catch (err) {
+    importState.value = "error";
+    importError.value = err instanceof ApiError ? err.message : "Yuklab bo'lmadi";
+  }
+}
+
+/**
+ * @param {string} jobId
+ * @returns {Promise<void>}
+ */
+async function pollImportStatus(jobId) {
+  const status = await importsApi.getImportStatus(jobId);
+  if (status.state === "completed") {
+    importState.value = "done";
+    importResult.value = status.result;
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    return;
+  }
+  if (status.state === "failed") {
+    importState.value = "error";
+    importError.value = status.failedReason ?? "Import muvaffaqiyatsiz";
+    return;
+  }
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await pollImportStatus(jobId);
+}
 </script>
 
 <template>
   <div>
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold text-brand-brown">Katalog</h1>
-      <Button size="sm" @click="router.push({ name: 'product-new' })">Yangi mahsulot</Button>
+      <div class="flex gap-2">
+        <Button variant="outline" size="sm" :disabled="isExporting" @click="onExport">
+          {{ isExporting ? "Yuklanmoqda…" : "Excel eksport" }}
+        </Button>
+        <Button variant="outline" size="sm" @click="fileInputRef?.click()">Excel import</Button>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".xlsx"
+          class="hidden"
+          @change="onImportFileSelected"
+        />
+        <Button size="sm" @click="router.push({ name: 'product-new' })">Yangi mahsulot</Button>
+      </div>
     </div>
+
+    <p v-if="importState === 'uploading'" class="mt-2 text-sm text-brand-brown/60">
+      Fayl yuklanmoqda…
+    </p>
+    <p v-else-if="importState === 'processing'" class="mt-2 text-sm text-brand-brown/60">
+      Qayta ishlanmoqda…
+    </p>
+    <p v-else-if="importState === 'done'" class="mt-2 text-sm text-brand-brown">
+      Import tugadi: {{ importResult.succeeded }}/{{ importResult.total }} muvaffaqiyatli
+      <span v-if="importResult.failed > 0" class="text-red-600">
+        ({{ importResult.failed }} xato)
+      </span>
+    </p>
+    <p v-else-if="importState === 'error'" class="mt-2 text-sm text-red-600">
+      {{ importError }}
+    </p>
 
     <div class="mt-4 flex flex-wrap gap-3">
       <Input

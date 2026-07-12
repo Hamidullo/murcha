@@ -6,3 +6,5 @@ export * from "./schemas/price-type.schemas.js";
 export * from "./schemas/warehouse-doc.schemas.js";
 export * from "./schemas/stock.schemas.js";
 export * from "./schemas/purchase-order.schemas.js";
+export * from "./schemas/counterparty.schemas.js";
+export * from "./schemas/inventory-count.schemas.js";

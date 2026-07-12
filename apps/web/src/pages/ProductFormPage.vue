@@ -8,6 +8,7 @@ import * as categoriesApi from "../api/categories.api.js";
 import * as unitsApi from "../api/units.api.js";
 import * as priceTypesApi from "../api/priceTypes.api.js";
 import { ApiError } from "../api/client.js";
+import { printBarcodeLabel } from "../lib/print-barcode.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
@@ -230,6 +231,46 @@ async function onDeleteImage(imageId) {
   await productsApi.deleteImage(productId.value, imageId);
   refetchImages();
 }
+
+// --- Shtrix-kodlar ---
+const { data: barcodesData, refetch: refetchBarcodes } = useQuery({
+  queryKey: computed(() => ["barcodes", productId.value]),
+  queryFn: () => productsApi.listBarcodes(productId.value),
+  enabled: isEdit,
+});
+const barcodes = computed(() => barcodesData.value?.barcodes ?? []);
+const newBarcode = ref("");
+const barcodeError = ref("");
+
+/** @returns {Promise<void>} */
+async function onAddBarcode() {
+  barcodeError.value = "";
+  if (!newBarcode.value.trim()) return;
+  try {
+    await productsApi.addBarcode(productId.value, { barcode: newBarcode.value.trim() });
+    newBarcode.value = "";
+    refetchBarcodes();
+  } catch (err) {
+    barcodeError.value = err instanceof ApiError ? err.message : "Xato yuz berdi";
+  }
+}
+
+/**
+ * @param {string} barcodeId
+ * @returns {Promise<void>}
+ */
+async function onRemoveBarcode(barcodeId) {
+  await productsApi.removeBarcode(productId.value, barcodeId);
+  refetchBarcodes();
+}
+
+/**
+ * @param {string} barcodeValue
+ * @returns {void}
+ */
+function onPrintBarcode(barcodeValue) {
+  printBarcodeLabel(barcodeValue, form.nameUz);
+}
 </script>
 
 <template>
@@ -408,6 +449,39 @@ async function onDeleteImage(imageId) {
           </div>
           <input type="file" accept="image/jpeg,image/png,image/webp" @change="onFileSelected" />
           <p v-if="imageError" class="text-xs text-red-600">{{ imageError }}</p>
+        </CardContent>
+      </Card>
+
+      <Card class="mt-4">
+        <CardHeader><CardTitle>Shtrix-kodlar</CardTitle></CardHeader>
+        <CardContent class="flex flex-col gap-3">
+          <ul class="flex flex-col gap-1 text-sm text-brand-brown">
+            <li
+              v-for="barcode in barcodes"
+              :key="barcode.id"
+              class="flex items-center justify-between"
+            >
+              <span>{{ barcode.barcode }}</span>
+              <span class="flex gap-2 text-xs">
+                <button
+                  type="button"
+                  class="text-brand-amber"
+                  @click="onPrintBarcode(barcode.barcode)"
+                >
+                  Yorliq chop etish
+                </button>
+                <button type="button" class="text-red-600" @click="onRemoveBarcode(barcode.id)">
+                  O'chirish
+                </button>
+              </span>
+            </li>
+            <li v-if="barcodes.length === 0" class="text-brand-brown/60">Shtrix-kod yo'q</li>
+          </ul>
+          <div class="flex gap-2">
+            <Input v-model="newBarcode" placeholder="Shtrix-kod raqami" />
+            <Button type="button" size="sm" @click="onAddBarcode">Qo'shish</Button>
+          </div>
+          <p v-if="barcodeError" class="text-xs text-red-600">{{ barcodeError }}</p>
         </CardContent>
       </Card>
     </template>

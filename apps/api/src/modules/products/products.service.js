@@ -141,6 +141,29 @@ export class ProductsService {
   }
 
   /**
+   * Shtrix-kod skaner uchun (kamera/USB) — topilgan shtrix-kod orqali
+   * to'g'ridan-to'g'ri mahsulotni qaytaradi. `product_barcodes`da RLS bor
+   * (`company_id` ustuni bilan), shuning uchun boshqa kompaniya shtrix-kodi
+   * hech qachon qaytmaydi.
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} barcode
+   * @returns {Promise<import("@prisma/client").Product>}
+   */
+  async getByBarcode(auth, barcode) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const productBarcode = await this.productBarcodesRepository.findByBarcode(tx, barcode);
+      if (!productBarcode) {
+        throw new NotFoundError("Bu shtrix-kod bo'yicha mahsulot topilmadi");
+      }
+      const product = await this.productsRepository.findById(tx, productBarcode.productId);
+      if (!product || product.deletedAt) {
+        throw new NotFoundError("Bu shtrix-kod bo'yicha mahsulot topilmadi");
+      }
+      return product;
+    });
+  }
+
+  /**
    * O'ram-birlik qo'shish (masalan "1 blok = 20 dona"). Asosiy birlik
    * (`baseUnitId`) qayta qo'shilmaydi — konvertatsiya har doim asosiy
    * birlikka nisbatan.

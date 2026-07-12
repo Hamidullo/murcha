@@ -27,6 +27,12 @@ async function onLogout() {
           <router-link :to="{ name: 'warehouse-docs' }" class="hover:text-brand-brown">
             Sklad hujjatlari
           </router-link>
+          <router-link :to="{ name: 'barcode-scan' }" class="hover:text-brand-brown">
+            Shtrix-kod
+          </router-link>
+          <router-link :to="{ name: 'inventory-counts' }" class="hover:text-brand-brown">
+            Inventarizatsiya
+          </router-link>
         </nav>
       </div>
       <div class="flex items-center gap-3">

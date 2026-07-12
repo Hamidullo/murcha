@@ -41,6 +41,19 @@ export class ProductsController {
   };
 
   /**
+   * `GET /api/v1/products/by-barcode/:barcode`
+   * @type {import("express").RequestHandler}
+   */
+  getByBarcode = async (req, res, next) => {
+    try {
+      const product = await this.productsService.getByBarcode(req.auth, req.params.barcode);
+      res.status(200).json(product);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
    * `GET /api/v1/products/:id`
    * @type {import("express").RequestHandler}
    */
