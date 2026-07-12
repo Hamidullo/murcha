@@ -14,6 +14,8 @@ describe("ShopCatalogService", () => {
   let salePointsRepository;
   let userAssignmentsRepository;
   let stockRepository;
+  let companiesRepository;
+  let exchangeRatesRepository;
   let service;
 
   beforeEach(() => {
@@ -23,12 +25,16 @@ describe("ShopCatalogService", () => {
     salePointsRepository = { findById: vi.fn() };
     userAssignmentsRepository = { findSalePointIdForUser: vi.fn() };
     stockRepository = { list: vi.fn() };
+    companiesRepository = { findById: vi.fn().mockResolvedValue({ settings: {} }) };
+    exchangeRatesRepository = { findLatest: vi.fn() };
     service = new ShopCatalogService({
       productsRepository,
       productPricesRepository,
       salePointsRepository,
       userAssignmentsRepository,
       stockRepository,
+      companiesRepository,
+      exchangeRatesRepository,
     });
   });
 
@@ -126,5 +132,28 @@ describe("ShopCatalogService", () => {
 
     expect(stockRepository.list).toHaveBeenCalledWith(fakeTx, "c1", { warehouseId: "w1" });
     expect(result[0].availableQty).toBe(7);
+  });
+
+  it("USD narxni joriy kurs bilan UZS'ga o'girib qaytaradi", async () => {
+    userAssignmentsRepository.findSalePointIdForUser.mockResolvedValue("sp1");
+    salePointsRepository.findById.mockResolvedValue({ id: "sp1", priceTypeId: "pt1" });
+    productsRepository.list.mockResolvedValue([
+      {
+        id: "p1",
+        sku: "SKU-1",
+        nameUz: "Import",
+        categoryId: null,
+        baseUnitId: "u1",
+        status: "active",
+      },
+    ]);
+    productPricesRepository.listCurrentByProduct.mockResolvedValue([
+      { priceTypeId: "pt1", price: 10, currency: "USD" },
+    ]);
+    exchangeRatesRepository.findLatest.mockResolvedValue({ rate: 12700 });
+
+    const result = await service.list(auth, {});
+
+    expect(result[0]).toMatchObject({ price: 127000, currency: "UZS" });
   });
 });

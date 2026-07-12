@@ -23,4 +23,16 @@ describe("CompaniesRepository", () => {
     expect(tx.company.findUnique).toHaveBeenCalledWith({ where: { id: "c1" } });
     expect(result).toBe(data);
   });
+
+  it("update — tx.company.update'ni id+data bilan chaqiradi", async () => {
+    const tx = { company: { update: vi.fn().mockResolvedValue({ id: "c1" }) } };
+    const repo = new CompaniesRepository();
+
+    await repo.update(tx, "c1", { name: "Yangi nom" });
+
+    expect(tx.company.update).toHaveBeenCalledWith({
+      where: { id: "c1" },
+      data: { name: "Yangi nom" },
+    });
+  });
 });

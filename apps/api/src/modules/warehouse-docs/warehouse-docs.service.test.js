@@ -16,6 +16,7 @@ describe("WarehouseDocsService", () => {
   let productUnitsRepository;
   let stockRepository;
   let stockMovementsRepository;
+  let companiesRepository;
   let service;
 
   beforeEach(() => {
@@ -23,6 +24,7 @@ describe("WarehouseDocsService", () => {
     warehouseDocsRepository = {
       create: vi.fn(),
       findById: vi.fn(),
+      findByIdForPrint: vi.fn(),
       list: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -36,6 +38,7 @@ describe("WarehouseDocsService", () => {
     productUnitsRepository = { findByProductAndUnit: vi.fn() };
     stockRepository = { findOne: vi.fn(), applyDelta: vi.fn() };
     stockMovementsRepository = { create: vi.fn() };
+    companiesRepository = { findById: vi.fn().mockResolvedValue({ name: "Chaqqon savdo" }) };
     service = new WarehouseDocsService({
       warehouseDocsRepository,
       warehousesRepository,
@@ -43,6 +46,7 @@ describe("WarehouseDocsService", () => {
       productUnitsRepository,
       stockRepository,
       stockMovementsRepository,
+      companiesRepository,
     });
   });
 
@@ -457,6 +461,42 @@ describe("WarehouseDocsService", () => {
         fakeTx,
         expect.objectContaining({ warehouseId: "w2", qtyDelta: 10 }),
       );
+    });
+  });
+
+  describe("getActPdf", () => {
+    it("hujjat topilmasa NotFoundError otadi", async () => {
+      warehouseDocsRepository.findByIdForPrint.mockResolvedValue(null);
+
+      await expect(service.getActPdf(auth, "d1")).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("hujjat topilsa PDF Buffer qaytaradi", async () => {
+      warehouseDocsRepository.findByIdForPrint.mockResolvedValue({
+        type: "receipt",
+        number: "KIR-2026-00001",
+        warehouse: { name: "Markaziy sklad" },
+        toWarehouse: null,
+        counterparty: { name: "Postavshchik" },
+        confirmedAt: new Date("2026-07-01"),
+        currency: "UZS",
+        total: 50000,
+        reason: null,
+        items: [
+          {
+            product: { nameUz: "Choy", sku: "SKU-2" },
+            unit: { short: "quti" },
+            qty: 5,
+            price: 10000,
+            total: 50000,
+          },
+        ],
+      });
+
+      const buffer = await service.getActPdf(auth, "d1");
+
+      expect(Buffer.isBuffer(buffer)).toBe(true);
+      expect(buffer.subarray(0, 4).toString()).toBe("%PDF");
     });
   });
 });

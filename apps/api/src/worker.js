@@ -1,12 +1,15 @@
 import sharp from "sharp";
 import ExcelJS from "exceljs";
 import { Worker } from "bullmq";
+import { uuidv7 } from "uuidv7";
 import {
   queueConnection,
   THUMBNAIL_QUEUE_NAME,
   IMPORT_QUEUE_NAME,
   DEBT_REMINDER_QUEUE_NAME,
   debtReminderQueue,
+  CBU_RATE_QUEUE_NAME,
+  cbuRateQueue,
 } from "./lib/queue.js";
 import { minioClient, MINIO_BUCKET, ensureBucket } from "./lib/minio.js";
 import { prisma } from "./lib/prisma.js";
@@ -25,6 +28,7 @@ import { StockMovementsRepository } from "./modules/stock/stock-movements.reposi
 import { SalePointsRepository } from "./modules/sale-points/sale-points.repository.js";
 import { CompaniesRepository } from "./modules/companies/companies.repository.js";
 import { DebtMovementsRepository } from "./modules/debts/debts.repository.js";
+import { ExchangeRatesRepository } from "./modules/exchange-rates/exchange-rates.repository.js";
 import { NotificationsRepository } from "./modules/notifications/notifications.repository.js";
 import { CompanyMembersRepository } from "./modules/companies/company-members.repository.js";
 import { RolesRepository } from "./modules/roles/roles.repository.js";
@@ -90,6 +94,8 @@ const importRepos = {
 const debtMovementsRepository = new DebtMovementsRepository();
 const salePointsRepository = new SalePointsRepository();
 const companiesRepository = new CompaniesRepository();
+const exchangeRatesRepository = new ExchangeRatesRepository();
+const CBU_API_URL = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/";
 // `worker.js` alohida process — `domainEvents` (in-process EventEmitter)
 // unga yetib bormaydi, shuning uchun `notifications` moduli composition
 // root'ini (`notifications.routes.js`dagi bilan bir xil) o'zi quradi.
@@ -145,6 +151,47 @@ async function processDebtReminderJob() {
   }
 
   return { companies: companyIds.length, reminders };
+}
+
+/**
+ * CBU'ning "DD.MM.YYYY" formatidagi sanasini UTC yarim tunga o'giradi.
+ * @param {string} dateStr
+ * @returns {Date}
+ */
+function parseCbuDate(dateStr) {
+  const [day, month, year] = dateStr.split(".").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+/**
+ * CBU (cbu.uz) ochiq JSON API'dan USD rasmiy kursini oladi, `exchange_rates`ga
+ * `companyId:null` bilan yozadi (RLS bu qatorlarni har doim o'tkazadi —
+ * `rls.sql`: `company_id IS NULL OR ...`, tenant kontekst kerak emas).
+ * Tarmoq/format xatosida jim o'tkazib yuboriladi — oldingi kunning kursi
+ * `ExchangeRatesRepository.findLatest`da `rateDate <= bugun` bilan ishlaydi.
+ * @returns {Promise<void>}
+ */
+async function processCbuRateJob() {
+  try {
+    const res = await fetch(CBU_API_URL);
+    if (!res.ok) {
+      throw new Error(`CBU API xato: ${res.status}`);
+    }
+    const rates = await res.json();
+    const usd = Array.isArray(rates) ? rates.find((r) => r.Ccy === "USD") : null;
+    if (!usd) {
+      throw new Error("CBU javobida USD topilmadi");
+    }
+    await exchangeRatesRepository.upsert(prisma, {
+      id: uuidv7(),
+      companyId: null,
+      currency: "USD",
+      rate: parseFloat(usd.Rate),
+      rateDate: parseCbuDate(usd.Date),
+    });
+  } catch (err) {
+    logger.error({ err }, "CBU kursini olishda xato — o'tkazib yuborildi");
+  }
 }
 
 /**
@@ -242,6 +289,14 @@ debtReminderWorker.on("failed", (job, err) => {
   logger.error({ err, jobId: job?.id }, "Qarz eslatmalarini yuborishda xato");
 });
 
+cbuRateQueue.add("fetch", {}, { repeat: { pattern: "0 7 * * *" }, jobId: "cbu-rate-daily" });
+const cbuRateWorker = new Worker(CBU_RATE_QUEUE_NAME, processCbuRateJob, {
+  connection: queueConnection,
+});
+cbuRateWorker.on("failed", (job, err) => {
+  logger.error({ err, jobId: job?.id }, "CBU kurs job'i kutilmagan xato bilan yiqildi");
+});
+
 logger.info(
-  `murcha worker — "${THUMBNAIL_QUEUE_NAME}", "${IMPORT_QUEUE_NAME}" va "${DEBT_REMINDER_QUEUE_NAME}" navbatlari tinglanmoqda`,
+  `murcha worker — "${THUMBNAIL_QUEUE_NAME}", "${IMPORT_QUEUE_NAME}", "${DEBT_REMINDER_QUEUE_NAME}" va "${CBU_RATE_QUEUE_NAME}" navbatlari tinglanmoqda`,
 );

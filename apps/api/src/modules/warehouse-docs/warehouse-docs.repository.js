@@ -19,6 +19,30 @@ export class WarehouseDocsRepository {
   }
 
   /**
+   * Akt PDF uchun — item'lar mahsulot nomi/artikuli va birlik qisqartmasi,
+   * sklad/kontragent nomlari bilan (`printing.pdf.js renderWarehouseDocPdf()`).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} id
+   * @returns {Promise<import("@prisma/client").WarehouseDoc | null>}
+   */
+  async findByIdForPrint(tx, id) {
+    return tx.warehouseDoc.findUnique({
+      where: { id },
+      include: {
+        warehouse: { select: { name: true } },
+        toWarehouse: { select: { name: true } },
+        counterparty: { select: { name: true } },
+        items: {
+          include: {
+            product: { select: { nameUz: true, sku: true } },
+            unit: { select: { short: true } },
+          },
+        },
+      },
+    });
+  }
+
+  /**
    * @param {import("@prisma/client").Prisma.TransactionClient} tx
    * @param {string} companyId
    * @param {{ type?: string, status?: string, warehouseId?: string }} [filters]

@@ -23,6 +23,7 @@ const fakeTx = {
     findUnique: vi.fn(),
     delete: vi.fn(),
   },
+  company: { findUnique: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },
@@ -120,6 +121,49 @@ describe("GET /api/v1/warehouse-docs/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(DOC_ID);
+  });
+});
+
+describe("GET /api/v1/warehouse-docs/:id/act.pdf", () => {
+  it("hujjat topilmasa 404 qaytaradi", async () => {
+    fakeTx.warehouseDoc.findUnique.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .get(`/api/v1/warehouse-docs/${DOC_ID}/act.pdf`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("hujjat topilsa PDF qaytaradi", async () => {
+    fakeTx.warehouseDoc.findUnique.mockResolvedValue({
+      type: "receipt",
+      number: "KIR-2026-00001",
+      warehouse: { name: "Markaziy sklad" },
+      toWarehouse: null,
+      counterparty: { name: "Postavshchik" },
+      confirmedAt: new Date("2026-07-01"),
+      currency: "UZS",
+      total: 50000,
+      reason: null,
+      items: [
+        {
+          product: { nameUz: "Choy", sku: "SKU-2" },
+          unit: { short: "quti" },
+          qty: 5,
+          price: 10000,
+          total: 50000,
+        },
+      ],
+    });
+    fakeTx.company.findUnique.mockResolvedValue({ name: "Chaqqon savdo", logoPath: null });
+
+    const res = await request(createApp())
+      .get(`/api/v1/warehouse-docs/${DOC_ID}/act.pdf`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("application/pdf");
   });
 });
 

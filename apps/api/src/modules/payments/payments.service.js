@@ -21,6 +21,8 @@ export class PaymentsService {
    *   debtMovementsRepository: import("../debts/debts.repository.js").DebtMovementsRepository,
    *   counterpartiesRepository: import("../counterparties/counterparties.repository.js").CounterpartiesRepository,
    *   rolesRepository: import("../roles/roles.repository.js").RolesRepository,
+   *   cashRegistersRepository: import("../cash/cash-registers.repository.js").CashRegistersRepository,
+   *   transactionsRepository: import("../cash/transactions.repository.js").TransactionsRepository,
    * }} deps
    */
   constructor({
@@ -28,11 +30,15 @@ export class PaymentsService {
     debtMovementsRepository,
     counterpartiesRepository,
     rolesRepository,
+    cashRegistersRepository,
+    transactionsRepository,
   }) {
     this.paymentsRepository = paymentsRepository;
     this.debtMovementsRepository = debtMovementsRepository;
     this.counterpartiesRepository = counterpartiesRepository;
     this.rolesRepository = rolesRepository;
+    this.cashRegistersRepository = cashRegistersRepository;
+    this.transactionsRepository = transactionsRepository;
   }
 
   /**
@@ -49,7 +55,14 @@ export class PaymentsService {
       if (!counterparty || counterparty.companyId !== auth.companyId) {
         throw new NotFoundError("Kontragent topilmadi");
       }
+      if (dto.cashRegisterId) {
+        const register = await this.cashRegistersRepository.findById(tx, dto.cashRegisterId);
+        if (!register || register.companyId !== auth.companyId) {
+          throw new NotFoundError("Kassa topilmadi");
+        }
+      }
 
+      const occurredAt = dto.occurredAt ? new Date(dto.occurredAt) : new Date();
       const payment = await this.paymentsRepository.create(tx, {
         id: uuidv7(),
         companyId: auth.companyId,
@@ -57,10 +70,26 @@ export class PaymentsService {
         amount: dto.amount,
         currency: dto.currency,
         method: dto.method,
+        cashRegisterId: dto.cashRegisterId ?? null,
         receivedBy: auth.userId,
         deliveryId: dto.deliveryId ?? null,
-        occurredAt: dto.occurredAt ? new Date(dto.occurredAt) : new Date(),
+        occurredAt,
       });
+
+      if (dto.cashRegisterId) {
+        await this.transactionsRepository.create(tx, {
+          id: uuidv7(),
+          companyId: auth.companyId,
+          cashRegisterId: dto.cashRegisterId,
+          type: "income",
+          counterpartyId: dto.counterpartyId,
+          paymentId: payment.id,
+          amount: dto.amount,
+          currency: dto.currency,
+          createdBy: auth.userId,
+          occurredAt,
+        });
+      }
 
       const movements = await this.debtMovementsRepository.listOrderLinkedMovements(
         tx,

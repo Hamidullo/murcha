@@ -41,3 +41,20 @@ export function shipOrder(id, dto = {}) {
 export function cancelOrder(id) {
   return apiFetch(`/orders/${id}/cancel`, { method: "POST" });
 }
+
+/**
+ * Nakladnaya PDF'ni yuklab oladi va brauzerda saqlash oynasini ochadi.
+ * @param {string} id
+ * @param {string} orderNumber
+ * @returns {Promise<void>}
+ */
+export async function downloadInvoicePdf(id, orderNumber) {
+  const res = await apiFetch(`/orders/${id}/invoice.pdf`, {}, { raw: true });
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `nakladnaya-${orderNumber}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}

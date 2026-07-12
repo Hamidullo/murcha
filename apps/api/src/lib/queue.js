@@ -21,3 +21,7 @@ export const DEBT_REMINDER_QUEUE_NAME = "debt-reminders";
 export const debtReminderQueue = new Queue(DEBT_REMINDER_QUEUE_NAME, {
   connection: queueConnection,
 });
+
+export const CBU_RATE_QUEUE_NAME = "cbu-rate";
+
+export const cbuRateQueue = new Queue(CBU_RATE_QUEUE_NAME, { connection: queueConnection });

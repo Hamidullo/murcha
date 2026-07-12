@@ -1,9 +1,12 @@
 <script setup>
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
 import * as deliveriesApi from "../api/deliveries.api.js";
 import * as companyMembersApi from "../api/company-members.api.js";
+import * as cashApi from "../api/cash.api.js";
+import { ApiError } from "../api/client.js";
+import Button from "@/components/ui/button/Button.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const STATUS_LABELS = { assigned: "Yo'lda", done: "Yakunlangan" };
@@ -33,6 +36,40 @@ const members = computed(() => membersData.value?.members ?? []);
 function courierName(courierMemberId) {
   return members.value.find((m) => m.id === courierMemberId)?.user.fullName ?? "—";
 }
+
+// --- Kassaga topshirish (inkassatsiya) ---
+const { data: registersData } = useQuery({
+  queryKey: ["cash-registers"],
+  queryFn: () => cashApi.listRegisters(),
+});
+const cashRegisterId = ref("");
+const isSettling = ref(false);
+const settleError = ref("");
+const isSettled = ref(false);
+
+/** @returns {Promise<void>} */
+async function onSettleCash() {
+  settleError.value = "";
+  if (!cashRegisterId.value) {
+    settleError.value = "Kassani tanlang";
+    return;
+  }
+  isSettling.value = true;
+  try {
+    await cashApi.createTransaction({
+      cashRegisterId: cashRegisterId.value,
+      type: "income",
+      amount: Number(delivery.value.cashCollected),
+      currency: "UZS",
+      comment: `Inkassatsiya: dostavka (kuryer ${courierName(delivery.value.courierMemberId)})`,
+    });
+    isSettled.value = true;
+  } catch (err) {
+    settleError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+  } finally {
+    isSettling.value = false;
+  }
+}
 </script>
 
 <template>
@@ -58,6 +95,30 @@ function courierName(courierMemberId) {
         <span class="text-sm">Yig'ilgan naqd</span>
         <span class="font-semibold">{{ Number(delivery.cashCollected) }}</span>
       </div>
+
+      <Card v-if="Number(delivery.cashCollected) > 0" class="mt-4">
+        <CardHeader><CardTitle>Kassaga topshirish</CardTitle></CardHeader>
+        <CardContent class="flex flex-col gap-3">
+          <p v-if="isSettled" class="text-sm text-green-700">
+            Kassaga topshirildi ({{ Number(delivery.cashCollected) }} UZS).
+          </p>
+          <template v-else>
+            <select
+              v-model="cashRegisterId"
+              class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
+            >
+              <option value="">Kassani tanlang</option>
+              <option v-for="r in registersData?.registers ?? []" :key="r.id" :value="r.id">
+                {{ r.name }}
+              </option>
+            </select>
+            <p v-if="settleError" class="text-sm text-red-600">{{ settleError }}</p>
+            <Button :disabled="isSettling" class="self-start" @click="onSettleCash">
+              {{ isSettling ? "Topshirilmoqda…" : "Kassaga topshirish" }}
+            </Button>
+          </template>
+        </CardContent>
+      </Card>
 
       <Card class="mt-4">
         <CardHeader><CardTitle>Bekatlar</CardTitle></CardHeader>

@@ -29,6 +29,28 @@ export class OrdersRepository {
   }
 
   /**
+   * Nakladnaya PDF uchun — item'lar mahsulot nomi/artikuli va birlik
+   * qisqartmasi bilan (`printing.pdf.js renderOrderInvoicePdf()`).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} id
+   * @returns {Promise<import("@prisma/client").Order | null>}
+   */
+  async findByIdForPrint(tx, id) {
+    return tx.order.findUnique({
+      where: { id },
+      include: {
+        salePoint: { select: { name: true } },
+        items: {
+          include: {
+            product: { select: { nameUz: true, sku: true } },
+            unit: { select: { short: true } },
+          },
+        },
+      },
+    });
+  }
+
+  /**
    * Idempotency replay — bir xil kalit bilan qayta so'ralsa mavjud zakaz
    * qaytariladi, yangisi yaratilmaydi.
    * @param {import("@prisma/client").Prisma.TransactionClient} tx

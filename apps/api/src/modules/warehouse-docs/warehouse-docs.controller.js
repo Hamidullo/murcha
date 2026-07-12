@@ -54,6 +54,21 @@ export class WarehouseDocsController {
   };
 
   /**
+   * `GET /api/v1/warehouse-docs/:id/act.pdf`
+   * @type {import("express").RequestHandler}
+   */
+  exportActPdf = async (req, res, next) => {
+    try {
+      const buffer = await this.warehouseDocsService.getActPdf(req.auth, req.params.id);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="akt.pdf"');
+      res.send(buffer);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
    * `PATCH /api/v1/warehouse-docs/:id`
    * @type {import("express").RequestHandler}
    */

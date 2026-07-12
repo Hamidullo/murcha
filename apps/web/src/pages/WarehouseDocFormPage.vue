@@ -180,6 +180,11 @@ async function onCancel() {
     actionError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
   }
 }
+
+/** @returns {Promise<void>} */
+function onPrintAct() {
+  return warehouseDocsApi.downloadActPdf(docId.value, doc.value.number);
+}
 </script>
 
 <template>
@@ -262,6 +267,9 @@ async function onCancel() {
           <Button v-if="isDraft" size="sm" @click="onConfirm">Tasdiqlash</Button>
           <Button v-if="isConfirmed" variant="outline" size="sm" @click="onCancel">
             Bekor qilish
+          </Button>
+          <Button v-if="isConfirmed" variant="outline" size="sm" @click="onPrintAct">
+            Chop etish
           </Button>
         </div>
       </div>

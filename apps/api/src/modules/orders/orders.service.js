@@ -9,7 +9,10 @@ import {
   CreditLimitExceededError,
 } from "../../lib/errors.js";
 import { computeQtyBase } from "../../lib/qty-base.js";
+import { convertToUzs, resolveExchangeRate } from "../../lib/currency.js";
 import { domainEvents } from "../../lib/events.js";
+import { renderOrderInvoicePdf } from "../printing/printing.pdf.js";
+import { loadCompanyLogoBase64 } from "../printing/printing.logo.js";
 
 /** `cancel()`da rezerv bo'shatiladigan (allaqachon `confirm()` bo'lgan) statuslar. */
 const RESERVED_STATUSES = ["confirmed", "picking"];
@@ -43,6 +46,7 @@ export class OrdersService {
    *   deliveriesRepository: import("../deliveries/deliveries.repository.js").DeliveriesRepository,
    *   debtMovementsRepository: import("../debts/debts.repository.js").DebtMovementsRepository,
    *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
+   *   exchangeRatesRepository: import("../exchange-rates/exchange-rates.repository.js").ExchangeRatesRepository,
    * }} deps
    */
   constructor({
@@ -61,6 +65,7 @@ export class OrdersService {
     deliveriesRepository,
     debtMovementsRepository,
     companiesRepository,
+    exchangeRatesRepository,
   }) {
     this.ordersRepository = ordersRepository;
     this.salePointsRepository = salePointsRepository;
@@ -77,6 +82,7 @@ export class OrdersService {
     this.deliveriesRepository = deliveriesRepository;
     this.debtMovementsRepository = debtMovementsRepository;
     this.companiesRepository = companiesRepository;
+    this.exchangeRatesRepository = exchangeRatesRepository;
   }
 
   /**
@@ -116,6 +122,7 @@ export class OrdersService {
         tx,
         salePoint.counterpartyId,
       );
+      let usdRate = null;
 
       let subtotal = 0;
       const itemsData = [];
@@ -140,7 +147,17 @@ export class OrdersService {
         if (!priceRow) {
           throw new NotFoundError(`Narx belgilanmagan: ${product.nameUz}`);
         }
-        const price = Number(priceRow.price);
+        if (priceRow.currency !== "UZS" && usdRate === null) {
+          const company = await this.companiesRepository.findById(tx, auth.companyId);
+          usdRate = await resolveExchangeRate(
+            tx,
+            this.exchangeRatesRepository,
+            auth.companyId,
+            priceRow.currency,
+            company?.settings?.exchangeRateMode ?? "cbu",
+          );
+        }
+        const price = convertToUzs(Number(priceRow.price), priceRow.currency, usdRate);
         const total = price * line.qty;
         subtotal += total;
         itemsData.push({
@@ -257,6 +274,39 @@ export class OrdersService {
       }
       return order;
     });
+  }
+
+  /**
+   * Nakladnaya PDF — `getById()`dagi bilan bir xil egalik tekshiruvi.
+   * MinIO/PDF generatsiya (tarmoq+CPU I/O) tranzaksiya tashqarisida —
+   * `product-images.service.js`dagi naqsh bilan bir xil.
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} id
+   * @returns {Promise<Buffer>}
+   */
+  async getInvoicePdf(auth, id) {
+    const { order, company } = await withTenant(auth.companyId, auth.userId, async (tx) => {
+      const order = await this.ordersRepository.findByIdForPrint(tx, id);
+      if (!order) {
+        throw new NotFoundError("Zakaz topilmadi");
+      }
+      const canViewAll = await this.rolesRepository.hasPermission(tx, auth.roleId, VIEW_PERMISSION);
+      if (!canViewAll) {
+        const salePointId = await this.userAssignmentsRepository.findSalePointIdForUser(
+          tx,
+          auth.companyId,
+          auth.userId,
+        );
+        if (order.salePointId !== salePointId) {
+          throw new NotFoundError("Zakaz topilmadi");
+        }
+      }
+      const company = await this.companiesRepository.findById(tx, auth.companyId);
+      return { order, company };
+    });
+
+    const logoBase64 = await loadCompanyLogoBase64(company);
+    return renderOrderInvoicePdf({ order, company, logoBase64 });
   }
 
   /**

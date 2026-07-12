@@ -45,3 +45,20 @@ export function confirmWarehouseDoc(id) {
 export function cancelWarehouseDoc(id) {
   return apiFetch(`/warehouse-docs/${id}/cancel`, { method: "POST" });
 }
+
+/**
+ * Akt PDF'ni yuklab oladi va brauzerda saqlash oynasini ochadi.
+ * @param {string} id
+ * @param {string} docNumber
+ * @returns {Promise<void>}
+ */
+export async function downloadActPdf(id, docNumber) {
+  const res = await apiFetch(`/warehouse-docs/${id}/act.pdf`, {}, { raw: true });
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `akt-${docNumber}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}

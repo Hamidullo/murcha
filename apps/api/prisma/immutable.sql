@@ -13,7 +13,7 @@ DECLARE
   t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
-    'stock_movements', 'debt_movements', 'audit_logs', 'order_status_history'
+    'stock_movements', 'debt_movements', 'audit_logs', 'order_status_history', 'transactions'
   ]
   LOOP
     EXECUTE format(

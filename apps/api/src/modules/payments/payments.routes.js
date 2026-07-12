@@ -7,6 +7,8 @@ import { PaymentsRepository } from "./payments.repository.js";
 import { DebtMovementsRepository } from "../debts/debts.repository.js";
 import { CounterpartiesRepository } from "../counterparties/counterparties.repository.js";
 import { RolesRepository } from "../roles/roles.repository.js";
+import { CashRegistersRepository } from "../cash/cash-registers.repository.js";
+import { TransactionsRepository } from "../cash/transactions.repository.js";
 import { PaymentsService } from "./payments.service.js";
 import { PaymentsController } from "./payments.controller.js";
 
@@ -16,6 +18,8 @@ const paymentsService = new PaymentsService({
   debtMovementsRepository: new DebtMovementsRepository(),
   counterpartiesRepository: new CounterpartiesRepository(),
   rolesRepository: new RolesRepository(),
+  cashRegistersRepository: new CashRegistersRepository(),
+  transactionsRepository: new TransactionsRepository(),
 });
 const paymentsController = new PaymentsController({ paymentsService });
 

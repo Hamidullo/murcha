@@ -5,6 +5,8 @@ import { ProductPricesRepository } from "../products/product-prices.repository.j
 import { SalePointsRepository } from "../sale-points/sale-points.repository.js";
 import { UserAssignmentsRepository } from "../user-assignments/user-assignments.repository.js";
 import { StockRepository } from "../stock/stock.repository.js";
+import { CompaniesRepository } from "../companies/companies.repository.js";
+import { ExchangeRatesRepository } from "../exchange-rates/exchange-rates.repository.js";
 import { ShopCatalogService } from "./shop-catalog.service.js";
 import { ShopCatalogController } from "./shop-catalog.controller.js";
 
@@ -15,6 +17,8 @@ const shopCatalogService = new ShopCatalogService({
   salePointsRepository: new SalePointsRepository(),
   userAssignmentsRepository: new UserAssignmentsRepository(),
   stockRepository: new StockRepository(),
+  companiesRepository: new CompaniesRepository(),
+  exchangeRatesRepository: new ExchangeRatesRepository(),
 });
 const shopCatalogController = new ShopCatalogController({ shopCatalogService });
 

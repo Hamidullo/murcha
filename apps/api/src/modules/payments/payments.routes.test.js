@@ -11,6 +11,8 @@ const fakeTx = {
   payment: { create: vi.fn() },
   paymentAllocation: { create: vi.fn() },
   debtMovement: { findMany: vi.fn().mockResolvedValue([]), create: vi.fn() },
+  cashRegister: { findUnique: vi.fn() },
+  transaction: { create: vi.fn() },
   rolePermission: { findFirst: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
@@ -79,6 +81,31 @@ describe("POST /api/v1/payments", () => {
     expect(res.status).toBe(201);
     expect(fakeTx.debtMovement.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ orderId: null, amount: -1000 }) }),
+    );
+  });
+
+  it("cashRegisterId berilsa Transaction ham yoziladi", async () => {
+    const REGISTER_ID = "22222222-2222-7222-8222-222222222222";
+    fakeTx.rolePermission.findFirst.mockResolvedValue({ id: "rp1" });
+    fakeTx.counterparty.findUnique.mockResolvedValue({ id: COUNTERPARTY_ID, companyId: "c1" });
+    fakeTx.cashRegister.findUnique.mockResolvedValue({ id: REGISTER_ID, companyId: "c1" });
+    fakeTx.payment.create.mockResolvedValue({ id: "pay1", ...body, cashRegisterId: REGISTER_ID });
+    fakeTx.debtMovement.findMany.mockResolvedValue([]);
+
+    const res = await request(createApp())
+      .post("/api/v1/payments")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ ...body, cashRegisterId: REGISTER_ID });
+
+    expect(res.status).toBe(201);
+    expect(fakeTx.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          cashRegisterId: REGISTER_ID,
+          type: "income",
+          amount: 1000,
+        }),
+      }),
     );
   });
 });

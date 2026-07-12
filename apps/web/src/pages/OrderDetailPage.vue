@@ -110,6 +110,11 @@ function onShip() {
     }),
   );
 }
+
+/** @returns {Promise<void>} */
+function onPrintInvoice() {
+  return ordersApi.downloadInvoicePdf(orderId.value, order.value.number);
+}
 </script>
 
 <template>
@@ -140,6 +145,13 @@ function onShip() {
             @click="onCancel"
           >
             Bekor qilish
+          </Button>
+          <Button
+            v-if="order.status !== 'new' && order.status !== 'cancelled'"
+            variant="outline"
+            @click="onPrintInvoice"
+          >
+            Chop etish
           </Button>
         </div>
       </div>

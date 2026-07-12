@@ -18,3 +18,6 @@ export * from "./schemas/push-subscription.schemas.js";
 export * from "./schemas/delivery.schemas.js";
 export * from "./schemas/debt.schemas.js";
 export * from "./schemas/payment.schemas.js";
+export * from "./schemas/cash.schemas.js";
+export * from "./schemas/exchange-rate.schemas.js";
+export * from "./schemas/company.schemas.js";

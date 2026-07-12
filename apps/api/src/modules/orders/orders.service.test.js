@@ -34,6 +34,7 @@ describe("OrdersService", () => {
   let deliveriesRepository;
   let debtMovementsRepository;
   let companiesRepository;
+  let exchangeRatesRepository;
   let service;
 
   const dto = {
@@ -48,6 +49,7 @@ describe("OrdersService", () => {
     ordersRepository = {
       create: vi.fn(),
       findById: vi.fn(),
+      findByIdForPrint: vi.fn(),
       findByIdempotencyKey: vi.fn().mockResolvedValue(null),
       list: vi.fn(),
       update: vi.fn(),
@@ -75,6 +77,7 @@ describe("OrdersService", () => {
     deliveriesRepository = { findByOrderId: vi.fn() };
     debtMovementsRepository = { create: vi.fn(), getBalance: vi.fn().mockResolvedValue(0) };
     companiesRepository = { findById: vi.fn().mockResolvedValue({ id: "c1", settings: {} }) };
+    exchangeRatesRepository = { findLatest: vi.fn() };
     service = new OrdersService({
       ordersRepository,
       salePointsRepository,
@@ -91,6 +94,7 @@ describe("OrdersService", () => {
       deliveriesRepository,
       debtMovementsRepository,
       companiesRepository,
+      exchangeRatesRepository,
     });
   });
 
@@ -155,7 +159,7 @@ describe("OrdersService", () => {
         nameUz: "Non",
       });
       productPricesRepository.listCurrentByProduct.mockResolvedValue([
-        { priceTypeId: "pt1", price: 5000 },
+        { priceTypeId: "pt1", price: 5000, currency: "UZS" },
       ]);
       const createdOrder = { id: "o1", number: "ZAK-2026-00001", salePointId: "sp1" };
       ordersRepository.create.mockResolvedValue(createdOrder);
@@ -204,6 +208,62 @@ describe("OrdersService", () => {
         orderNumber: "ZAK-2026-00001",
         salePointId: "sp1",
       });
+    });
+
+    it("USD narxli mahsulotni joriy kurs bilan UZS'ga o'girib snapshot qiladi", async () => {
+      userAssignmentsRepository.findSalePointIdForUser.mockResolvedValue("sp1");
+      salePointsRepository.findById.mockResolvedValue({
+        id: "sp1",
+        priceTypeId: "pt1",
+        counterpartyId: "cp1",
+      });
+      warehousesRepository.findById.mockResolvedValue({ id: "w1" });
+      counterpartiesRepository.findById.mockResolvedValue({ paymentTermDays: 15 });
+      productsRepository.findById.mockResolvedValue({
+        id: "p1",
+        baseUnitId: "u-dona",
+        nameUz: "Non",
+      });
+      productPricesRepository.listCurrentByProduct.mockResolvedValue([
+        { priceTypeId: "pt1", price: 10, currency: "USD" },
+      ]);
+      exchangeRatesRepository.findLatest.mockResolvedValue({ rate: 12700 });
+      ordersRepository.create.mockResolvedValue({ id: "o1", number: "ZAK-2026-00001" });
+
+      await service.create(auth, dto);
+
+      expect(ordersRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          subtotal: 254000,
+          total: 254000,
+          items: {
+            create: [expect.objectContaining({ price: 127000, total: 254000 })],
+          },
+        }),
+      );
+    });
+
+    it("USD narxli mahsulot uchun hech qanday kurs topilmasa ValidationError otadi", async () => {
+      userAssignmentsRepository.findSalePointIdForUser.mockResolvedValue("sp1");
+      salePointsRepository.findById.mockResolvedValue({
+        id: "sp1",
+        priceTypeId: "pt1",
+        counterpartyId: "cp1",
+      });
+      warehousesRepository.findById.mockResolvedValue({ id: "w1" });
+      counterpartiesRepository.findById.mockResolvedValue({ paymentTermDays: 15 });
+      productsRepository.findById.mockResolvedValue({
+        id: "p1",
+        baseUnitId: "u-dona",
+        nameUz: "Non",
+      });
+      productPricesRepository.listCurrentByProduct.mockResolvedValue([
+        { priceTypeId: "pt1", price: 10, currency: "USD" },
+      ]);
+      exchangeRatesRepository.findLatest.mockResolvedValue(null);
+
+      await expect(service.create(auth, dto)).rejects.toBeInstanceOf(ValidationError);
     });
   });
 
@@ -747,6 +807,50 @@ describe("OrdersService", () => {
         }),
       );
       expect(result).toEqual({ id: "doc1", status: "confirmed" });
+    });
+  });
+
+  describe("getInvoicePdf", () => {
+    it("zakaz topilmasa NotFoundError otadi", async () => {
+      ordersRepository.findByIdForPrint.mockResolvedValue(null);
+
+      await expect(service.getInvoicePdf(auth, "o1")).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("orders.view ruxsati bo'lmasa va boshqa nuqtaga tegishli bo'lsa NotFoundError otadi", async () => {
+      ordersRepository.findByIdForPrint.mockResolvedValue({ id: "o1", salePointId: "sp-other" });
+      rolesRepository.hasPermission.mockResolvedValue(false);
+      userAssignmentsRepository.findSalePointIdForUser.mockResolvedValue("sp1");
+
+      await expect(service.getInvoicePdf(auth, "o1")).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("orders.view ruxsati bo'lsa PDF Buffer qaytaradi", async () => {
+      ordersRepository.findByIdForPrint.mockResolvedValue({
+        id: "o1",
+        number: "ZAK-2026-00001",
+        salePointId: "sp1",
+        salePoint: { name: "Do'kon 1" },
+        confirmedAt: new Date("2026-07-01"),
+        currency: "UZS",
+        total: 20000,
+        items: [
+          {
+            product: { nameUz: "Non", sku: "SKU-1" },
+            unit: { short: "dona" },
+            qtyOrdered: 2,
+            qtyShipped: 2,
+            price: 10000,
+            total: 20000,
+          },
+        ],
+      });
+      rolesRepository.hasPermission.mockResolvedValue(true);
+
+      const buffer = await service.getInvoicePdf(auth, "o1");
+
+      expect(Buffer.isBuffer(buffer)).toBe(true);
+      expect(buffer.subarray(0, 4).toString()).toBe("%PDF");
     });
   });
 });

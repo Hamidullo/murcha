@@ -28,15 +28,16 @@ const PERMISSIONS = [
   "deliveries.manage",
   "debts.view",
   "debts.manage",
+  "cash.view",
   "cash.manage",
   "reports.view",
 ];
 
-/** Owner'dan tashqari sklad tomoni rollariga beriladigan ruxsatlar (Faza 5/8). */
+/** Owner'dan tashqari sklad tomoni rollariga beriladigan ruxsatlar (Faza 5/8/9). */
 const ROLE_PERMISSIONS = {
   warehouse_manager: ["orders.view", "orders.confirm", "deliveries.manage", "debts.view"],
   picker: ["orders.view", "orders.confirm"],
-  accountant: ["debts.view", "debts.manage", "reports.view"],
+  accountant: ["debts.view", "debts.manage", "cash.view", "cash.manage", "reports.view"],
 };
 
 const SYSTEM_UNITS = [

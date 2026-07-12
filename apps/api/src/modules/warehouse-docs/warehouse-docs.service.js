@@ -7,6 +7,8 @@ import {
   InsufficientStockError,
 } from "../../lib/errors.js";
 import { computeQtyBase } from "../../lib/qty-base.js";
+import { renderWarehouseDocPdf } from "../printing/printing.pdf.js";
+import { loadCompanyLogoBase64 } from "../printing/printing.logo.js";
 
 /** Hujjat raqami prefiksi (DATABASE.md: `KIR-2026-00001` uslubi). */
 const NUMBER_PREFIX = {
@@ -29,6 +31,7 @@ export class WarehouseDocsService {
    *   productUnitsRepository: import("../products/product-units.repository.js").ProductUnitsRepository,
    *   stockRepository: import("../stock/stock.repository.js").StockRepository,
    *   stockMovementsRepository: import("../stock/stock-movements.repository.js").StockMovementsRepository,
+   *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
    * }} deps
    */
   constructor({
@@ -38,6 +41,7 @@ export class WarehouseDocsService {
     productUnitsRepository,
     stockRepository,
     stockMovementsRepository,
+    companiesRepository,
   }) {
     this.warehouseDocsRepository = warehouseDocsRepository;
     this.warehousesRepository = warehousesRepository;
@@ -45,6 +49,7 @@ export class WarehouseDocsService {
     this.productUnitsRepository = productUnitsRepository;
     this.stockRepository = stockRepository;
     this.stockMovementsRepository = stockMovementsRepository;
+    this.companiesRepository = companiesRepository;
   }
 
   /**
@@ -117,6 +122,28 @@ export class WarehouseDocsService {
       throw new NotFoundError("Hujjat topilmadi");
     }
     return doc;
+  }
+
+  /**
+   * Kirim/chiqim/spisaniye/ko'chirish akti PDF. MinIO/PDF generatsiya
+   * tranzaksiya tashqarisida (`orders.service.js getInvoicePdf()`dagi bilan
+   * bir xil naqsh).
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} id
+   * @returns {Promise<Buffer>}
+   */
+  async getActPdf(auth, id) {
+    const { doc, company } = await withTenant(auth.companyId, auth.userId, async (tx) => {
+      const doc = await this.warehouseDocsRepository.findByIdForPrint(tx, id);
+      if (!doc) {
+        throw new NotFoundError("Hujjat topilmadi");
+      }
+      const company = await this.companiesRepository.findById(tx, auth.companyId);
+      return { doc, company };
+    });
+
+    const logoBase64 = await loadCompanyLogoBase64(company);
+    return renderWarehouseDocPdf({ doc, company, logoBase64 });
   }
 
   /**

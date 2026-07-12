@@ -13,6 +13,7 @@ import { ProductsRepository } from "../products/products.repository.js";
 import { ProductUnitsRepository } from "../products/product-units.repository.js";
 import { StockRepository } from "../stock/stock.repository.js";
 import { StockMovementsRepository } from "../stock/stock-movements.repository.js";
+import { CompaniesRepository } from "../companies/companies.repository.js";
 import { WarehouseDocsService } from "./warehouse-docs.service.js";
 import { WarehouseDocsController } from "./warehouse-docs.controller.js";
 
@@ -24,6 +25,7 @@ const warehouseDocsService = new WarehouseDocsService({
   productUnitsRepository: new ProductUnitsRepository(),
   stockRepository: new StockRepository(),
   stockMovementsRepository: new StockMovementsRepository(),
+  companiesRepository: new CompaniesRepository(),
 });
 const warehouseDocsController = new WarehouseDocsController({ warehouseDocsService });
 
@@ -38,6 +40,7 @@ warehouseDocsRouter.post(
 );
 warehouseDocsRouter.get("/", warehouseDocsController.list);
 warehouseDocsRouter.get("/:id", warehouseDocsController.getById);
+warehouseDocsRouter.get("/:id/act.pdf", warehouseDocsController.exportActPdf);
 warehouseDocsRouter.patch(
   "/:id",
   requirePermission("warehouse.manage"),

@@ -13,6 +13,8 @@ describe("PaymentsService", () => {
   let debtMovementsRepository;
   let counterpartiesRepository;
   let rolesRepository;
+  let cashRegistersRepository;
+  let transactionsRepository;
   let service;
 
   const dto = { counterpartyId: "cp1", amount: 1000, currency: "UZS", method: "cash" };
@@ -26,11 +28,15 @@ describe("PaymentsService", () => {
     };
     counterpartiesRepository = { findById: vi.fn() };
     rolesRepository = { hasPermission: vi.fn() };
+    cashRegistersRepository = { findById: vi.fn() };
+    transactionsRepository = { create: vi.fn() };
     service = new PaymentsService({
       paymentsRepository,
       debtMovementsRepository,
       counterpartiesRepository,
       rolesRepository,
+      cashRegistersRepository,
+      transactionsRepository,
     });
   });
 
@@ -181,5 +187,53 @@ describe("PaymentsService", () => {
       fakeTx,
       expect.objectContaining({ type: "payment", orderId: "o1", amount: -1000 }),
     );
+  });
+
+  it("cashRegisterId berilib kassa topilmasa NotFoundError otadi", async () => {
+    rolesRepository.hasPermission.mockResolvedValue(true);
+    counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", companyId: "c1" });
+    cashRegistersRepository.findById.mockResolvedValue(null);
+
+    await expect(service.create(auth, { ...dto, cashRegisterId: "r1" })).rejects.toThrow(
+      NotFoundError,
+    );
+    expect(paymentsRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("cashRegisterId berilsa Payment yozilgach Transaction (income) yozadi", async () => {
+    rolesRepository.hasPermission.mockResolvedValue(true);
+    counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", companyId: "c1" });
+    cashRegistersRepository.findById.mockResolvedValue({ id: "r1", companyId: "c1" });
+    paymentsRepository.create.mockResolvedValue({ id: "pay1" });
+    debtMovementsRepository.listOrderLinkedMovements.mockResolvedValue([]);
+
+    await service.create(auth, { ...dto, cashRegisterId: "r1" });
+
+    expect(paymentsRepository.create).toHaveBeenCalledWith(
+      fakeTx,
+      expect.objectContaining({ cashRegisterId: "r1" }),
+    );
+    expect(transactionsRepository.create).toHaveBeenCalledWith(
+      fakeTx,
+      expect.objectContaining({
+        cashRegisterId: "r1",
+        type: "income",
+        paymentId: "pay1",
+        amount: 1000,
+        currency: "UZS",
+        counterpartyId: "cp1",
+      }),
+    );
+  });
+
+  it("cashRegisterId berilmasa Transaction yozilmaydi", async () => {
+    rolesRepository.hasPermission.mockResolvedValue(true);
+    counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", companyId: "c1" });
+    paymentsRepository.create.mockResolvedValue({ id: "pay1" });
+    debtMovementsRepository.listOrderLinkedMovements.mockResolvedValue([]);
+
+    await service.create(auth, dto);
+
+    expect(transactionsRepository.create).not.toHaveBeenCalled();
   });
 });

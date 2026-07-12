@@ -10,6 +10,7 @@ export const createPaymentSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().default("UZS"),
   method: z.enum(["cash", "bank", "card"]),
+  cashRegisterId: z.string().uuid().optional(),
   deliveryId: z.string().uuid().optional(),
   occurredAt: z.string().datetime().optional(),
   allocations: z.array(paymentAllocationSchema).optional(),

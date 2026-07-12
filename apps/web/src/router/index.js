@@ -170,6 +170,21 @@ const routes = [
         name: "debts-aging",
         component: () => import("../pages/DebtsAgingPage.vue"),
       },
+      {
+        path: "cash",
+        name: "cash-registers",
+        component: () => import("../pages/CashRegistersPage.vue"),
+      },
+      {
+        path: "cash/registers/:id",
+        name: "cash-register-ledger",
+        component: () => import("../pages/CashRegisterLedgerPage.vue"),
+      },
+      {
+        path: "company/settings",
+        name: "company-settings",
+        component: () => import("../pages/CompanySettingsPage.vue"),
+      },
     ],
   },
 ];

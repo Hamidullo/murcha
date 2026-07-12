@@ -22,12 +22,15 @@ import { salePointsRouter } from "./modules/sale-points/sale-points.routes.js";
 import { ordersRouter } from "./modules/orders/orders.routes.js";
 import { shopCatalogRouter } from "./modules/shop-catalog/shop-catalog.routes.js";
 import { companyMembersRouter } from "./modules/companies/company-members.routes.js";
+import { companiesRouter } from "./modules/companies/companies.routes.js";
 import { rolesRouter } from "./modules/roles/roles.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { pushSubscriptionsRouter } from "./modules/push-subscriptions/push-subscriptions.routes.js";
 import { deliveriesRouter } from "./modules/deliveries/deliveries.routes.js";
 import { debtsRouter } from "./modules/debts/debts.routes.js";
 import { paymentsRouter } from "./modules/payments/payments.routes.js";
+import { cashRouter } from "./modules/cash/cash.routes.js";
+import { exchangeRatesRouter } from "./modules/exchange-rates/exchange-rates.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -64,12 +67,15 @@ export function createApp() {
   app.use("/api/v1/orders", ordersRouter);
   app.use("/api/v1/shop-catalog", shopCatalogRouter);
   app.use("/api/v1/company-members", companyMembersRouter);
+  app.use("/api/v1/companies", companiesRouter);
   app.use("/api/v1/roles", rolesRouter);
   app.use("/api/v1/notifications", notificationsRouter);
   app.use("/api/v1/push-subscriptions", pushSubscriptionsRouter);
   app.use("/api/v1/deliveries", deliveriesRouter);
   app.use("/api/v1/debts", debtsRouter);
   app.use("/api/v1/payments", paymentsRouter);
+  app.use("/api/v1/cash", cashRouter);
+  app.use("/api/v1/exchange-rates", exchangeRatesRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

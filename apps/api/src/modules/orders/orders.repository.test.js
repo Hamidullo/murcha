@@ -29,6 +29,26 @@ describe("OrdersRepository", () => {
     });
   });
 
+  it("findByIdForPrint — salePoint va item product/unit bilan include qiladi", async () => {
+    const tx = { order: { findUnique: vi.fn().mockResolvedValue({ id: "o1" }) } };
+    const repo = new OrdersRepository();
+
+    await repo.findByIdForPrint(tx, "o1");
+
+    expect(tx.order.findUnique).toHaveBeenCalledWith({
+      where: { id: "o1" },
+      include: {
+        salePoint: { select: { name: true } },
+        items: {
+          include: {
+            product: { select: { nameUz: true, sku: true } },
+            unit: { select: { short: true } },
+          },
+        },
+      },
+    });
+  });
+
   it("findByIdempotencyKey — companyId_idempotencyKey unique kalit bilan qidiradi", async () => {
     const tx = { order: { findUnique: vi.fn().mockResolvedValue(null) } };
     const repo = new OrdersRepository();

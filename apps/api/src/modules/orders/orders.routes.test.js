@@ -20,6 +20,8 @@ const fakeTx = {
   productPrice: { findMany: vi.fn() },
   userAssignment: { findFirst: vi.fn() },
   stock: { findUnique: vi.fn(), upsert: vi.fn() },
+  company: { findUnique: vi.fn() },
+  exchangeRate: { findFirst: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },
@@ -99,7 +101,9 @@ describe("POST /api/v1/orders", () => {
       nameUz: "Non",
       deletedAt: null,
     });
-    fakeTx.productPrice.findMany.mockResolvedValue([{ priceTypeId: "pt1", price: 5000 }]);
+    fakeTx.productPrice.findMany.mockResolvedValue([
+      { priceTypeId: "pt1", price: 5000, currency: "UZS" },
+    ]);
     fakeTx.order.findUnique.mockResolvedValue(null);
     fakeTx.order.create.mockImplementation((args) => Promise.resolve({ ...args.data, items: [] }));
 
@@ -119,6 +123,53 @@ describe("POST /api/v1/orders", () => {
       .send({ ...body, items: [] });
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /api/v1/orders/:id/invoice.pdf", () => {
+  beforeEach(() => {
+    resetFakeTx();
+    hasPermission.mockReset().mockResolvedValue(true);
+  });
+
+  it("zakaz topilmasa 404 qaytaradi", async () => {
+    fakeTx.order.findUnique.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .get("/api/v1/orders/o1/invoice.pdf")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("zakaz topilsa PDF qaytaradi", async () => {
+    fakeTx.order.findUnique.mockResolvedValue({
+      id: "o1",
+      number: "ZAK-2026-00001",
+      salePointId: "sp1",
+      salePoint: { name: "Do'kon 1" },
+      confirmedAt: new Date("2026-07-01"),
+      currency: "UZS",
+      total: 20000,
+      items: [
+        {
+          product: { nameUz: "Non", sku: "SKU-1" },
+          unit: { short: "dona" },
+          qtyOrdered: 2,
+          qtyShipped: 2,
+          price: 10000,
+          total: 20000,
+        },
+      ],
+    });
+    fakeTx.company.findUnique.mockResolvedValue({ name: "Chaqqon savdo", logoPath: null });
+
+    const res = await request(createApp())
+      .get("/api/v1/orders/o1/invoice.pdf")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("application/pdf");
   });
 });
 

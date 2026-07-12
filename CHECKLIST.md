@@ -128,13 +128,14 @@
 
 ## Faza 9 — Kassa, valyuta, chop etish (1–2 hafta)
 
-- [ ] Kassa/hisob raqamlar, tranzaksiyalar, xarajat kategoriyalari
-- [ ] Zakaz ↔ to'lov bog'lanishi
-- [ ] Kun yopish (smena) + kuryer inkassatsiyasi
-- [ ] Valyuta: USD narxlar, CBU kursi avtomatik, valyutali qarz
-- [ ] Kompaniya brendingi: logo yuklash + brend rangi
-- [ ] Chop etish: nakladnaya, aktlar (logo bilan, A4/termoprinter)
-- [ ] ✅ **Natija: kun yopilganda kassa farqi ko'rinadi; nakladnaya logo bilan chiqadi**
+- [x] Kassa/hisob raqamlar, tranzaksiyalar, xarajat kategoriyalari — `cash` moduli (registers/expense-categories/transactions), `transactions` immutable (`immutable.sql`)
+- [x] Zakaz ↔ to'lov bog'lanishi — `payments.service.js` `cashRegisterId` berilsa `Payment`dan keyin `Transaction` (`type:"income"`) avtomatik yoziladi
+- [x] Kun yopish (smena) + kuryer inkassatsiyasi — `CashShift` ochish/yopish (`expectedBalance`/`diff`, `occurredAt` oynasi bilan), `DeliveryDetailPage.vue`da "Kassaga topshirish"
+- [x] Valyuta: USD narxlar, CBU kursi avtomatik, valyutali qarz — `exchange-rates` moduli, kunlik CBU job (`cbu.uz`), `orders`/`shop-catalog`da USD→UZS konvertatsiya; qarz `DebtMovement.currency` orqali Faza 8'dan valyuta-agnostik (alohida USD qarz UI qo'shilmadi)
+- [x] Kompaniya brendingi: logo yuklash + brend rangi — `companies` moduli birinchi marta (avval faqat repository bor edi), MinIO logo yuklash
+- [x] Chop etish: nakladnaya, aktlar (logo bilan, A4/termoprinter) — `printing.pdf.js` (`pdfmake`, logo bilan); termoprinter/etiketka Faza 4'da qilingan
+- [x] ✅ **Natija: kun yopilganda kassa farqi ko'rinadi; nakladnaya logo bilan chiqadi**
+      — barcha kod yozilgan va testlangan (901/901 backend test yashil, frontend build muvaffaqiyatli, Claude Browser'da kassa/smena/kompaniya sozlamalari/chop etish/inkassatsiya oqimlari soxta `fetch` bilan uchdan-uchgacha tekshirildi). Haqiqiy Postgres/Redis/MinIO'siz (real CBU API javobi, real PDF ko'rinishi) hali tasdiqlanmagan — oldingi fazalardagi bilan bir xil infratuzilma cheklovi
 
 ## Faza 10 — Dashboard va hisobotlar (1 hafta)
 

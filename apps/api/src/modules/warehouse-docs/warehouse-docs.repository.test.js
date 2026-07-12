@@ -27,6 +27,28 @@ describe("WarehouseDocsRepository", () => {
     expect(result).toBe(data);
   });
 
+  it("findByIdForPrint — warehouse/toWarehouse/counterparty va item product/unit bilan include qiladi", async () => {
+    const tx = { warehouseDoc: { findUnique: vi.fn().mockResolvedValue({ id: "d1" }) } };
+    const repo = new WarehouseDocsRepository();
+
+    await repo.findByIdForPrint(tx, "d1");
+
+    expect(tx.warehouseDoc.findUnique).toHaveBeenCalledWith({
+      where: { id: "d1" },
+      include: {
+        warehouse: { select: { name: true } },
+        toWarehouse: { select: { name: true } },
+        counterparty: { select: { name: true } },
+        items: {
+          include: {
+            product: { select: { nameUz: true, sku: true } },
+            unit: { select: { short: true } },
+          },
+        },
+      },
+    });
+  });
+
   it("list — filtrlar berilsa where'ga qo'shadi", async () => {
     const tx = { warehouseDoc: { findMany: vi.fn().mockResolvedValue([]) } };
     const repo = new WarehouseDocsRepository();

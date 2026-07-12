@@ -18,6 +18,7 @@ import { WarehouseDocsRepository } from "../warehouse-docs/warehouse-docs.reposi
 import { DeliveriesRepository } from "../deliveries/deliveries.repository.js";
 import { DebtMovementsRepository } from "../debts/debts.repository.js";
 import { CompaniesRepository } from "../companies/companies.repository.js";
+import { ExchangeRatesRepository } from "../exchange-rates/exchange-rates.repository.js";
 import { OrdersService } from "./orders.service.js";
 import { OrdersController } from "./orders.controller.js";
 
@@ -38,6 +39,7 @@ const ordersService = new OrdersService({
   deliveriesRepository: new DeliveriesRepository(),
   debtMovementsRepository: new DebtMovementsRepository(),
   companiesRepository: new CompaniesRepository(),
+  exchangeRatesRepository: new ExchangeRatesRepository(),
 });
 const ordersController = new OrdersController({ ordersService });
 
@@ -47,6 +49,7 @@ ordersRouter.use(requireAuth);
 ordersRouter.post("/", validate(createOrderSchema), ordersController.create);
 ordersRouter.get("/", ordersController.list);
 ordersRouter.get("/:id", ordersController.getById);
+ordersRouter.get("/:id/invoice.pdf", ordersController.exportInvoicePdf);
 ordersRouter.post("/:id/confirm", requirePermission("orders.confirm"), ordersController.confirm);
 ordersRouter.post("/:id/cancel", requirePermission("orders.confirm"), ordersController.cancel);
 ordersRouter.post("/:id/pick", requirePermission("orders.confirm"), ordersController.pick);

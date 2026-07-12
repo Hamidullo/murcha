@@ -59,6 +59,21 @@ export class OrdersController {
   };
 
   /**
+   * `GET /api/v1/orders/:id/invoice.pdf`
+   * @type {import("express").RequestHandler}
+   */
+  exportInvoicePdf = async (req, res, next) => {
+    try {
+      const buffer = await this.ordersService.getInvoicePdf(req.auth, req.params.id);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="nakladnaya.pdf"');
+      res.send(buffer);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
    * `POST /api/v1/orders/:id/confirm`
    * @type {import("express").RequestHandler}
    */
