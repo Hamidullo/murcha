@@ -23,6 +23,25 @@ export const shipOrderSchema = z.object({
   items: z.array(shipOrderItemSchema).optional(),
 });
 
+export const acceptOrderItemSchema = z.object({
+  orderItemId: z.string().uuid(),
+  qtyAccepted: z.number().nonnegative(),
+});
+
+export const acceptOrderSchema = z.object({
+  acceptCode: z.string().length(4),
+  items: z.array(acceptOrderItemSchema).min(1),
+});
+
+export const returnOrderItemSchema = z.object({
+  orderItemId: z.string().uuid(),
+  qty: z.number().positive(),
+});
+
+export const returnOrderSchema = z.object({
+  items: z.array(returnOrderItemSchema).min(1),
+});
+
 export const listOrdersQuerySchema = z.object({
   status: z
     .enum(["new", "confirmed", "picking", "shipped", "delivered", "accepted", "cancelled"])

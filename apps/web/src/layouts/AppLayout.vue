@@ -2,7 +2,7 @@
 import { reactive, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.store.js";
-import { connectSocket, playDing } from "../lib/socket.js";
+import { connectSocket, disconnectSocket, playDing } from "../lib/socket.js";
 import Button from "@/components/ui/button/Button.vue";
 import PushSubscribeButton from "@/components/PushSubscribeButton.vue";
 
@@ -30,7 +30,7 @@ function connect() {
 }
 
 function disconnect() {
-  socket?.disconnect();
+  disconnectSocket();
   socket = null;
 }
 
@@ -77,6 +77,15 @@ async function onLogout() {
           </router-link>
           <router-link :to="{ name: 'employees' }" class="hover:text-brand-brown">
             Hodimlar
+          </router-link>
+          <router-link :to="{ name: 'deliveries' }" class="hover:text-brand-brown">
+            Dostavkalar
+          </router-link>
+          <router-link :to="{ name: 'delivery-map' }" class="hover:text-brand-brown">
+            Xarita
+          </router-link>
+          <router-link :to="{ name: 'courier-deliveries' }" class="hover:text-brand-brown">
+            Yetkazish
           </router-link>
         </nav>
       </div>

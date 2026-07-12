@@ -1,16 +1,27 @@
 import { Server } from "socket.io";
 import { verifyToken } from "./jwt.js";
 import { logger } from "./logger.js";
+import { CourierLocationsService } from "../modules/courier-locations/courier-locations.service.js";
+import { CourierLocationsRepository } from "../modules/courier-locations/courier-locations.repository.js";
+import { CompanyMembersRepository } from "../modules/companies/company-members.repository.js";
 
 /** @type {import("socket.io").Server | null} */
 let io = null;
+
+const courierLocationsService = new CourierLocationsService({
+  courierLocationsRepository: new CourierLocationsRepository(),
+  companyMembersRepository: new CompanyMembersRepository(),
+});
 
 /**
  * `http.Server`ga Socket.IO ulaydi (`index.js`da `app.listen()` natijasi bilan
  * chaqiriladi). Ulanishda `socket.handshake.auth.token`dan JWT access token
  * tekshiriladi (`requireAuth` middleware bilan bir xil `verifyToken()`),
  * muvaffaqiyatli bo'lsa socket `company:{companyId}` xonasiga qo'shiladi —
- * bildirishnomalar shu xonaga yetkaziladi (`emitToCompany()`).
+ * bildirishnomalar shu xonaga yetkaziladi (`emitToCompany()`). Kuryer
+ * `courier:location` eventi bilan `{lat, lng}` yuboradi — `courier-locations`
+ * moduliga yoziladi va `courier:position` sifatida qayta uzatiladi (jonli
+ * xarita, Faza 7).
  * @param {import("node:http").Server} httpServer
  * @returns {import("socket.io").Server}
  */
@@ -33,6 +44,25 @@ export function initSocket(httpServer) {
 
   io.on("connection", (socket) => {
     socket.join(`company:${socket.data.companyId}`);
+
+    socket.on("courier:location", async (payload) => {
+      const lat = Number(payload?.lat);
+      const lng = Number(payload?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+      }
+      try {
+        const result = await courierLocationsService.record(
+          { companyId: socket.data.companyId, userId: socket.data.userId },
+          { lat, lng },
+        );
+        if (result) {
+          emitToCompany(socket.data.companyId, "courier:position", result);
+        }
+      } catch (err) {
+        logger.error({ err }, "courier:location qayta ishlashda xato");
+      }
+    });
   });
 
   return io;

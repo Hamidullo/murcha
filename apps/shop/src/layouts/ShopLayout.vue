@@ -1,15 +1,30 @@
 <script setup>
+import { onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.store.js";
 import { useCartStore } from "../stores/cart.store.js";
+import { connectSocket, disconnectSocket } from "../lib/socket.js";
 import Button from "@/components/ui/button/Button.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 
+function connect() {
+  if (!authStore.accessToken) return;
+  connectSocket(authStore.accessToken);
+}
+
+watch(
+  () => authStore.accessToken,
+  (token) => (token ? connect() : disconnectSocket()),
+);
+onMounted(connect);
+onUnmounted(disconnectSocket);
+
 /** @returns {Promise<void>} */
 async function onLogout() {
+  disconnectSocket();
   await authStore.logout();
   router.push({ name: "login" });
 }

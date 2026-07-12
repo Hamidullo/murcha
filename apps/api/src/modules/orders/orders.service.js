@@ -39,6 +39,7 @@ export class OrdersService {
    *   stockRepository: import("../stock/stock.repository.js").StockRepository,
    *   stockMovementsRepository: import("../stock/stock-movements.repository.js").StockMovementsRepository,
    *   warehouseDocsRepository: import("../warehouse-docs/warehouse-docs.repository.js").WarehouseDocsRepository,
+   *   deliveriesRepository: import("../deliveries/deliveries.repository.js").DeliveriesRepository,
    * }} deps
    */
   constructor({
@@ -54,6 +55,7 @@ export class OrdersService {
     stockRepository,
     stockMovementsRepository,
     warehouseDocsRepository,
+    deliveriesRepository,
   }) {
     this.ordersRepository = ordersRepository;
     this.salePointsRepository = salePointsRepository;
@@ -67,6 +69,7 @@ export class OrdersService {
     this.stockRepository = stockRepository;
     this.stockMovementsRepository = stockMovementsRepository;
     this.warehouseDocsRepository = warehouseDocsRepository;
+    this.deliveriesRepository = deliveriesRepository;
   }
 
   /**
@@ -517,6 +520,200 @@ export class OrdersService {
         comment: null,
       });
 
+      return this.warehouseDocsRepository.findById(tx, doc.id);
+    });
+  }
+
+  /**
+   * Do'kon zakazni qabul qiladi (farqlar akti) — `delivered→accepted`.
+   * Kuryer bergan 4 xonali `acceptCode` (`deliveries` moduli,
+   * `deliverStop()`da yaratilgan) mos kelishi shart — yetkazish tasdig'i.
+   * Har item uchun haqiqatda qabul qilingan miqdor (`qtyAccepted`)
+   * yoziladi; `qtyShipped`dan kam bo'lsa farq shu ustunlar orqali ko'rinadi
+   * (moliyaviy oqibati — spisaniye/qarz — Faza 8/9'ga bog'liq, hali yo'q).
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} orderId
+   * @param {import("@murcha/shared").acceptOrderSchema._type} dto
+   * @returns {Promise<import("@prisma/client").Order>}
+   */
+  async accept(auth, orderId, dto) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const order = await this.ordersRepository.findById(tx, orderId);
+      if (!order) {
+        throw new NotFoundError("Zakaz topilmadi");
+      }
+      const canViewAll = await this.rolesRepository.hasPermission(tx, auth.roleId, VIEW_PERMISSION);
+      if (!canViewAll) {
+        const salePointId = await this.userAssignmentsRepository.findSalePointIdForUser(
+          tx,
+          auth.companyId,
+          auth.userId,
+        );
+        if (order.salePointId !== salePointId) {
+          throw new NotFoundError("Zakaz topilmadi");
+        }
+      }
+      if (order.status !== "delivered") {
+        throw new ConflictError("Faqat yetkazilgan zakazni qabul qilish mumkin");
+      }
+
+      const stop = await this.deliveriesRepository.findByOrderId(tx, orderId);
+      if (!stop || stop.acceptCode !== dto.acceptCode) {
+        throw new ValidationError("Qabul qilish kodi noto'g'ri");
+      }
+
+      const itemsById = new Map(order.items.map((item) => [item.id, item]));
+      for (const line of dto.items) {
+        const item = itemsById.get(line.orderItemId);
+        if (!item) {
+          throw new NotFoundError(`Zakaz qatori topilmadi: ${line.orderItemId}`);
+        }
+        const qtyShipped = Number(item.qtyShipped);
+        if (line.qtyAccepted > qtyShipped) {
+          throw new ValidationError(
+            "Qabul qilingan miqdor jo'natilgandan ko'p bo'lishi mumkin emas",
+          );
+        }
+        const qtyBaseAccepted =
+          qtyShipped === 0 ? 0 : (Number(item.qtyBaseShipped) * line.qtyAccepted) / qtyShipped;
+        await this.ordersRepository.updateItem(tx, item.id, {
+          qtyAccepted: line.qtyAccepted,
+          qtyBaseAccepted,
+        });
+      }
+
+      const updated = await this.ordersRepository.update(tx, orderId, { status: "accepted" });
+      await this.ordersRepository.addStatusHistory(tx, {
+        id: uuidv7(),
+        orderId,
+        fromStatus: "delivered",
+        toStatus: "accepted",
+        byUser: auth.userId,
+        comment: null,
+      });
+      return updated;
+    });
+  }
+
+  /**
+   * Qaytarish (vozvrat) — qabul qilingan zakazdan sotilmagan/muddati
+   * o'tayotgan tovar skladga qaytariladi. `ship()`ning teskarisi: `receipt`
+   * hujjat yaratiladi, `stock.quantity` oshadi. Order o'zi o'zgarmaydi
+   * (tasdiqlangan hujjat immutable — CLAUDE.md) — qaytarish mustaqil
+   * hujjat. Qarz kamayishi — `debts` moduli hali yo'q (Faza 8), qoldiriladi.
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} orderId
+   * @param {import("@murcha/shared").returnOrderSchema._type} dto
+   * @returns {Promise<import("@prisma/client").WarehouseDoc>}
+   */
+  async returnItems(auth, orderId, dto) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const order = await this.ordersRepository.findById(tx, orderId);
+      if (!order) {
+        throw new NotFoundError("Zakaz topilmadi");
+      }
+      const canViewAll = await this.rolesRepository.hasPermission(tx, auth.roleId, VIEW_PERMISSION);
+      if (!canViewAll) {
+        const salePointId = await this.userAssignmentsRepository.findSalePointIdForUser(
+          tx,
+          auth.companyId,
+          auth.userId,
+        );
+        if (order.salePointId !== salePointId) {
+          throw new NotFoundError("Zakaz topilmadi");
+        }
+      }
+      if (order.status !== "accepted") {
+        throw new ConflictError("Faqat qabul qilingan zakazdan qaytarish mumkin");
+      }
+
+      const salePoint = await this.salePointsRepository.findById(tx, order.salePointId);
+
+      const itemsById = new Map(order.items.map((item) => [item.id, item]));
+      const lines = dto.items.map((line) => {
+        const item = itemsById.get(line.orderItemId);
+        if (!item) {
+          throw new NotFoundError(`Zakaz qatori topilmadi: ${line.orderItemId}`);
+        }
+        const qtyAccepted = Number(item.qtyAccepted);
+        if (line.qty > qtyAccepted) {
+          throw new ValidationError(
+            "Qaytarilayotgan miqdor qabul qilingandan ko'p bo'lishi mumkin emas",
+          );
+        }
+        return { line, item };
+      });
+      lines.sort((a, b) => (this.#lockKey(a.item) < this.#lockKey(b.item) ? -1 : 1));
+
+      const year = new Date().getFullYear();
+      const counter = await this.warehouseDocsRepository.nextCounter(
+        tx,
+        auth.companyId,
+        "receipt",
+        year,
+      );
+      const number = `KIR-${year}-${String(counter).padStart(5, "0")}`;
+      const doc = await this.warehouseDocsRepository.create(tx, {
+        id: uuidv7(),
+        companyId: auth.companyId,
+        type: "receipt",
+        number,
+        warehouseId: order.warehouseId,
+        counterpartyId: salePoint.counterpartyId,
+        status: "confirmed",
+        currency: order.currency,
+        reason: `Qaytarish: zakaz № ${order.number}`,
+        total: 0,
+        confirmedAt: new Date(),
+        confirmedBy: auth.userId,
+        createdBy: auth.userId,
+      });
+
+      let docTotal = 0;
+      for (const { line, item } of lines) {
+        const qtyBase = (Number(item.qtyBaseAccepted) * line.qty) / Number(item.qtyAccepted);
+        const total = Number(item.price) * line.qty;
+        docTotal += total;
+
+        const docItem = await this.warehouseDocsRepository.addItem(tx, {
+          id: uuidv7(),
+          docId: doc.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          batchId: null,
+          unitId: item.unitId,
+          qty: line.qty,
+          qtyBase,
+          price: item.price,
+          total,
+        });
+
+        await this.stockRepository.applyDelta(tx, {
+          id: uuidv7(),
+          companyId: auth.companyId,
+          warehouseId: order.warehouseId,
+          productId: item.productId,
+          variantId: item.variantId,
+          batchId: null,
+          qtyDelta: qtyBase,
+        });
+        await this.stockMovementsRepository.create(tx, {
+          id: uuidv7(),
+          companyId: auth.companyId,
+          warehouseId: order.warehouseId,
+          productId: item.productId,
+          variantId: item.variantId,
+          batchId: null,
+          docType: "receipt",
+          docId: doc.id,
+          docItemId: docItem.id,
+          qty: qtyBase,
+          costPrice: item.price,
+          createdBy: auth.userId,
+        });
+      }
+
+      await this.warehouseDocsRepository.update(tx, doc.id, { total: docTotal });
       return this.warehouseDocsRepository.findById(tx, doc.id);
     });
   }

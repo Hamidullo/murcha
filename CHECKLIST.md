@@ -105,13 +105,13 @@
 
 ## Faza 7 — Dostavka va kuryer xaritada (1–2 hafta)
 
-- [ ] Zakazni kuryerga biriktirish
-- [ ] Kuryer PWA ekrani (ro'yxat, summalar)
-- [ ] GPS uzatish (Geolocation + Socket.IO)
-- [ ] Jonli xarita (Leaflet) — ega/dispetcher + do'kon ko'radi
-- [ ] Qabul qilish + farqlar akti + yetkazish tasdig'i (apps/shop'da)
-- [ ] Qaytarish (vozvrat)
-- [ ] ✅ **Natija: kuryer nuqtasi xaritada jonli siljiydi; do'kon PWA'da farq belgilab qabul qiladi**
+- [x] Zakazni kuryerga biriktirish — `deliveries` moduli, faqat `shipped` zakazlar, `deliveries.manage` ruxsati
+- [x] Kuryer PWA ekrani (ro'yxat, summalar) — `CourierDeliveriesPage.vue`/`CourierDeliveryDetailPage.vue`, Wake Lock
+- [x] GPS uzatish (Geolocation + Socket.IO) — `courier:location`→`courier:position`, tenant-ichi 30-kunlik tozalash (global cron o'rniga — RLS-bypass roli Faza 11'gacha yo'q)
+- [x] Jonli xarita (Leaflet) — ega/dispetcher (`DeliveryMapPage.vue`, barcha kuryerlar) + do'kon (`apps/shop` `OrderDetailPage.vue`, mini-xarita) ko'radi
+- [x] Qabul qilish + farqlar akti + yetkazish tasdig'i (apps/shop'da) — 4 xonali `acceptCode`, `qtyAccepted` ustunlariga yoziladi
+- [x] Qaytarish (vozvrat) — `receipt` hujjat + stock ↑, qarz oqibati Faza 8'ga bog'liq (hali yo'q)
+- [x] ✅ **Natija: kuryer nuqtasi xaritada jonli siljiydi; do'kon PWA'da farq belgilab qabul qiladi**
 
 ## Faza 8 — Qarz (nasiya) boshqaruvi (2 hafta)
 

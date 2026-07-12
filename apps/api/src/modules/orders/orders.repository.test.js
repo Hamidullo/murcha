@@ -13,7 +13,7 @@ describe("OrdersRepository", () => {
     expect(result).toEqual({ ...data, items: [] });
   });
 
-  it("findById — items va statusHistory bilan include qiladi", async () => {
+  it("findById — items, statusHistory va deliveryOrders.delivery bilan include qiladi", async () => {
     const tx = { order: { findUnique: vi.fn().mockResolvedValue({ id: "o1" }) } };
     const repo = new OrdersRepository();
 
@@ -21,7 +21,11 @@ describe("OrdersRepository", () => {
 
     expect(tx.order.findUnique).toHaveBeenCalledWith({
       where: { id: "o1" },
-      include: { items: true, statusHistory: { orderBy: { createdAt: "asc" } } },
+      include: {
+        items: true,
+        statusHistory: { orderBy: { createdAt: "asc" } },
+        deliveryOrders: { include: { delivery: true } },
+      },
     });
   });
 

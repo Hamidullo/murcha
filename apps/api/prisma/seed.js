@@ -25,6 +25,7 @@ const PERMISSIONS = [
   "sale_points.manage",
   "orders.view",
   "orders.confirm",
+  "deliveries.manage",
   "debts.view",
   "debts.manage",
   "cash.manage",
@@ -33,7 +34,7 @@ const PERMISSIONS = [
 
 /** Owner'dan tashqari sklad tomoni rollariga beriladigan ruxsatlar (Faza 5). */
 const ROLE_PERMISSIONS = {
-  warehouse_manager: ["orders.view", "orders.confirm"],
+  warehouse_manager: ["orders.view", "orders.confirm", "deliveries.manage"],
   picker: ["orders.view", "orders.confirm"],
 };
 

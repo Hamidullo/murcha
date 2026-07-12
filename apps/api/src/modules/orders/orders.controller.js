@@ -1,4 +1,9 @@
-import { listOrdersQuerySchema, shipOrderSchema } from "./orders.schemas.js";
+import {
+  listOrdersQuerySchema,
+  shipOrderSchema,
+  acceptOrderSchema,
+  returnOrderSchema,
+} from "./orders.schemas.js";
 import { ValidationError } from "../../lib/errors.js";
 
 /** HTTP qatlam: request → service → response (CLAUDE.md qatlam qoidasi). */
@@ -103,6 +108,40 @@ export class OrdersController {
         throw new ValidationError("Noto'g'ri so'rov", parsed.error.issues);
       }
       const doc = await this.ordersService.ship(req.auth, req.params.id, parsed.data);
+      res.status(200).json(doc);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `POST /api/v1/orders/:id/accept`
+   * @type {import("express").RequestHandler}
+   */
+  accept = async (req, res, next) => {
+    try {
+      const parsed = acceptOrderSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new ValidationError("Noto'g'ri so'rov", parsed.error.issues);
+      }
+      const order = await this.ordersService.accept(req.auth, req.params.id, parsed.data);
+      res.status(200).json(order);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `POST /api/v1/orders/:id/return`
+   * @type {import("express").RequestHandler}
+   */
+  returnItems = async (req, res, next) => {
+    try {
+      const parsed = returnOrderSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new ValidationError("Noto'g'ri so'rov", parsed.error.issues);
+      }
+      const doc = await this.ordersService.returnItems(req.auth, req.params.id, parsed.data);
       res.status(200).json(doc);
     } catch (err) {
       next(err);

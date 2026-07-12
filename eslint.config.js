@@ -52,6 +52,8 @@ export default [
         URLSearchParams: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
         FormData: "readonly",
         confirm: "readonly",
         URL: "readonly",

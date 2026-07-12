@@ -25,6 +25,7 @@ import { companyMembersRouter } from "./modules/companies/company-members.routes
 import { rolesRouter } from "./modules/roles/roles.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { pushSubscriptionsRouter } from "./modules/push-subscriptions/push-subscriptions.routes.js";
+import { deliveriesRouter } from "./modules/deliveries/deliveries.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -64,6 +65,7 @@ export function createApp() {
   app.use("/api/v1/roles", rolesRouter);
   app.use("/api/v1/notifications", notificationsRouter);
   app.use("/api/v1/push-subscriptions", pushSubscriptionsRouter);
+  app.use("/api/v1/deliveries", deliveriesRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

@@ -25,6 +25,7 @@ describe("OrdersService", () => {
   let stockRepository;
   let stockMovementsRepository;
   let warehouseDocsRepository;
+  let deliveriesRepository;
   let service;
 
   const dto = {
@@ -63,6 +64,7 @@ describe("OrdersService", () => {
       update: vi.fn(),
       findById: vi.fn(),
     };
+    deliveriesRepository = { findByOrderId: vi.fn() };
     service = new OrdersService({
       ordersRepository,
       salePointsRepository,
@@ -76,6 +78,7 @@ describe("OrdersService", () => {
       stockRepository,
       stockMovementsRepository,
       warehouseDocsRepository,
+      deliveriesRepository,
     });
   });
 
@@ -499,6 +502,166 @@ describe("OrdersService", () => {
       await expect(
         service.ship(auth, "o1", { items: [{ orderItemId: "oi1", qty: 99 }] }),
       ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  describe("accept", () => {
+    const order = {
+      id: "o1",
+      status: "delivered",
+      salePointId: "sp1",
+      items: [
+        {
+          id: "oi1",
+          qtyShipped: 10,
+          qtyBaseShipped: 10,
+        },
+      ],
+    };
+
+    it("status 'delivered' bo'lmasa ConflictError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue({ ...order, status: "shipped" });
+      rolesRepository.hasPermission.mockResolvedValue(true);
+
+      await expect(
+        service.accept(auth, "o1", { acceptCode: "1234", items: [] }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("acceptCode mos kelmasa ValidationError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+      deliveriesRepository.findByOrderId.mockResolvedValue({ acceptCode: "9999" });
+
+      await expect(
+        service.accept(auth, "o1", {
+          acceptCode: "1234",
+          items: [{ orderItemId: "oi1", qtyAccepted: 10 }],
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("jo'natilgandan ko'p qtyAccepted bo'lsa ValidationError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+      deliveriesRepository.findByOrderId.mockResolvedValue({ acceptCode: "1234" });
+
+      await expect(
+        service.accept(auth, "o1", {
+          acceptCode: "1234",
+          items: [{ orderItemId: "oi1", qtyAccepted: 20 }],
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("to'g'ri holatda qtyAccepted yozadi va statusni 'accepted' qiladi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+      deliveriesRepository.findByOrderId.mockResolvedValue({ acceptCode: "1234" });
+      ordersRepository.update.mockResolvedValue({ id: "o1", status: "accepted" });
+
+      const result = await service.accept(auth, "o1", {
+        acceptCode: "1234",
+        items: [{ orderItemId: "oi1", qtyAccepted: 8 }],
+      });
+
+      expect(ordersRepository.updateItem).toHaveBeenCalledWith(fakeTx, "oi1", {
+        qtyAccepted: 8,
+        qtyBaseAccepted: 8,
+      });
+      expect(ordersRepository.update).toHaveBeenCalledWith(fakeTx, "o1", { status: "accepted" });
+      expect(ordersRepository.addStatusHistory).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ fromStatus: "delivered", toStatus: "accepted" }),
+      );
+      expect(result).toEqual({ id: "o1", status: "accepted" });
+    });
+
+    it("egasi bo'lmagan sotuv nuqtasi uchun NotFoundError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(false);
+      userAssignmentsRepository.findSalePointIdForUser.mockResolvedValue("sp2");
+
+      await expect(
+        service.accept(auth, "o1", { acceptCode: "1234", items: [] }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe("returnItems", () => {
+    const order = {
+      id: "o1",
+      number: "1",
+      status: "accepted",
+      salePointId: "sp1",
+      warehouseId: "w1",
+      currency: "UZS",
+      items: [
+        {
+          id: "oi1",
+          productId: "p1",
+          variantId: null,
+          unitId: "u-dona",
+          qtyAccepted: 8,
+          qtyBaseAccepted: 8,
+          price: 5000,
+        },
+      ],
+    };
+
+    it("status 'accepted' bo'lmasa ConflictError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue({ ...order, status: "delivered" });
+      rolesRepository.hasPermission.mockResolvedValue(true);
+
+      await expect(
+        service.returnItems(auth, "o1", { items: [{ orderItemId: "oi1", qty: 1 }] }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("qabul qilingandan ko'p miqdor qaytarilsa ValidationError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+
+      await expect(
+        service.returnItems(auth, "o1", { items: [{ orderItemId: "oi1", qty: 99 }] }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("to'g'ri holatda 'receipt' hujjat yaratadi, stock'ni oshiradi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+      salePointsRepository.findById.mockResolvedValue({ id: "sp1", counterpartyId: "cp1" });
+      warehouseDocsRepository.create.mockResolvedValue({ id: "doc1" });
+      warehouseDocsRepository.addItem.mockResolvedValue({ id: "di1" });
+      warehouseDocsRepository.findById.mockResolvedValue({ id: "doc1", status: "confirmed" });
+
+      const result = await service.returnItems(auth, "o1", {
+        items: [{ orderItemId: "oi1", qty: 2 }],
+      });
+
+      expect(warehouseDocsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          type: "receipt",
+          number: expect.stringMatching(/^KIR-\d{4}-00001$/),
+          warehouseId: "w1",
+          counterpartyId: "cp1",
+          reason: "Qaytarish: zakaz № 1",
+        }),
+      );
+      expect(warehouseDocsRepository.addItem).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ docId: "doc1", productId: "p1", qty: 2, qtyBase: 2 }),
+      );
+      expect(stockRepository.applyDelta).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ productId: "p1", qtyDelta: 2 }),
+      );
+      expect(stockMovementsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ docType: "receipt", docId: "doc1", qty: 2 }),
+      );
+      expect(result).toEqual({ id: "doc1", status: "confirmed" });
     });
   });
 });

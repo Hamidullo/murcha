@@ -10,6 +10,9 @@ export class OrdersRepository {
   }
 
   /**
+   * `deliveryOrders.delivery` — do'kon UI "kim yetkazyapti"ni bilishi uchun
+   * (Faza 7: jonli xaritada `courier:position` oqimini shu
+   * `courierMemberId` bo'yicha filtrlaydi).
    * @param {import("@prisma/client").Prisma.TransactionClient} tx
    * @param {string} id
    * @returns {Promise<(import("@prisma/client").Order & { items: import("@prisma/client").OrderItem[] }) | null>}
@@ -17,7 +20,11 @@ export class OrdersRepository {
   async findById(tx, id) {
     return tx.order.findUnique({
       where: { id },
-      include: { items: true, statusHistory: { orderBy: { createdAt: "asc" } } },
+      include: {
+        items: true,
+        statusHistory: { orderBy: { createdAt: "asc" } },
+        deliveryOrders: { include: { delivery: true } },
+      },
     });
   }
 

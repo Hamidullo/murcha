@@ -15,6 +15,7 @@ import { RolesRepository } from "../roles/roles.repository.js";
 import { StockRepository } from "../stock/stock.repository.js";
 import { StockMovementsRepository } from "../stock/stock-movements.repository.js";
 import { WarehouseDocsRepository } from "../warehouse-docs/warehouse-docs.repository.js";
+import { DeliveriesRepository } from "../deliveries/deliveries.repository.js";
 import { OrdersService } from "./orders.service.js";
 import { OrdersController } from "./orders.controller.js";
 
@@ -32,6 +33,7 @@ const ordersService = new OrdersService({
   stockRepository: new StockRepository(),
   stockMovementsRepository: new StockMovementsRepository(),
   warehouseDocsRepository: new WarehouseDocsRepository(),
+  deliveriesRepository: new DeliveriesRepository(),
 });
 const ordersController = new OrdersController({ ordersService });
 
@@ -45,3 +47,5 @@ ordersRouter.post("/:id/confirm", requirePermission("orders.confirm"), ordersCon
 ordersRouter.post("/:id/cancel", requirePermission("orders.confirm"), ordersController.cancel);
 ordersRouter.post("/:id/pick", requirePermission("orders.confirm"), ordersController.pick);
 ordersRouter.post("/:id/ship", requirePermission("orders.confirm"), ordersController.ship);
+ordersRouter.post("/:id/accept", ordersController.accept);
+ordersRouter.post("/:id/return", ordersController.returnItems);

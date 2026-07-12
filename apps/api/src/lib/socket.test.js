@@ -4,6 +4,21 @@ const verifyToken = vi.fn();
 vi.mock("./jwt.js", () => ({ verifyToken }));
 vi.mock("./logger.js", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
+const recordMock = vi.fn();
+vi.mock("../modules/courier-locations/courier-locations.service.js", () => ({
+  CourierLocationsService: class {
+    record(...args) {
+      return recordMock(...args);
+    }
+  },
+}));
+vi.mock("../modules/courier-locations/courier-locations.repository.js", () => ({
+  CourierLocationsRepository: class {},
+}));
+vi.mock("../modules/companies/company-members.repository.js", () => ({
+  CompanyMembersRepository: class {},
+}));
+
 /** @type {{ use: Function, on: Function, to: Function }} */
 let fakeIoInstance;
 const emitMock = vi.fn();
@@ -29,6 +44,7 @@ describe("lib/socket.js", () => {
     verifyToken.mockReset();
     emitMock.mockReset();
     toMock.mockClear();
+    recordMock.mockReset();
     ({ initSocket, emitToCompany } = await import("./socket.js"));
   });
 
@@ -86,11 +102,61 @@ describe("lib/socket.js", () => {
       initSocket({});
       const connectionHandler = fakeIoInstance.on.mock.calls[0][1];
       const join = vi.fn();
-      const socket = { data: { companyId: "c1" }, join };
+      const socket = { data: { companyId: "c1" }, join, on: vi.fn() };
 
       connectionHandler(socket);
 
       expect(join).toHaveBeenCalledWith("company:c1");
+    });
+  });
+
+  describe("courier:location", () => {
+    function connectSocket() {
+      initSocket({});
+      const connectionHandler = fakeIoInstance.on.mock.calls[0][1];
+      const on = vi.fn();
+      const socket = { data: { companyId: "c1", userId: "u1" }, join: vi.fn(), on };
+      connectionHandler(socket);
+      return on.mock.calls.find(([event]) => event === "courier:location")[1];
+    }
+
+    it("noto'g'ri koordinata bilan record() chaqirilmaydi", async () => {
+      const locationHandler = connectSocket();
+
+      await locationHandler({ lat: "abc", lng: 69.2 });
+
+      expect(recordMock).not.toHaveBeenCalled();
+    });
+
+    it("to'g'ri koordinata bilan record()ni chaqiradi va courier:position uzatadi", async () => {
+      recordMock.mockResolvedValue({
+        courierMemberId: "m1",
+        lat: 41.3,
+        lng: 69.2,
+        recordedAt: new Date(),
+      });
+      const locationHandler = connectSocket();
+
+      await locationHandler({ lat: 41.3, lng: 69.2 });
+
+      expect(recordMock).toHaveBeenCalledWith(
+        { companyId: "c1", userId: "u1" },
+        { lat: 41.3, lng: 69.2 },
+      );
+      expect(toMock).toHaveBeenCalledWith("company:c1");
+      expect(emitMock).toHaveBeenCalledWith(
+        "courier:position",
+        expect.objectContaining({ courierMemberId: "m1" }),
+      );
+    });
+
+    it("record() null qaytarsa (a'zolik topilmadi) hech narsa uzatilmaydi", async () => {
+      recordMock.mockResolvedValue(null);
+      const locationHandler = connectSocket();
+
+      await locationHandler({ lat: 41.3, lng: 69.2 });
+
+      expect(toMock).not.toHaveBeenCalled();
     });
   });
 

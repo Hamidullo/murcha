@@ -25,3 +25,21 @@ export function listOrders() {
 export function getOrder(id) {
   return apiFetch(`/orders/${id}`);
 }
+
+/**
+ * @param {string} id
+ * @param {import("@murcha/shared").acceptOrderSchema._type} dto
+ * @returns {Promise<object>}
+ */
+export function acceptOrder(id, dto) {
+  return apiFetch(`/orders/${id}/accept`, { method: "POST", body: JSON.stringify(dto) });
+}
+
+/**
+ * @param {string} id
+ * @param {import("@murcha/shared").returnOrderSchema._type} dto
+ * @returns {Promise<object>}
+ */
+export function returnOrder(id, dto) {
+  return apiFetch(`/orders/${id}/return`, { method: "POST", body: JSON.stringify(dto) });
+}

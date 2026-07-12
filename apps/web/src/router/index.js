@@ -130,6 +130,36 @@ const routes = [
         name: "role-permissions",
         component: () => import("../pages/RolePermissionsPage.vue"),
       },
+      {
+        path: "deliveries",
+        name: "deliveries",
+        component: () => import("../pages/DeliveryListPage.vue"),
+      },
+      {
+        path: "deliveries/new",
+        name: "delivery-new",
+        component: () => import("../pages/DeliveryFormPage.vue"),
+      },
+      {
+        path: "deliveries/:id",
+        name: "delivery-detail",
+        component: () => import("../pages/DeliveryDetailPage.vue"),
+      },
+      {
+        path: "deliveries-map",
+        name: "delivery-map",
+        component: () => import("../pages/DeliveryMapPage.vue"),
+      },
+      {
+        path: "courier",
+        name: "courier-deliveries",
+        component: () => import("../pages/CourierDeliveriesPage.vue"),
+      },
+      {
+        path: "courier/:deliveryId/:orderId",
+        name: "courier-delivery-detail",
+        component: () => import("../pages/CourierDeliveryDetailPage.vue"),
+      },
     ],
   },
 ];
