@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import jsdoc from "eslint-plugin-jsdoc";
+import vue from "eslint-plugin-vue";
 import prettier from "eslint-config-prettier";
 
 export default [
@@ -33,6 +34,23 @@ export default [
       "jsdoc/require-jsdoc": "off",
       "jsdoc/require-param-description": "off",
       "jsdoc/require-returns-description": "off",
+    },
+  },
+  ...vue.configs["flat/recommended"],
+  {
+    files: ["apps/web/**/*.{js,vue}", "apps/shop/**/*.{js,vue}", "apps/landing/**/*.{js,vue}"],
+    languageOptions: {
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        fetch: "readonly",
+        Headers: "readonly",
+        localStorage: "readonly",
+      },
+    },
+    rules: {
+      "vue/multi-word-component-names": "off",
+      "jsdoc/no-undefined-types": ["warn", { definedTypes: ["Response", "RequestInit"] }],
     },
   },
   {
