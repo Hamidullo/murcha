@@ -13,6 +13,7 @@ export default [
       "**/graphify-out/**",
       "**/.agents/**",
       "**/.claude/skills/**",
+      "**/.claude/worktrees/**",
     ],
   },
   js.configs.recommended,
@@ -56,6 +57,7 @@ export default [
         requestAnimationFrame: "readonly",
         cancelAnimationFrame: "readonly",
         BarcodeDetector: "readonly",
+        crypto: "readonly",
       },
     },
     rules: {

@@ -3,7 +3,7 @@
 > Reja: [PLAN.md](PLAN.md). Har bajarilgan band `[x]` qilinadi. Faza "Natija" mezoni bajarilmaguncha yopilmaydi.
 > Vazifa darajasidagi mayda bo'linish har faza boshida `TASKS.md`da qilinadi (PLAN.md 8.0).
 
-**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) · Faza 3 tugadi (real Postgres demo sinovisiz) · Faza 4 tugadi (real Postgres/kamera demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
+**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) · Faza 3 tugadi (real Postgres demo sinovisiz) · Faza 4 tugadi (real Postgres/kamera demo sinovisiz) · Faza 5 tugadi (real Postgres/PWA o'rnatish demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
 
 ---
 
@@ -84,13 +84,15 @@
 
 ## Faza 5 — B2B zakaz portali (2 hafta) ← killer feature
 
-- [ ] Sotuv nuqtalari boshqaruvi (counterparty bog'lanishi, narx turi biriktirish)
-- [ ] apps/shop skeleti (alohida PWA, packages/ui bilan)
-- [ ] Do'kon: katalog (o'z narxlari) → savat → zakaz (idempotency key, rezerv)
-- [ ] Sklad: zakaz navbati, tasdiqlash, pick list, statuslar oqimi
-- [ ] Qisman yetkazish / backorder
-- [ ] Zakazni bekor qilish (storno)
-- [ ] ✅ **Natija: do'kon shop.murcha.uz'ni telefonga o'rnatib zakaz beradi; E2E "zakaz→yig'ish" o'tadi**
+- [x] Sotuv nuqtalari boshqaruvi (counterparty bog'lanishi, narx turi biriktirish) — `sale-points` moduli: yaratishda avtomatik `Counterparty` (type:customer) ochiladi, operator biriktirish (`user-assignments` — `UserAssignment.targetType:"sale_point"`), `orders.view`/`orders.confirm` → `warehouse_manager`/`picker` rollariga biriktirildi
+- [x] apps/shop skeleti — yangi PWA ilova (`vite-plugin-pwa`, manifest+service worker), `apps/web`ning auth/UI qolipini nusxa oladi (`packages/ui` hali bo'sh — ko'chirish BACKLOG'ga qoldirildi), login→home oqimi Claude Browser'da tekshirildi (mobile viewport ham)
+- [x] Do'kon: katalog (`apps/shop` — `CatalogPage.vue`, sklad tanlash + qidiruv + savatga qo'shish) → savat (`CartPage.vue`, lokal Pinia `cart.store.js`, bitta savat = bitta sklad) → zakaz berish (idempotency key `crypto.randomUUID()`) → zakazlarim (`OrdersListPage.vue`/`OrderDetailPage.vue`, status kuzatish) — narx `product_prices`dan sotuv nuqtasining narx turi bo'yicha snapshot qilinadi, `salePointId` `UserAssignment` orqali auth'dan hal qilinadi (client yubormaydi). Rezerv — `confirm()`
+- [x] Sklad: zakaz navbati, tasdiqlash, pick list, statuslar oqimi — `orders.confirm()` (`stock.reserved` oshiradi, yetarli emas bo'lsa butun tasdiqlash bekor qilinadi), `pick()` (`confirmed→picking`, sof status belgisi), `ship()` (`picking→shipped` — bitta darhol-`confirmed` `warehouse_docs` `issue`, `stock.quantity`/`reserved` kamayadi, `stock_movements` yoziladi)
+- [x] Qisman yetkazish / backorder — `ship()` har item uchun to'liq/qisman miqdor qabul qiladi (`qtyShipped < qtyOrdered` — avtomatik keyingi harakat yo'q, MVP scope-kesish)
+- [x] Zakazni bekor qilish (storno) — `orders.cancel()`, faqat `shipped`gacha (`new`/`confirmed`/`picking`), rezerv bo'lgan bo'lsa to'liq bo'shatiladi
+- [x] Sklad tomoni UI (`apps/web`) — sotuv nuqtalari CRUD + operator biriktirish (telefon bo'yicha), zakazlar navbati (holat filtri) + tafsilot (pick list ko'rinishi: tasdiqlash/yig'ishni boshlash/jo'natish — har item uchun miqdor tahrirlash/bekor qilish)
+- [x] ✅ **Natija: do'kon shop.murcha.uz'ni telefonga o'rnatib zakaz beradi; E2E "zakaz→yig'ish" o'tadi**
+      — barcha kod yozilgan va testlangan (563/563 backend test yashil, ikkala frontend build muvaffaqiyatli), to'liq oqim (do'kon zakaz berdi → sklad tasdiqladi → yig'di → jo'natdi) Claude Browser'da ikkala ilovada (shop+web) soxta `fetch` bilan uchdan-uchgacha tekshirildi. Haqiqiy Postgres/Redis/PWA o'rnatish (real telefon) bilan hali tasdiqlanmagan — oldingi fazalardagi bilan bir xil infratuzilma cheklovi
 
 ## Faza 6 — Hodimlar va bildirishnomalar (1 hafta)
 

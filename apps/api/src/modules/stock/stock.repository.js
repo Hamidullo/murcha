@@ -53,6 +53,40 @@ export class StockRepository {
   }
 
   /**
+   * Faqat `reserved`ni o'zgartiradi (`quantity` tegilmaydi) — buyurtma
+   * tasdiqlashda rezerv qo'yish/bekor qilishda bo'shatish uchun (Faza 5:
+   * `orders.confirm()`/`cancel()`). Manfiy `reserved`/`reserved > quantity`
+   * DB CHECK (`checks.sql: stock_quantity_check`) bilan taqiqlangan — service
+   * qatlami oldindan tekshiradi (`applyDelta()`dagi bilan bir xil konvensiya).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {{ id: string, companyId: string, warehouseId: string, productId: string, variantId: string | null, batchId: string | null, reservedDelta: number }} data
+   * @returns {Promise<import("@prisma/client").Stock>}
+   */
+  async applyReservedDelta(tx, data) {
+    return tx.stock.upsert({
+      where: {
+        warehouseId_productId_variantId_batchId: {
+          warehouseId: data.warehouseId,
+          productId: data.productId,
+          variantId: data.variantId ?? null,
+          batchId: data.batchId ?? null,
+        },
+      },
+      update: { reserved: { increment: data.reservedDelta } },
+      create: {
+        id: data.id,
+        companyId: data.companyId,
+        warehouseId: data.warehouseId,
+        productId: data.productId,
+        variantId: data.variantId ?? null,
+        batchId: data.batchId ?? null,
+        quantity: 0,
+        reserved: data.reservedDelta,
+      },
+    });
+  }
+
+  /**
    * `onlyTracked` — `minQty` belgilangan qatorlar (low-stock hisoblash uchun,
    * `quantity <= minQty` taqqoslash Prisma'da ifodalanmaydi — service
    * qatlamida JS'da filtrlanadi).

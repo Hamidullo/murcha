@@ -8,3 +8,6 @@ export * from "./schemas/stock.schemas.js";
 export * from "./schemas/purchase-order.schemas.js";
 export * from "./schemas/counterparty.schemas.js";
 export * from "./schemas/inventory-count.schemas.js";
+export * from "./schemas/sale-point.schemas.js";
+export * from "./schemas/order.schemas.js";
+export * from "./schemas/shop-catalog.schemas.js";

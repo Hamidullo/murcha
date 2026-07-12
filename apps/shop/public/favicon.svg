@@ -1,0 +1,60 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- MURCHA — maskot ikon konsepti (chumoli "Chaqqon" qutini ko'tarib ketmoqda). Dastlabki qoralama, Faza 0'da dizayn skill'lar bilan sayqallanadi -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDBA4D"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fon: yumaloq kvadrat (PWA/favicon uchun) -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <!-- Tezlik chiziqlari (ulgur = chaqqonlik) -->
+  <rect x="26" y="250" width="62" height="13" rx="6.5" fill="#FFFFFF" opacity="0.85"/>
+  <rect x="40" y="288" width="80" height="13" rx="6.5" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="26" y="326" width="50" height="13" rx="6.5" fill="#FFFFFF" opacity="0.4"/>
+
+  <!-- Quti (chumoli boshi uzra ko'tarib ketmoqda) -->
+  <g transform="rotate(-7 330 150)">
+    <rect x="252" y="92" width="156" height="116" rx="14" fill="#FFF8F0"/>
+    <rect x="252" y="138" width="156" height="22" fill="#FDBA74"/>
+    <rect x="318" y="92" width="24" height="116" fill="#FDBA74" opacity="0.6"/>
+  </g>
+
+  <!-- Oyoqlar (orqa va o'rta) -->
+  <path d="M 205 358 L 168 438" stroke="#431407" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <path d="M 262 366 L 258 442" stroke="#431407" stroke-width="16" stroke-linecap="round" fill="none"/>
+
+  <!-- Qorin (orqa qism) -->
+  <ellipse cx="148" cy="322" rx="88" ry="72" fill="#4A2B12"/>
+  <path d="M 92 292 Q 148 262 204 292" stroke="#6B3E1D" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <path d="M 84 332 Q 148 308 212 332" stroke="#6B3E1D" stroke-width="12" stroke-linecap="round" fill="none"/>
+
+  <!-- Ko'krak (o'rta qism) -->
+  <ellipse cx="258" cy="312" rx="56" ry="50" fill="#4A2B12"/>
+
+  <!-- Old oyoqlar — qutini ushlab turibdi -->
+  <path d="M 292 292 L 278 208" stroke="#431407" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <path d="M 318 300 L 352 212" stroke="#431407" stroke-width="16" stroke-linecap="round" fill="none"/>
+
+  <!-- Mo'ylovlar (antennalar) -->
+  <path d="M 330 232 C 318 186 288 168 272 174" stroke="#431407" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <circle cx="272" cy="174" r="12" fill="#431407"/>
+  <path d="M 366 230 C 378 182 412 166 428 174" stroke="#431407" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <circle cx="428" cy="174" r="12" fill="#431407"/>
+
+  <!-- Bosh -->
+  <circle cx="348" cy="292" r="64" fill="#4A2B12"/>
+
+  <!-- Ko'z (yon ko'rinish, katta do'stona) -->
+  <circle cx="368" cy="282" r="24" fill="#FFFFFF"/>
+  <circle cx="374" cy="284" r="11" fill="#1F1206"/>
+  <circle cx="378" cy="279" r="4" fill="#FFFFFF"/>
+
+  <!-- Tabassum -->
+  <path d="M 352 330 Q 372 344 392 328" stroke="#FFF8F0" stroke-width="9" stroke-linecap="round" fill="none"/>
+
+  <!-- Yonoq -->
+  <circle cx="330" cy="322" r="13" fill="#FDBA74" opacity="0.7"/>
+</svg>

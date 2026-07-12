@@ -6,3 +6,5 @@ pnpm-lock.yaml
 graphify-out/
 .agents/
 .claude/skills/
+.claude/worktrees/
+.impeccable/

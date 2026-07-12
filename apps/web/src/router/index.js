@@ -68,6 +68,31 @@ const routes = [
         name: "inventory-count-detail",
         component: () => import("../pages/InventoryCountDetailPage.vue"),
       },
+      {
+        path: "sale-points",
+        name: "sale-points",
+        component: () => import("../pages/SalePointListPage.vue"),
+      },
+      {
+        path: "sale-points/new",
+        name: "sale-point-new",
+        component: () => import("../pages/SalePointFormPage.vue"),
+      },
+      {
+        path: "sale-points/:id",
+        name: "sale-point-edit",
+        component: () => import("../pages/SalePointFormPage.vue"),
+      },
+      {
+        path: "orders",
+        name: "orders",
+        component: () => import("../pages/OrderListPage.vue"),
+      },
+      {
+        path: "orders/:id",
+        name: "order-detail",
+        component: () => import("../pages/OrderDetailPage.vue"),
+      },
     ],
   },
 ];

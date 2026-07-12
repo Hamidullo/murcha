@@ -22,6 +22,7 @@ const PERMISSIONS = [
   "products.manage",
   "warehouse.manage",
   "counterparties.manage",
+  "sale_points.manage",
   "orders.view",
   "orders.confirm",
   "debts.view",
@@ -29,6 +30,12 @@ const PERMISSIONS = [
   "cash.manage",
   "reports.view",
 ];
+
+/** Owner'dan tashqari sklad tomoni rollariga beriladigan ruxsatlar (Faza 5). */
+const ROLE_PERMISSIONS = {
+  warehouse_manager: ["orders.view", "orders.confirm"],
+  picker: ["orders.view", "orders.confirm"],
+};
 
 const SYSTEM_UNITS = [
   { name: "dona", short: "dona" },
@@ -72,6 +79,19 @@ async function main() {
       update: {},
       create: { roleId: roles.owner.id, permissionId: permission.id },
     });
+  }
+
+  // boshqa rollar — cheklangan ruxsat matritsasi (ROLE_PERMISSIONS)
+  for (const [roleName, codes] of Object.entries(ROLE_PERMISSIONS)) {
+    for (const code of codes) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: roles[roleName].id, permissionId: permissions[code].id },
+        },
+        update: {},
+        create: { roleId: roles[roleName].id, permissionId: permissions[code].id },
+      });
+    }
   }
 
   for (const unit of SYSTEM_UNITS) {

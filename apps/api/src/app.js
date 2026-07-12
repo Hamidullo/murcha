@@ -18,6 +18,9 @@ import { counterpartiesRouter } from "./modules/counterparties/counterparties.ro
 import { exportsRouter } from "./modules/exports/exports.routes.js";
 import { importsRouter } from "./modules/imports/imports.routes.js";
 import { inventoryCountsRouter } from "./modules/inventory-counts/inventory-counts.routes.js";
+import { salePointsRouter } from "./modules/sale-points/sale-points.routes.js";
+import { ordersRouter } from "./modules/orders/orders.routes.js";
+import { shopCatalogRouter } from "./modules/shop-catalog/shop-catalog.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -50,6 +53,9 @@ export function createApp() {
   app.use("/api/v1/exports", exportsRouter);
   app.use("/api/v1/imports", importsRouter);
   app.use("/api/v1/inventory-counts", inventoryCountsRouter);
+  app.use("/api/v1/sale-points", salePointsRouter);
+  app.use("/api/v1/orders", ordersRouter);
+  app.use("/api/v1/shop-catalog", shopCatalogRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

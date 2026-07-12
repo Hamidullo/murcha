@@ -6,6 +6,7 @@ import {
   ValidationError,
   InsufficientStockError,
 } from "../../lib/errors.js";
+import { computeQtyBase } from "../../lib/qty-base.js";
 
 /** Hujjat raqami prefiksi (DATABASE.md: `KIR-2026-00001` uslubi). */
 const NUMBER_PREFIX = {
@@ -158,7 +159,13 @@ export class WarehouseDocsService {
         throw new NotFoundError("Mahsulot topilmadi");
       }
 
-      const qtyBase = await this.#computeQtyBase(tx, product, dto.unitId, dto.qty);
+      const qtyBase = await computeQtyBase(
+        tx,
+        this.productUnitsRepository,
+        product,
+        dto.unitId,
+        dto.qty,
+      );
       const total = dto.price != null ? dto.price * dto.qty : null;
 
       const item = await this.warehouseDocsRepository.addItem(tx, {
@@ -365,29 +372,6 @@ export class WarehouseDocsService {
       throw new ConflictError("Faqat qoralama hujjatni tahrirlash mumkin");
     }
     return doc;
-  }
-
-  /**
-   * Kiritilgan birlikni asosiy birlikka o'giradi (`ProductUnit.factor`).
-   * @param {import("@prisma/client").Prisma.TransactionClient} tx
-   * @param {import("@prisma/client").Product} product
-   * @param {string} unitId
-   * @param {number} qty
-   * @returns {Promise<number>}
-   */
-  async #computeQtyBase(tx, product, unitId, qty) {
-    if (unitId === product.baseUnitId) {
-      return qty;
-    }
-    const productUnit = await this.productUnitsRepository.findByProductAndUnit(
-      tx,
-      product.id,
-      unitId,
-    );
-    if (!productUnit) {
-      throw new ValidationError("Bu birlik mahsulotga ulanmagan");
-    }
-    return qty * Number(productUnit.factor);
   }
 
   /**

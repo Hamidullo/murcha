@@ -33,6 +33,12 @@ async function onLogout() {
           <router-link :to="{ name: 'inventory-counts' }" class="hover:text-brand-brown">
             Inventarizatsiya
           </router-link>
+          <router-link :to="{ name: 'sale-points' }" class="hover:text-brand-brown">
+            Sotuv nuqtalari
+          </router-link>
+          <router-link :to="{ name: 'orders' }" class="hover:text-brand-brown">
+            Zakazlar
+          </router-link>
         </nav>
       </div>
       <div class="flex items-center gap-3">

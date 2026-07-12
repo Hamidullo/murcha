@@ -1,6 +1,7 @@
 import { uuidv7 } from "uuidv7";
 import { withTenant } from "../../lib/tenant-context.js";
 import { NotFoundError, ConflictError, ValidationError } from "../../lib/errors.js";
+import { computeQtyBase } from "../../lib/qty-base.js";
 
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). PO CRUD + shu asosida kirim
@@ -204,7 +205,13 @@ export class PurchaseOrdersService {
       for (const line of dto.items) {
         const poItem = poItemsById.get(line.poItemId);
         const product = await this.productsRepository.findById(tx, poItem.productId);
-        const qtyBase = await this.#computeQtyBase(tx, product, poItem.unitId, line.qty);
+        const qtyBase = await computeQtyBase(
+          tx,
+          this.productUnitsRepository,
+          product,
+          poItem.unitId,
+          line.qty,
+        );
         const total = Number(poItem.price) * line.qty;
         docTotal += total;
 
@@ -252,30 +259,6 @@ export class PurchaseOrdersService {
       throw new ConflictError("Faqat qoralama zakazni tahrirlash mumkin");
     }
     return po;
-  }
-
-  /**
-   * Kiritilgan birlikni asosiy birlikka o'giradi (`ProductUnit.factor`) —
-   * `warehouse-docs`dagi bilan bir xil hisoblash.
-   * @param {import("@prisma/client").Prisma.TransactionClient} tx
-   * @param {import("@prisma/client").Product} product
-   * @param {string} unitId
-   * @param {number} qty
-   * @returns {Promise<number>}
-   */
-  async #computeQtyBase(tx, product, unitId, qty) {
-    if (unitId === product.baseUnitId) {
-      return qty;
-    }
-    const productUnit = await this.productUnitsRepository.findByProductAndUnit(
-      tx,
-      product.id,
-      unitId,
-    );
-    if (!productUnit) {
-      throw new ValidationError("Bu birlik mahsulotga ulanmagan");
-    }
-    return qty * Number(productUnit.factor);
   }
 
   /**

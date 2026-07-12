@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@murcha/api", "start"],
       "port": 3000
+    },
+    {
+      "name": "shop",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@murcha/shop", "dev"],
+      "port": 5174
     }
   ]
 }

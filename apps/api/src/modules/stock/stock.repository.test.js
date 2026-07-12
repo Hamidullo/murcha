@@ -65,6 +65,45 @@ describe("StockRepository", () => {
     expect(result).toBe(data);
   });
 
+  it("applyReservedDelta — tx.stock.upsert'ni reserved increment bilan chaqiradi", async () => {
+    const data = { id: "s1", reserved: 3 };
+    const tx = { stock: { upsert: vi.fn().mockResolvedValue(data) } };
+    const repo = new StockRepository();
+
+    const result = await repo.applyReservedDelta(tx, {
+      id: "s1",
+      companyId: "c1",
+      warehouseId: "w1",
+      productId: "p1",
+      variantId: null,
+      batchId: null,
+      reservedDelta: 3,
+    });
+
+    expect(tx.stock.upsert).toHaveBeenCalledWith({
+      where: {
+        warehouseId_productId_variantId_batchId: {
+          warehouseId: "w1",
+          productId: "p1",
+          variantId: null,
+          batchId: null,
+        },
+      },
+      update: { reserved: { increment: 3 } },
+      create: {
+        id: "s1",
+        companyId: "c1",
+        warehouseId: "w1",
+        productId: "p1",
+        variantId: null,
+        batchId: null,
+        quantity: 0,
+        reserved: 3,
+      },
+    });
+    expect(result).toBe(data);
+  });
+
   it("list — filtrlar berilsa where'ga qo'shadi", async () => {
     const tx = { stock: { findMany: vi.fn().mockResolvedValue([]) } };
     const repo = new StockRepository();
