@@ -6,6 +6,9 @@ import { pinoHttp } from "pino-http";
 import { logger } from "./lib/logger.js";
 import { healthRouter } from "./routes/health.routes.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { warehousesRouter } from "./modules/warehouses/warehouses.routes.js";
+import { categoriesRouter } from "./modules/categories/categories.routes.js";
+import { productsRouter } from "./modules/products/products.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -26,6 +29,9 @@ export function createApp() {
 
   app.use(healthRouter);
   app.use("/api/v1/auth", authRouter);
+  app.use("/api/v1/warehouses", warehousesRouter);
+  app.use("/api/v1/categories", categoriesRouter);
+  app.use("/api/v1/products", productsRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

@@ -49,13 +49,13 @@
 
 ## Faza 2 — Mahsulot katalogi (1–2 hafta)
 
-- [ ] TASKS.md — faza vazifalarga bo'lindi
-- [ ] Prisma product modellari + migratsiya
-- [ ] Products backend moduli (repository → service → controller + testlar)
-- [ ] Kategoriyalar daraxti + o'lchov birliklari / o'ram konvertatsiyasi
+- [x] TASKS.md — faza vazifalarga bo'lindi (8 vazifa)
+- [x] Prisma product modellari — Faza 0'da yozilgan (`Product`/`Category`/`Unit`/`ProductUnit`/`ProductBarcode`/`ProductImage`/`PriceType`/`ProductPrice`/`ProductVariant`/`Batch`/`Stock`); migratsiya mahalliy Postgres yo'qligi sababli hali qo'llanilmagan (Faza 0/1'dagi bilan bir xil cheklov)
+- [x] Products backend moduli (repository → service → controller + testlar)
+- [x] Kategoriyalar daraxti backend (`categories` moduli) — o'lchov birliklari / o'ram konvertatsiyasi Task 3'da (mahsulot bilan bog'liq)
 - [ ] Narx turlari + narx tarixi, variantlar, custom maydonlar (JSONB)
 - [ ] Rasm yuklash (MinIO + sharp thumbnail, BullMQ)
-- [ ] Skladlar CRUD
+- [x] Skladlar CRUD (`warehouses` moduli)
 - [ ] Katalog UI: ro'yxat, forma, qidiruv/filter (full-text)
 - [ ] ✅ **Natija: 100 ta mahsulotli katalog rasmlari bilan telefonda tez ochiladi**
 
