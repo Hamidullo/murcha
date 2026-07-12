@@ -12,12 +12,22 @@ export class ProductsService {
    *   productsRepository: import("./products.repository.js").ProductsRepository,
    *   categoriesRepository: import("../categories/categories.repository.js").CategoriesRepository,
    *   unitsRepository: import("../units/units.repository.js").UnitsRepository,
+   *   productUnitsRepository: import("./product-units.repository.js").ProductUnitsRepository,
+   *   productBarcodesRepository: import("./product-barcodes.repository.js").ProductBarcodesRepository,
    * }} deps
    */
-  constructor({ productsRepository, categoriesRepository, unitsRepository }) {
+  constructor({
+    productsRepository,
+    categoriesRepository,
+    unitsRepository,
+    productUnitsRepository,
+    productBarcodesRepository,
+  }) {
     this.productsRepository = productsRepository;
     this.categoriesRepository = categoriesRepository;
     this.unitsRepository = unitsRepository;
+    this.productUnitsRepository = productUnitsRepository;
+    this.productBarcodesRepository = productBarcodesRepository;
   }
 
   /**
@@ -126,6 +136,147 @@ export class ProductsService {
         status: "archived",
         deletedAt: new Date(),
       });
+    });
+  }
+
+  /**
+   * O'ram-birlik qo'shish (masalan "1 blok = 20 dona"). Asosiy birlik
+   * (`baseUnitId`) qayta qo'shilmaydi — konvertatsiya har doim asosiy
+   * birlikka nisbatan.
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @param {import("@murcha/shared").createProductUnitSchema._type} dto
+   * @returns {Promise<import("@prisma/client").ProductUnit>}
+   */
+  async addUnit(auth, productId, dto) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      if (dto.unitId === product.baseUnitId) {
+        throw new ConflictError("Bu birlik allaqachon asosiy birlik");
+      }
+      const unit = await this.unitsRepository.findById(tx, dto.unitId);
+      if (!unit) {
+        throw new NotFoundError("Birlik topilmadi");
+      }
+      const existing = await this.productUnitsRepository.findByProductAndUnit(
+        tx,
+        productId,
+        dto.unitId,
+      );
+      if (existing) {
+        throw new ConflictError("Bu birlik allaqachon qo'shilgan");
+      }
+      return this.productUnitsRepository.create(tx, {
+        id: uuidv7(),
+        productId,
+        unitId: dto.unitId,
+        factor: dto.factor,
+      });
+    });
+  }
+
+  /**
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @returns {Promise<import("@prisma/client").ProductUnit[]>}
+   */
+  async listUnits(auth, productId) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      return this.productUnitsRepository.list(tx, productId);
+    });
+  }
+
+  /**
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @param {string} productUnitId
+   * @returns {Promise<void>}
+   */
+  async removeUnit(auth, productId, productUnitId) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      const productUnit = await this.productUnitsRepository.findById(tx, productUnitId);
+      if (!productUnit || productUnit.productId !== productId) {
+        throw new NotFoundError("O'ram birligi topilmadi");
+      }
+      await this.productUnitsRepository.delete(tx, productUnitId);
+    });
+  }
+
+  /**
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @param {import("@murcha/shared").createProductBarcodeSchema._type} dto
+   * @returns {Promise<import("@prisma/client").ProductBarcode>}
+   */
+  async addBarcode(auth, productId, dto) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      if (dto.unitId) {
+        const unit = await this.unitsRepository.findById(tx, dto.unitId);
+        if (!unit) {
+          throw new NotFoundError("Birlik topilmadi");
+        }
+      }
+      const existing = await this.productBarcodesRepository.findByBarcode(tx, dto.barcode);
+      if (existing) {
+        throw new ConflictError("Bu shtrix-kod allaqachon band");
+      }
+      return this.productBarcodesRepository.create(tx, {
+        id: uuidv7(),
+        companyId: auth.companyId,
+        productId,
+        unitId: dto.unitId ?? null,
+        barcode: dto.barcode,
+      });
+    });
+  }
+
+  /**
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @returns {Promise<import("@prisma/client").ProductBarcode[]>}
+   */
+  async listBarcodes(auth, productId) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      return this.productBarcodesRepository.list(tx, productId);
+    });
+  }
+
+  /**
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @param {string} barcodeId
+   * @returns {Promise<void>}
+   */
+  async removeBarcode(auth, productId, barcodeId) {
+    return withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      const barcode = await this.productBarcodesRepository.findById(tx, barcodeId);
+      if (!barcode || barcode.productId !== productId) {
+        throw new NotFoundError("Shtrix-kod topilmadi");
+      }
+      await this.productBarcodesRepository.delete(tx, barcodeId);
     });
   }
 }

@@ -22,3 +22,33 @@ export const createProductSchema = z.object({
 export const updateProductSchema = createProductSchema.partial().extend({
   status: z.enum(["active", "archived"]).optional(),
 });
+
+/** O'ram-birlik konvertatsiyasi (masalan "1 blok = 20 dona"). */
+export const createProductUnitSchema = z.object({
+  unitId: z.string().uuid(),
+  factor: z.number().positive(),
+});
+
+export const createProductBarcodeSchema = z.object({
+  barcode: z.string().min(4).max(50),
+  unitId: z.string().uuid().optional(),
+});
+
+/**
+ * Narx tarixi — immutable (UPDATE yo'q). `validFrom` berilmasa hozirgi vaqt
+ * ishlatiladi (service qatlamida).
+ */
+export const createProductPriceSchema = z.object({
+  priceTypeId: z.string().uuid(),
+  price: z.number().positive(),
+  currency: z.enum(["UZS", "USD"]),
+  validFrom: z.coerce.date().optional(),
+});
+
+export const createProductVariantSchema = z.object({
+  sku: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(300),
+  attributes: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const updateProductVariantSchema = createProductVariantSchema.partial();

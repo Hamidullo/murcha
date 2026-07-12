@@ -1,1 +1,6 @@
-export { createProductSchema, updateProductSchema } from "@murcha/shared";
+export {
+  createProductSchema,
+  updateProductSchema,
+  createProductUnitSchema,
+  createProductBarcodeSchema,
+} from "@murcha/shared";

@@ -8,10 +8,10 @@ Prisma sxemasi bu faza uchun kerakli barcha modellarni Faza 0'da o'z ichiga olad
 
 - [x] **Task 1 — Skladlar + kategoriyalar**: `warehouses` va `categories` modullari (repository→service→controller→routes+testlar), RBAC (`warehouse.manage`/`products.manage`)
 - [x] **Task 2 — Mahsulot asosiy CRUD**: `products` moduli (SKU, nom, kategoriya, asosiy birlik, custom JSONB, status/soft-delete)
-- [ ] **Task 3 — O'ram-birlik konvertatsiyasi + shtrix-kodlar**: `ProductUnit`, `ProductBarcode` — mahsulot service kengaytiriladi
-- [ ] **Task 4 — Narx turlari + narx tarixi**: `price-types` + `product-prices` modullari (immutable — UPDATE yo'q, yangi qator)
-- [ ] **Task 5 — Mahsulot variantlari**: `product-variants` moduli (`attributes` JSONB)
-- [ ] **Task 6 — Rasm yuklash**: MinIO klient (`lib/minio.js`), yuklash endpoint, BullMQ worker (`sharp` bilan thumbnail)
+- [x] **Task 3 — O'ram-birlik konvertatsiyasi + shtrix-kodlar**: `ProductUnit`, `ProductBarcode` — mahsulot service kengaytiriladi
+- [x] **Task 4 — Narx turlari + narx tarixi**: `price-types` + `product-prices` modullari (immutable — UPDATE yo'q, yangi qator)
+- [x] **Task 5 — Mahsulot variantlari**: `product-variants` moduli (`attributes` JSONB)
+- [x] **Task 6 — Rasm yuklash**: MinIO klient (`lib/minio.js`), yuklash endpoint, BullMQ worker (`sharp` bilan thumbnail)
 - [ ] **Task 7 — Katalog UI: ro'yxat + qidiruv/filter** (full-text, `pg_trgm` GIN indeks)
 - [ ] **Task 8 — Katalog UI: mahsulot forma** (yaratish/tahrirlash, rasm/narx/variant boshqaruvi)
 

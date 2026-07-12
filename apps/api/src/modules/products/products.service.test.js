@@ -13,6 +13,8 @@ describe("ProductsService", () => {
   let productsRepository;
   let categoriesRepository;
   let unitsRepository;
+  let productUnitsRepository;
+  let productBarcodesRepository;
   let service;
 
   beforeEach(() => {
@@ -26,7 +28,27 @@ describe("ProductsService", () => {
     };
     categoriesRepository = { findById: vi.fn() };
     unitsRepository = { findById: vi.fn() };
-    service = new ProductsService({ productsRepository, categoriesRepository, unitsRepository });
+    productUnitsRepository = {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findByProductAndUnit: vi.fn(),
+      list: vi.fn(),
+      delete: vi.fn(),
+    };
+    productBarcodesRepository = {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findByBarcode: vi.fn(),
+      list: vi.fn(),
+      delete: vi.fn(),
+    };
+    service = new ProductsService({
+      productsRepository,
+      categoriesRepository,
+      unitsRepository,
+      productUnitsRepository,
+      productBarcodesRepository,
+    });
   });
 
   describe("create", () => {
@@ -144,6 +166,161 @@ describe("ProductsService", () => {
         "p1",
         expect.objectContaining({ status: "archived", deletedAt: expect.any(Date) }),
       );
+    });
+  });
+
+  describe("addUnit", () => {
+    it("mahsulot topilmasa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.addUnit(auth, "p1", { unitId: "unit-blok", factor: 20 }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("asosiy birlikni qo'shishga urinsa ConflictError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1", baseUnitId: "unit-dona" });
+
+      await expect(
+        service.addUnit(auth, "p1", { unitId: "unit-dona", factor: 1 }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("birlik topilmasa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1", baseUnitId: "unit-dona" });
+      unitsRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.addUnit(auth, "p1", { unitId: "unit-blok", factor: 20 }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("bu birlik allaqachon qo'shilgan bo'lsa ConflictError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1", baseUnitId: "unit-dona" });
+      unitsRepository.findById.mockResolvedValue({ id: "unit-blok" });
+      productUnitsRepository.findByProductAndUnit.mockResolvedValue({ id: "pu-existing" });
+
+      await expect(
+        service.addUnit(auth, "p1", { unitId: "unit-blok", factor: 20 }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("hammasi to'g'ri bo'lsa yaratadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1", baseUnitId: "unit-dona" });
+      unitsRepository.findById.mockResolvedValue({ id: "unit-blok" });
+      productUnitsRepository.findByProductAndUnit.mockResolvedValue(null);
+      productUnitsRepository.create.mockResolvedValue({ id: "pu1", factor: 20 });
+
+      const result = await service.addUnit(auth, "p1", { unitId: "unit-blok", factor: 20 });
+
+      expect(productUnitsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ productId: "p1", unitId: "unit-blok", factor: 20 }),
+      );
+      expect(result).toEqual({ id: "pu1", factor: 20 });
+    });
+  });
+
+  describe("listUnits", () => {
+    it("mahsulot topilmasa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue(null);
+
+      await expect(service.listUnits(auth, "p1")).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("repository.list'ni productId bilan chaqiradi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productUnitsRepository.list.mockResolvedValue([]);
+
+      await service.listUnits(auth, "p1");
+
+      expect(productUnitsRepository.list).toHaveBeenCalledWith(fakeTx, "p1");
+    });
+  });
+
+  describe("removeUnit", () => {
+    it("o'ram birligi boshqa mahsulotga tegishli bo'lsa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productUnitsRepository.findById.mockResolvedValue({ id: "pu1", productId: "p2" });
+
+      await expect(service.removeUnit(auth, "p1", "pu1")).rejects.toBeInstanceOf(NotFoundError);
+      expect(productUnitsRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it("to'g'ri bo'lsa o'chiradi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productUnitsRepository.findById.mockResolvedValue({ id: "pu1", productId: "p1" });
+
+      await service.removeUnit(auth, "p1", "pu1");
+
+      expect(productUnitsRepository.delete).toHaveBeenCalledWith(fakeTx, "pu1");
+    });
+  });
+
+  describe("addBarcode", () => {
+    it("mahsulot topilmasa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.addBarcode(auth, "p1", { barcode: "4780000000017" }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("shtrix-kod band bo'lsa ConflictError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productBarcodesRepository.findByBarcode.mockResolvedValue({ id: "b-existing" });
+
+      await expect(
+        service.addBarcode(auth, "p1", { barcode: "4780000000017" }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("hammasi to'g'ri bo'lsa yaratadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productBarcodesRepository.findByBarcode.mockResolvedValue(null);
+      productBarcodesRepository.create.mockResolvedValue({ id: "b1", barcode: "4780000000017" });
+
+      const result = await service.addBarcode(auth, "p1", { barcode: "4780000000017" });
+
+      expect(productBarcodesRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          companyId: "c1",
+          productId: "p1",
+          barcode: "4780000000017",
+        }),
+      );
+      expect(result).toEqual({ id: "b1", barcode: "4780000000017" });
+    });
+  });
+
+  describe("listBarcodes", () => {
+    it("repository.list'ni productId bilan chaqiradi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productBarcodesRepository.list.mockResolvedValue([]);
+
+      await service.listBarcodes(auth, "p1");
+
+      expect(productBarcodesRepository.list).toHaveBeenCalledWith(fakeTx, "p1");
+    });
+  });
+
+  describe("removeBarcode", () => {
+    it("shtrix-kod boshqa mahsulotga tegishli bo'lsa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productBarcodesRepository.findById.mockResolvedValue({ id: "b1", productId: "p2" });
+
+      await expect(service.removeBarcode(auth, "p1", "b1")).rejects.toBeInstanceOf(NotFoundError);
+      expect(productBarcodesRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it("to'g'ri bo'lsa o'chiradi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productBarcodesRepository.findById.mockResolvedValue({ id: "b1", productId: "p1" });
+
+      await service.removeBarcode(auth, "p1", "b1");
+
+      expect(productBarcodesRepository.delete).toHaveBeenCalledWith(fakeTx, "b1");
     });
   });
 });

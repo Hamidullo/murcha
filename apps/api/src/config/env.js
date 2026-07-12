@@ -9,4 +9,9 @@ export const env = {
   jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? "15m",
   cookieDomain: process.env.COOKIE_DOMAIN,
   refreshTokenTtlDays: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
+  minioEndpoint: process.env.MINIO_ENDPOINT ?? "localhost",
+  minioPort: Number(process.env.MINIO_PORT ?? 9000),
+  minioRootUser: process.env.MINIO_ROOT_USER,
+  minioRootPassword: process.env.MINIO_ROOT_PASSWORD,
+  minioBucket: process.env.MINIO_BUCKET ?? "murcha",
 };

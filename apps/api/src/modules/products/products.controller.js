@@ -71,4 +71,82 @@ export class ProductsController {
       next(err);
     }
   };
+
+  /**
+   * `POST /api/v1/products/:id/units`
+   * @type {import("express").RequestHandler}
+   */
+  addUnit = async (req, res, next) => {
+    try {
+      const productUnit = await this.productsService.addUnit(req.auth, req.params.id, req.body);
+      res.status(201).json(productUnit);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `GET /api/v1/products/:id/units`
+   * @type {import("express").RequestHandler}
+   */
+  listUnits = async (req, res, next) => {
+    try {
+      const units = await this.productsService.listUnits(req.auth, req.params.id);
+      res.status(200).json({ units });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `DELETE /api/v1/products/:id/units/:unitId`
+   * @type {import("express").RequestHandler}
+   */
+  removeUnit = async (req, res, next) => {
+    try {
+      await this.productsService.removeUnit(req.auth, req.params.id, req.params.unitId);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `POST /api/v1/products/:id/barcodes`
+   * @type {import("express").RequestHandler}
+   */
+  addBarcode = async (req, res, next) => {
+    try {
+      const barcode = await this.productsService.addBarcode(req.auth, req.params.id, req.body);
+      res.status(201).json(barcode);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `GET /api/v1/products/:id/barcodes`
+   * @type {import("express").RequestHandler}
+   */
+  listBarcodes = async (req, res, next) => {
+    try {
+      const barcodes = await this.productsService.listBarcodes(req.auth, req.params.id);
+      res.status(200).json({ barcodes });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `DELETE /api/v1/products/:id/barcodes/:barcodeId`
+   * @type {import("express").RequestHandler}
+   */
+  removeBarcode = async (req, res, next) => {
+    try {
+      await this.productsService.removeBarcode(req.auth, req.params.id, req.params.barcodeId);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  };
 }
