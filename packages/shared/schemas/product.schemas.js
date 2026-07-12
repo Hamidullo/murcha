@@ -23,6 +23,12 @@ export const updateProductSchema = createProductSchema.partial().extend({
   status: z.enum(["active", "archived"]).optional(),
 });
 
+/** `GET /api/v1/products` — nom bo'yicha qidiruv (trigram GIN indeks) + kategoriya filtri. */
+export const listProductsQuerySchema = z.object({
+  search: z.string().min(1).max(200).optional(),
+  categoryId: z.string().uuid().optional(),
+});
+
 /** O'ram-birlik konvertatsiyasi (masalan "1 blok = 20 dona"). */
 export const createProductUnitSchema = z.object({
   unitId: z.string().uuid(),

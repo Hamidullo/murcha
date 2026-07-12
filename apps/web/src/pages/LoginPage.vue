@@ -37,7 +37,7 @@ async function onSubmit() {
     if (result.status === "select_company") {
       router.push({ name: "select-company" });
     } else {
-      router.push({ name: "dashboard" });
+      router.push({ name: "products" });
     }
   } catch (err) {
     formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";

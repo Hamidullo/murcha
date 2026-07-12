@@ -20,8 +20,8 @@ const routes = [
     children: [
       {
         path: "",
-        name: "dashboard",
-        component: () => import("../pages/DashboardPage.vue"),
+        name: "products",
+        component: () => import("../pages/ProductListPage.vue"),
       },
     ],
   },
@@ -43,7 +43,7 @@ router.beforeEach((to) => {
     return authStore.pendingToken ? true : { name: "login" };
   }
   if (to.meta.public) {
-    return authStore.isAuthenticated ? { name: "dashboard" } : true;
+    return authStore.isAuthenticated ? { name: "products" } : true;
   }
   return authStore.isAuthenticated ? true : { name: "login" };
 });

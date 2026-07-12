@@ -28,6 +28,9 @@ pnpm db:migrate
 # 4. RLS policy'lar (migratsiyadan alohida — Prisma migrate RLS'ni yaxshi kuzatmaydi)
 pnpm db:rls
 
+# 4.5. Full-text qidiruv uchun trigram indeks (Faza 2 Task 8, katalog qidiruv)
+pnpm db:search
+
 # 5. Seed (tizim rollari/ruxsatlari/birliklari)
 pnpm db:generate   # client generatsiya (migratsiyadan keyin ham xavfsiz)
 pnpm db:seed
@@ -42,4 +45,5 @@ yetarli, checks/rls fayllariga yangi qoida qo'shilsa alohida qo'llaniladi.
 - `checks.sql` — CHECK cheklovlar ro'yxati (birinchi migratsiyaga qo'lda qo'shiladi)
 - `immutable.sql` — immutable jurnal trigger'lari
 - `rls.sql` — Row-Level Security policy'lar (DATABASE.md 9-bo'lim)
+- `search.sql` — `pg_trgm` kengaytma + GIN indeks (katalog nom qidiruvi, Faza 2 Task 8)
 - `seed.js` — tizim rollari/ruxsatlari/birliklari

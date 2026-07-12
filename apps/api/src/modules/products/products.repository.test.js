@@ -43,8 +43,40 @@ describe("ProductsRepository", () => {
 
     expect(tx.product.findMany).toHaveBeenCalledWith({
       where: { companyId: "c1", deletedAt: null },
+      include: {
+        category: { select: { id: true, nameUz: true } },
+        baseUnit: { select: { id: true, short: true } },
+      },
       orderBy: { nameUz: "asc" },
     });
+  });
+
+  it("list — search berilsa nameUz bo'yicha case-insensitive filtr qo'shadi", async () => {
+    const tx = { product: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new ProductsRepository();
+
+    await repo.list(tx, "c1", { search: "non" });
+
+    expect(tx.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          nameUz: { contains: "non", mode: "insensitive" },
+        }),
+      }),
+    );
+  });
+
+  it("list — categoryId berilsa filtr qo'shadi", async () => {
+    const tx = { product: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new ProductsRepository();
+
+    await repo.list(tx, "c1", { categoryId: "cat1" });
+
+    expect(tx.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ categoryId: "cat1" }),
+      }),
+    );
   });
 
   it("update — tx.product.update'ni id va data bilan chaqiradi", async () => {

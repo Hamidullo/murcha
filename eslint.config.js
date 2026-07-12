@@ -46,6 +46,9 @@ export default [
         fetch: "readonly",
         Headers: "readonly",
         localStorage: "readonly",
+        URLSearchParams: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
       },
     },
     rules: {

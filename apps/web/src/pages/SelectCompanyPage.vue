@@ -21,7 +21,7 @@ async function onSelect(companyId) {
   selectingId.value = companyId;
   try {
     await authStore.selectCompany(companyId);
-    router.push({ name: "dashboard" });
+    router.push({ name: "products" });
   } catch (err) {
     error.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
   } finally {

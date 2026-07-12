@@ -61,11 +61,12 @@ export class ProductsService {
 
   /**
    * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {import("@murcha/shared").listProductsQuerySchema._type} [filters]
    * @returns {Promise<import("@prisma/client").Product[]>}
    */
-  async list(auth) {
+  async list(auth, filters = {}) {
     return withTenant(auth.companyId, auth.userId, (tx) =>
-      this.productsRepository.list(tx, auth.companyId),
+      this.productsRepository.list(tx, auth.companyId, filters),
     );
   }
 

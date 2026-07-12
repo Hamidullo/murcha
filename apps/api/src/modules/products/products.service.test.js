@@ -94,12 +94,23 @@ describe("ProductsService", () => {
   });
 
   describe("list", () => {
-    it("repository.list'ni companyId bilan chaqiradi", async () => {
+    it("repository.list'ni companyId bilan chaqiradi (filtrsiz)", async () => {
       productsRepository.list.mockResolvedValue([]);
 
       await service.list(auth);
 
-      expect(productsRepository.list).toHaveBeenCalledWith(fakeTx, "c1");
+      expect(productsRepository.list).toHaveBeenCalledWith(fakeTx, "c1", {});
+    });
+
+    it("repository.list'ga filtrlarni uzatadi", async () => {
+      productsRepository.list.mockResolvedValue([]);
+
+      await service.list(auth, { search: "non", categoryId: "cat1" });
+
+      expect(productsRepository.list).toHaveBeenCalledWith(fakeTx, "c1", {
+        search: "non",
+        categoryId: "cat1",
+      });
     });
   });
 

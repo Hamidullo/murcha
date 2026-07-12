@@ -57,7 +57,7 @@
 - [x] Rasm yuklash (MinIO + sharp thumbnail, BullMQ) — real MinIO/Redis worker bilan hali sinalmagan (mahalliy infratuzilma yo'q, Faza 0/1'dagi bilan bir xil cheklov)
 - [x] Skladlar CRUD (`warehouses` moduli)
 - [x] Frontend skelet + auth ekranlari (`apps/web`: Vue/Vite/Tailwind4/shadcn-vue/Pinia/TanStack Query/Vue Router, login→kompaniya tanlash→dashboard) — brauzerda tekshirildi (Claude Browser), haqiqiy DB'siz login backend xatosi to'g'ri ko'rsatiladi
-- [ ] Katalog UI: ro'yxat, forma, qidiruv/filter (full-text)
+- [x] Katalog UI: ro'yxat + qidiruv/filter — full-text (`pg_trgm` GIN indeks, `prisma/search.sql`) — mahsulot forma Task 9'da
 - [ ] ✅ **Natija: 100 ta mahsulotli katalog rasmlari bilan telefonda tez ochiladi**
 
 ## Faza 3 — Sklad operatsiyalari (1–2 hafta)

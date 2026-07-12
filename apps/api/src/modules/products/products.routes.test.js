@@ -165,6 +165,34 @@ describe("GET /api/v1/products", () => {
     expect(res.status).toBe(200);
     expect(res.body.products).toEqual([{ id: "p1", nameUz: "Non" }]);
   });
+
+  it("search va categoryId query bilan filtrlaydi", async () => {
+    fakeTx.product.findMany.mockReset().mockResolvedValue([]);
+
+    const res = await request(createApp())
+      .get("/api/v1/products")
+      .query({ search: "non", categoryId: "00000000-0000-7000-8000-000000000005" })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(fakeTx.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          nameUz: { contains: "non", mode: "insensitive" },
+          categoryId: "00000000-0000-7000-8000-000000000005",
+        }),
+      }),
+    );
+  });
+
+  it("noto'g'ri categoryId (UUID emas) 400 qaytaradi", async () => {
+    const res = await request(createApp())
+      .get("/api/v1/products")
+      .query({ categoryId: "not-a-uuid" })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("GET /api/v1/products/:id", () => {

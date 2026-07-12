@@ -19,7 +19,8 @@
     "db:migrate": "dotenv -e .env -- pnpm --filter @murcha/api db:migrate",
     "db:seed": "dotenv -e .env -- pnpm --filter @murcha/api db:seed",
     "db:rls": "dotenv -e .env -- pnpm --filter @murcha/api exec prisma db execute --file prisma/rls.sql --schema prisma/schema.prisma",
-    "db:immutable": "dotenv -e .env -- pnpm --filter @murcha/api exec prisma db execute --file prisma/immutable.sql --schema prisma/schema.prisma"
+    "db:immutable": "dotenv -e .env -- pnpm --filter @murcha/api exec prisma db execute --file prisma/immutable.sql --schema prisma/schema.prisma",
+    "db:search": "dotenv -e .env -- pnpm --filter @murcha/api exec prisma db execute --file prisma/search.sql --schema prisma/schema.prisma"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

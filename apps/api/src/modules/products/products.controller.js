@@ -1,3 +1,6 @@
+import { listProductsQuerySchema } from "./products.schemas.js";
+import { ValidationError } from "../../lib/errors.js";
+
 /** HTTP qatlam: request → service → response (CLAUDE.md qatlam qoidasi). */
 export class ProductsController {
   /**
@@ -21,12 +24,16 @@ export class ProductsController {
   };
 
   /**
-   * `GET /api/v1/products`
+   * `GET /api/v1/products?search=&categoryId=`
    * @type {import("express").RequestHandler}
    */
   list = async (req, res, next) => {
     try {
-      const products = await this.productsService.list(req.auth);
+      const parsed = listProductsQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new ValidationError("Noto'g'ri so'rov parametrlari", parsed.error.issues);
+      }
+      const products = await this.productsService.list(req.auth, parsed.data);
       res.status(200).json({ products });
     } catch (err) {
       next(err);
