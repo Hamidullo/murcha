@@ -30,4 +30,14 @@ export class UsersRepository {
   async create(tx, data) {
     return tx.user.create({ data });
   }
+
+  /**
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} id
+   * @param {object} data
+   * @returns {Promise<import("@prisma/client").User>}
+   */
+  async update(tx, id, data) {
+    return tx.user.update({ where: { id }, data });
+  }
 }

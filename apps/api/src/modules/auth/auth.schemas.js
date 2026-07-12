@@ -1,1 +1,8 @@
-export { registerSchema, loginSchema, selectCompanySchema } from "@murcha/shared";
+export {
+  registerSchema,
+  loginSchema,
+  selectCompanySchema,
+  setPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "@murcha/shared";

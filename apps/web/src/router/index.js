@@ -15,6 +15,18 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: "/forgot-password",
+    name: "forgot-password",
+    component: () => import("../pages/ForgotPasswordPage.vue"),
+    meta: { public: true },
+  },
+  {
+    path: "/set-password",
+    name: "set-password",
+    component: () => import("../pages/SetPasswordPage.vue"),
+    meta: { public: true },
+  },
+  {
     path: "/",
     component: () => import("../layouts/AppLayout.vue"),
     children: [
@@ -92,6 +104,31 @@ const routes = [
         path: "orders/:id",
         name: "order-detail",
         component: () => import("../pages/OrderDetailPage.vue"),
+      },
+      {
+        path: "employees",
+        name: "employees",
+        component: () => import("../pages/EmployeeListPage.vue"),
+      },
+      {
+        path: "employees/new",
+        name: "employee-new",
+        component: () => import("../pages/EmployeeFormPage.vue"),
+      },
+      {
+        path: "employees/:id",
+        name: "employee-edit",
+        component: () => import("../pages/EmployeeFormPage.vue"),
+      },
+      {
+        path: "roles",
+        name: "roles",
+        component: () => import("../pages/RoleListPage.vue"),
+      },
+      {
+        path: "roles/:id/permissions",
+        name: "role-permissions",
+        component: () => import("../pages/RolePermissionsPage.vue"),
       },
     ],
   },

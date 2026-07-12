@@ -96,12 +96,12 @@
 
 ## Faza 6 — Hodimlar va bildirishnomalar (1 hafta)
 
-- [ ] Hodimlar UI: yaratish, rol / maxsus rol (ruxsatlar matritsasi), biriktirish, bloklash
-- [ ] SMS (Eskiz.uz) — hodim/do'kon taklifi (tegishli ilova linki bilan)
-- [ ] Parolni tiklash: ega hodimnikini tiklaydi + "parolni unutdim" (SMS OTP, muddat + urinish limiti, sessiyalar bekor)
-- [ ] Socket.IO real-time + Web Push (ikkala ilovada)
-- [ ] Hodim statistikasi (kim qancha yig'di/sotdi)
-- [ ] ✅ **Natija: hodim SMS link bilan kiradi; yangi zakazda sklad telefoni "ding" etadi (ilova yopiq bo'lsa ham)**
+- [x] Hodimlar backend: yaratish (parolsiz — `company-members` moduli, sklad/nuqtaga `UserAssignment` biriktirish), ro'yxat/bloklash (`SessionsRepository` orqali barcha sessiyalar bekor qilinadi)/rol o'zgartirish. Maxsus rol backend: `roles` moduli — CRUD (tizim rollari o'zgarmas) + ruxsatlar matritsasi (`GET/PUT /roles/:id/permissions`). Frontend UI — Task 7
+- [x] SMS (Eskiz.uz) — `lib/sms.js` (token-based auth, Redis'da keshlanadi, `ESKIZ_EMAIL`/`ESKIZ_PASSWORD` yo'q bo'lsa graceful no-op+log). Hodim yaratishda taklif SMS (faqat yangi — parolsiz — foydalanuvchiga)
+- [x] Parolni tiklash — bir martalik token mexanizmi (Redis, `PasswordResetRepository`, `POST /auth/set-password`): (1) yangi hodim taklifi, (2) ega majburiy tiklashi (`POST /company-members/:id/reset-password` — eski parol darhol "unusable"ga almashtiriladi + sessiyalar bekor qilinadi), (3) o'z-o'zini OTP-tiklash (`POST /auth/forgot-password`/`reset-password` — 6 xonali kod, 3 daqiqa TTL, 3 urinish limiti, telefon mavjudligini oshkor qilmaydi)
+- [x] Socket.IO real-time + Web Push (ikkala ilovada) — `lib/socket.js` (JWT auth, `company:{companyId}` xona), `lib/web-push.js` (VAPID, graceful degradation), `push-subscriptions` moduli; frontend: Socket.IO klient (toast+tovush), Web Push obuna tugmasi, `vite-plugin-pwa` (`apps/web`)
+- [ ] Hodim statistikasi (kim qancha yig'di/sotdi) — 8 vazifalik rejaga kiritilmagan, BACKLOG'ga o'tkaziladi
+- [x] ✅ **Natija: hodim SMS link bilan kiradi; yangi zakazda sklad telefoni "ding" etadi (ilova yopiq bo'lsa ham)**
 
 ## Faza 7 — Dostavka va kuryer xaritada (1–2 hafta)
 

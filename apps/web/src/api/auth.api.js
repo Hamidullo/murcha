@@ -36,3 +36,27 @@ export function logout() {
 export function me() {
   return apiFetch("/auth/me");
 }
+
+/**
+ * @param {import("@murcha/shared").forgotPasswordSchema._type} dto
+ * @returns {Promise<void>}
+ */
+export function forgotPassword(dto) {
+  return apiFetch("/auth/forgot-password", { method: "POST", body: JSON.stringify(dto) });
+}
+
+/**
+ * @param {import("@murcha/shared").resetPasswordSchema._type} dto
+ * @returns {Promise<void>}
+ */
+export function resetPassword(dto) {
+  return apiFetch("/auth/reset-password", { method: "POST", body: JSON.stringify(dto) });
+}
+
+/**
+ * @param {import("@murcha/shared").setPasswordSchema._type} dto
+ * @returns {Promise<void>}
+ */
+export function setPassword(dto) {
+  return apiFetch("/auth/set-password", { method: "POST", body: JSON.stringify(dto) });
+}

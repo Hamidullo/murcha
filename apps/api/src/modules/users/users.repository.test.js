@@ -34,4 +34,18 @@ describe("UsersRepository", () => {
     expect(tx.user.create).toHaveBeenCalledWith({ data });
     expect(result).toBe(data);
   });
+
+  it("update — tx.user.update'ni id va data bilan chaqiradi", async () => {
+    const updated = { id: "u1", passwordHash: "new-hash" };
+    const tx = { user: { update: vi.fn().mockResolvedValue(updated) } };
+    const repo = new UsersRepository();
+
+    const result = await repo.update(tx, "u1", { passwordHash: "new-hash" });
+
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: { passwordHash: "new-hash" },
+    });
+    expect(result).toBe(updated);
+  });
 });

@@ -3,6 +3,7 @@ import { withTenant, withUserContext, withoutTenant } from "../../lib/tenant-con
 import { hashPassword, verifyPassword } from "../../lib/password.js";
 import { signAccessToken, signPendingToken, verifyToken } from "../../lib/jwt.js";
 import { generateOpaqueToken } from "../../lib/opaque-token.js";
+import { sendSms } from "../../lib/sms.js";
 import {
   ConflictError,
   UnauthorizedError,
@@ -11,6 +12,7 @@ import {
 } from "../../lib/errors.js";
 
 const MAX_LOGIN_ATTEMPTS = 5;
+const MAX_OTP_ATTEMPTS = 3;
 
 /**
  * @param {import("@prisma/client").User} user
@@ -33,6 +35,8 @@ export class AuthService {
    *   rolesRepository: import("../roles/roles.repository.js").RolesRepository,
    *   sessionsRepository: import("../sessions/sessions.repository.js").SessionsRepository,
    *   loginAttemptsRepository: import("./login-attempts.repository.js").LoginAttemptsRepository,
+   *   passwordResetRepository: import("./password-reset.repository.js").PasswordResetRepository,
+   *   otpRepository: import("./otp.repository.js").OtpRepository,
    * }} deps
    */
   constructor({
@@ -42,6 +46,8 @@ export class AuthService {
     rolesRepository,
     sessionsRepository,
     loginAttemptsRepository,
+    passwordResetRepository,
+    otpRepository,
   }) {
     this.usersRepository = usersRepository;
     this.companiesRepository = companiesRepository;
@@ -49,6 +55,8 @@ export class AuthService {
     this.rolesRepository = rolesRepository;
     this.sessionsRepository = sessionsRepository;
     this.loginAttemptsRepository = loginAttemptsRepository;
+    this.passwordResetRepository = passwordResetRepository;
+    this.otpRepository = otpRepository;
   }
 
   /**
@@ -333,5 +341,80 @@ export class AuthService {
       company: company ? { id: company.id, name: company.name } : null,
       roleId: auth.roleId,
     };
+  }
+
+  /**
+   * Bir martalik token orqali parol o'rnatadi — yangi hodim taklifi, ega
+   * majburiy tiklashi va o'z-o'zini OTP-tiklash (Task 3) uchun umumiy
+   * yakuniy bosqich. Muvaffaqiyatdan keyin foydalanuvchining BARCHA aktiv
+   * sessiyalari bekor qilinadi (PLAN.md — eski token/qurilma o'g'irlangan
+   * bo'lishi mumkin).
+   * @param {import("@murcha/shared").setPasswordSchema._type} dto
+   * @returns {Promise<void>}
+   */
+  async setPassword(dto) {
+    const userId = await this.passwordResetRepository.consumeToken(dto.token);
+    if (!userId) {
+      throw new UnauthorizedError("Token yaroqsiz yoki muddati o'tgan");
+    }
+    const passwordHash = await hashPassword(dto.password);
+    await withoutTenant((tx) => this.usersRepository.update(tx, userId, { passwordHash }));
+
+    const sessions = await this.sessionsRepository.listByUser(userId);
+    await Promise.all(
+      sessions.map((session) => this.sessionsRepository.revoke(session.id, userId)),
+    );
+  }
+
+  /**
+   * O'z-o'zini parolni tiklash — 1-bosqich. Foydalanuvchi mavjudligini
+   * oshkor qilmaslik uchun (user enumeration) — telefon ro'yxatdan
+   * o'tmagan bo'lsa ham xatosiz qaytadi, faqat SMS yuborilmaydi.
+   * @param {import("@murcha/shared").forgotPasswordSchema._type} dto
+   * @returns {Promise<void>}
+   */
+  async forgotPassword(dto) {
+    const user = await withoutTenant((tx) => this.usersRepository.findByPhone(tx, dto.phone));
+    if (!user) {
+      return;
+    }
+    const code = await this.otpRepository.create(dto.phone);
+    await sendSms(dto.phone, `Murcha: parolni tiklash kodi — ${code}. 3 daqiqa amal qiladi.`);
+  }
+
+  /**
+   * O'z-o'zini parolni tiklash — 2-bosqich. Kod noto'g'ri bo'lsa urinishlar
+   * soni oshadi, `MAX_OTP_ATTEMPTS`dan keyin kod bekor qilinadi (qayta
+   * `forgotPassword` chaqirish kerak). Muvaffaqiyatda — parol yangilanadi,
+   * BARCHA aktiv sessiyalar bekor qilinadi (PLAN.md).
+   * @param {import("@murcha/shared").resetPasswordSchema._type} dto
+   * @returns {Promise<void>}
+   */
+  async resetPasswordWithOtp(dto) {
+    const stored = await this.otpRepository.get(dto.phone);
+    if (!stored) {
+      throw new UnauthorizedError("Kod topilmadi yoki muddati o'tgan");
+    }
+    if (stored.attempts >= MAX_OTP_ATTEMPTS) {
+      await this.otpRepository.delete(dto.phone);
+      throw new ForbiddenError("Juda ko'p noto'g'ri urinish — qaytadan kod so'rang");
+    }
+    if (stored.code !== dto.code) {
+      await this.otpRepository.incrementAttempts(dto.phone);
+      throw new UnauthorizedError("Kod noto'g'ri");
+    }
+    await this.otpRepository.delete(dto.phone);
+
+    const user = await withoutTenant((tx) => this.usersRepository.findByPhone(tx, dto.phone));
+    if (!user) {
+      throw new NotFoundError("Foydalanuvchi topilmadi");
+    }
+    const passwordHash = await hashPassword(dto.password);
+    await withoutTenant((tx) => this.usersRepository.update(tx, user.id, { passwordHash }));
+
+    const sessions = await this.sessionsRepository.listByUser(user.id);
+    await Promise.all(
+      sessions.map((session) => this.sessionsRepository.revoke(session.id, user.id)),
+    );
   }
 }

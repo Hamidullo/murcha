@@ -78,9 +78,10 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  companyMembers CompanyMember[]
-  auditLogs      AuditLog[]
-  notifications  Notification[]
+  companyMembers    CompanyMember[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -1046,6 +1047,20 @@ model Notification {
   @@index([userId, readAt, createdAt(sort: Desc)])
   @@index([companyId])
   @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model Subscription {

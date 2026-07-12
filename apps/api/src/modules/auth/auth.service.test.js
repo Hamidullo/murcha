@@ -15,6 +15,8 @@ vi.mock("../../lib/password.js", () => ({
 vi.mock("../../lib/opaque-token.js", () => ({
   generateOpaqueToken: vi.fn(() => "opaque-token"),
 }));
+const sendSms = vi.fn().mockResolvedValue(undefined);
+vi.mock("../../lib/sms.js", () => ({ sendSms: (...args) => sendSms(...args) }));
 
 const { AuthService } = await import("./auth.service.js");
 const { ConflictError, UnauthorizedError, ForbiddenError, NotFoundError } =
@@ -28,6 +30,7 @@ function makeDeps() {
       findByPhone: vi.fn().mockResolvedValue(null),
       findById: vi.fn(),
       create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+      update: vi.fn().mockImplementation((_tx, id, data) => Promise.resolve({ id, ...data })),
     },
     companiesRepository: {
       create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
@@ -52,6 +55,16 @@ function makeDeps() {
       getFailureCount: vi.fn().mockResolvedValue(0),
       recordFailure: vi.fn().mockResolvedValue(1),
       reset: vi.fn().mockResolvedValue(undefined),
+    },
+    passwordResetRepository: {
+      createToken: vi.fn().mockResolvedValue("reset-token"),
+      consumeToken: vi.fn().mockResolvedValue("u1"),
+    },
+    otpRepository: {
+      create: vi.fn().mockResolvedValue("123456"),
+      get: vi.fn().mockResolvedValue({ code: "123456", attempts: 0 }),
+      incrementAttempts: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
     },
   };
 }
@@ -405,5 +418,108 @@ describe("AuthService.getCurrentUser", () => {
     const result = await service.getCurrentUser({ userId: "u1", companyId: "c1", roleId: "r1" });
 
     expect(result.company).toBeNull();
+  });
+});
+
+describe("AuthService.setPassword", () => {
+  it("token yaroqsiz bo'lsa UnauthorizedError otadi", async () => {
+    const deps = makeDeps();
+    deps.passwordResetRepository.consumeToken.mockResolvedValue(null);
+    const service = new AuthService(deps);
+
+    await expect(
+      service.setPassword({ token: "bad", password: "Murcha2026!" }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(deps.usersRepository.update).not.toHaveBeenCalled();
+  });
+
+  it("to'g'ri tokenda parolni yangilaydi va barcha sessiyalarni bekor qiladi", async () => {
+    const deps = makeDeps();
+    deps.passwordResetRepository.consumeToken.mockResolvedValue("u1");
+    deps.sessionsRepository.listByUser.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
+    const service = new AuthService(deps);
+
+    await service.setPassword({ token: "good", password: "Murcha2026!" });
+
+    expect(deps.usersRepository.update).toHaveBeenCalledWith(
+      fakeTx,
+      "u1",
+      expect.objectContaining({ passwordHash: "hashed-password" }),
+    );
+    expect(deps.sessionsRepository.revoke).toHaveBeenCalledWith("s1", "u1");
+    expect(deps.sessionsRepository.revoke).toHaveBeenCalledWith("s2", "u1");
+  });
+});
+
+describe("AuthService.forgotPassword", () => {
+  beforeEach(() => sendSms.mockClear());
+
+  it("telefon ro'yxatdan o'tmagan bo'lsa jim qaytadi, SMS yubormaydi", async () => {
+    const deps = makeDeps();
+    deps.usersRepository.findByPhone.mockResolvedValue(null);
+    const service = new AuthService(deps);
+
+    await service.forgotPassword({ phone: "+998901234567" });
+
+    expect(deps.otpRepository.create).not.toHaveBeenCalled();
+    expect(sendSms).not.toHaveBeenCalled();
+  });
+
+  it("telefon mavjud bo'lsa OTP yaratadi va SMS yuboradi", async () => {
+    const deps = makeDeps();
+    deps.usersRepository.findByPhone.mockResolvedValue(user);
+    const service = new AuthService(deps);
+
+    await service.forgotPassword({ phone: user.phone });
+
+    expect(deps.otpRepository.create).toHaveBeenCalledWith(user.phone);
+    expect(sendSms).toHaveBeenCalledWith(user.phone, expect.stringContaining("123456"));
+  });
+});
+
+describe("AuthService.resetPasswordWithOtp", () => {
+  const dto = { phone: user.phone, code: "123456", password: "Murcha2026!" };
+
+  it("kod topilmasa UnauthorizedError otadi", async () => {
+    const deps = makeDeps();
+    deps.otpRepository.get.mockResolvedValue(null);
+    const service = new AuthService(deps);
+
+    await expect(service.resetPasswordWithOtp(dto)).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  it("urinishlar limitidan oshsa ForbiddenError otadi va kod o'chiriladi", async () => {
+    const deps = makeDeps();
+    deps.otpRepository.get.mockResolvedValue({ code: "123456", attempts: 3 });
+    const service = new AuthService(deps);
+
+    await expect(service.resetPasswordWithOtp(dto)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(deps.otpRepository.delete).toHaveBeenCalledWith(dto.phone);
+  });
+
+  it("kod noto'g'ri bo'lsa UnauthorizedError otadi, urinish sanaladi", async () => {
+    const deps = makeDeps();
+    deps.otpRepository.get.mockResolvedValue({ code: "654321", attempts: 0 });
+    const service = new AuthService(deps);
+
+    await expect(service.resetPasswordWithOtp(dto)).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(deps.otpRepository.incrementAttempts).toHaveBeenCalledWith(dto.phone);
+  });
+
+  it("to'g'ri kodda parolni yangilaydi va barcha sessiyalarni bekor qiladi", async () => {
+    const deps = makeDeps();
+    deps.usersRepository.findByPhone.mockResolvedValue(user);
+    deps.sessionsRepository.listByUser.mockResolvedValue([{ id: "s1" }]);
+    const service = new AuthService(deps);
+
+    await service.resetPasswordWithOtp(dto);
+
+    expect(deps.otpRepository.delete).toHaveBeenCalledWith(dto.phone);
+    expect(deps.usersRepository.update).toHaveBeenCalledWith(
+      fakeTx,
+      user.id,
+      expect.objectContaining({ passwordHash: "hashed-password" }),
+    );
+    expect(deps.sessionsRepository.revoke).toHaveBeenCalledWith("s1", user.id);
   });
 });

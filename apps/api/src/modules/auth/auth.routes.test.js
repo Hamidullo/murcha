@@ -5,7 +5,7 @@ process.env.JWT_ACCESS_SECRET = "test-secret-kamida-32-belgi-uzunlikda";
 
 const fakeTx = {
   $executeRaw: vi.fn().mockResolvedValue(undefined),
-  user: { findUnique: vi.fn(), create: vi.fn() },
+  user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
   company: { create: vi.fn(), findUnique: vi.fn() },
   role: { findFirst: vi.fn() },
   companyMember: { create: vi.fn(), findMany: vi.fn() },
@@ -20,6 +20,9 @@ vi.mock("../../lib/password.js", () => ({
   verifyPassword: vi.fn().mockResolvedValue(true),
 }));
 
+const sendSms = vi.fn().mockResolvedValue(undefined);
+vi.mock("../../lib/sms.js", () => ({ sendSms: (...args) => sendSms(...args) }));
+
 const fakeRedisMultiChain = {
   set: vi.fn().mockReturnThis(),
   sadd: vi.fn().mockReturnThis(),
@@ -29,11 +32,15 @@ const fakeRedisMultiChain = {
 const fakeRedis = {
   multi: vi.fn(() => fakeRedisMultiChain),
   get: vi.fn(),
+  set: vi.fn().mockResolvedValue("OK"),
   del: vi.fn().mockResolvedValue(undefined),
   srem: vi.fn().mockResolvedValue(undefined),
   smembers: vi.fn().mockResolvedValue([]),
   incr: vi.fn().mockResolvedValue(1),
   expire: vi.fn().mockResolvedValue(undefined),
+  hset: vi.fn().mockResolvedValue(1),
+  hgetall: vi.fn().mockResolvedValue({}),
+  hincrby: vi.fn().mockResolvedValue(1),
 };
 vi.mock("../../lib/redis.js", () => ({ redis: fakeRedis }));
 
@@ -303,5 +310,141 @@ describe("GET /api/v1/auth/me", () => {
       company: { id: "c1", name: "Kompaniya" },
       roleId: "r1",
     });
+  });
+});
+
+describe("POST /api/v1/auth/set-password", () => {
+  beforeEach(() => {
+    fakeRedis.get.mockReset();
+    fakeRedis.del.mockReset().mockResolvedValue(undefined);
+    fakeTx.user.update.mockReset().mockResolvedValue({ id: "u1" });
+  });
+
+  it("noto'g'ri parol uzunligida 400 qaytaradi", async () => {
+    const res = await request(createApp())
+      .post("/api/v1/auth/set-password")
+      .send({ token: "tok1", password: "qisqa" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("token yaroqsiz bo'lsa 401 qaytaradi", async () => {
+    fakeRedis.get.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/set-password")
+      .send({ token: "tok1", password: "Murcha2026!" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("to'g'ri tokenda 204 qaytaradi", async () => {
+    fakeRedis.get.mockResolvedValue("u1");
+    fakeRedis.smembers.mockResolvedValue([]);
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/set-password")
+      .send({ token: "tok1", password: "Murcha2026!" });
+
+    expect(res.status).toBe(204);
+    expect(fakeRedis.del).toHaveBeenCalledWith("pwreset:tok1");
+    expect(fakeTx.user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: expect.objectContaining({ passwordHash: "hashed-password" }),
+    });
+  });
+});
+
+describe("POST /api/v1/auth/forgot-password", () => {
+  beforeEach(() => {
+    sendSms.mockClear();
+    fakeTx.user.findUnique.mockReset();
+    fakeRedis.hset.mockReset().mockResolvedValue(1);
+    fakeRedis.expire.mockReset().mockResolvedValue(undefined);
+    fakeRedis.incr.mockReset().mockResolvedValue(1);
+  });
+
+  it("noto'g'ri telefon formatida 400 qaytaradi", async () => {
+    const res = await request(createApp())
+      .post("/api/v1/auth/forgot-password")
+      .send({ phone: "901234567" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("telefon ro'yxatdan o'tmagan bo'lsa ham 204 qaytaradi (oshkor qilmaydi), SMS yubormaydi", async () => {
+    fakeTx.user.findUnique.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/forgot-password")
+      .send({ phone: "+998901234567" });
+
+    expect(res.status).toBe(204);
+    expect(sendSms).not.toHaveBeenCalled();
+  });
+
+  it("telefon mavjud bo'lsa 204 qaytaradi va SMS yuboradi", async () => {
+    fakeTx.user.findUnique.mockResolvedValue({ id: "u1", phone: "+998901234567" });
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/forgot-password")
+      .send({ phone: "+998901234567" });
+
+    expect(res.status).toBe(204);
+    expect(sendSms).toHaveBeenCalledWith("+998901234567", expect.any(String));
+  });
+});
+
+describe("POST /api/v1/auth/reset-password", () => {
+  beforeEach(() => {
+    fakeTx.user.findUnique.mockReset();
+    fakeTx.user.update.mockReset().mockResolvedValue({ id: "u1" });
+    fakeRedis.hgetall.mockReset();
+    fakeRedis.hincrby.mockReset().mockResolvedValue(1);
+    fakeRedis.del.mockReset().mockResolvedValue(undefined);
+    fakeRedis.smembers.mockReset().mockResolvedValue([]);
+  });
+
+  it("kod topilmasa 401 qaytaradi", async () => {
+    fakeRedis.hgetall.mockResolvedValue({});
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/reset-password")
+      .send({ phone: "+998901234567", code: "123456", password: "Murcha2026!" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("kod noto'g'ri bo'lsa 401 qaytaradi", async () => {
+    fakeRedis.hgetall.mockResolvedValue({ code: "000000", attempts: "0" });
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/reset-password")
+      .send({ phone: "+998901234567", code: "123456", password: "Murcha2026!" });
+
+    expect(res.status).toBe(401);
+    expect(fakeRedis.hincrby).toHaveBeenCalled();
+  });
+
+  it("urinish limitidan oshsa 403 qaytaradi", async () => {
+    fakeRedis.hgetall.mockResolvedValue({ code: "123456", attempts: "3" });
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/reset-password")
+      .send({ phone: "+998901234567", code: "123456", password: "Murcha2026!" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("to'g'ri kodda 204 qaytaradi", async () => {
+    fakeRedis.hgetall.mockResolvedValue({ code: "123456", attempts: "0" });
+    fakeTx.user.findUnique.mockResolvedValue({ id: "u1", phone: "+998901234567" });
+
+    const res = await request(createApp())
+      .post("/api/v1/auth/reset-password")
+      .send({ phone: "+998901234567", code: "123456", password: "Murcha2026!" });
+
+    expect(res.status).toBe(204);
+    expect(fakeRedis.del).toHaveBeenCalledWith("otp:+998901234567");
   });
 });

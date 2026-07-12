@@ -2,7 +2,14 @@ import { Router } from "express";
 import { validate } from "../../middleware/validate.js";
 import { requireAuth } from "../../middleware/require-auth.js";
 import { rateLimit } from "../../middleware/rate-limit.js";
-import { registerSchema, loginSchema, selectCompanySchema } from "./auth.schemas.js";
+import {
+  registerSchema,
+  loginSchema,
+  selectCompanySchema,
+  setPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "./auth.schemas.js";
 import { AuthService } from "./auth.service.js";
 import { AuthController } from "./auth.controller.js";
 import { UsersRepository } from "../users/users.repository.js";
@@ -11,6 +18,8 @@ import { CompanyMembersRepository } from "../companies/company-members.repositor
 import { RolesRepository } from "../roles/roles.repository.js";
 import { SessionsRepository } from "../sessions/sessions.repository.js";
 import { LoginAttemptsRepository } from "./login-attempts.repository.js";
+import { PasswordResetRepository } from "./password-reset.repository.js";
+import { OtpRepository } from "./otp.repository.js";
 import { redis } from "../../lib/redis.js";
 
 // Kompozitsiya ildizi (qo'lda DI factory — CLAUDE.md: "awilix yoki qo'lda
@@ -23,12 +32,21 @@ const authService = new AuthService({
   rolesRepository: new RolesRepository(),
   sessionsRepository: new SessionsRepository(redis),
   loginAttemptsRepository: new LoginAttemptsRepository(redis),
+  passwordResetRepository: new PasswordResetRepository(redis),
+  otpRepository: new OtpRepository(redis),
 });
 const authController = new AuthController({ authService });
 
 // IP bo'yicha umumiy himoya (login endpoint eng ko'p nishonlanadi); telefon
 // bo'yicha aniqroq brute-force bloki AuthService.login() ichida (PLAN.md).
 const loginRateLimit = rateLimit({ windowSeconds: 5 * 60, max: 20, keyPrefix: "rl:login" });
+// SMS OTP spam'ining oldini olish — IP bo'yicha, telefon bo'yicha esa OTP
+// urinish limiti (`MAX_OTP_ATTEMPTS`) `AuthService.resetPasswordWithOtp()`da.
+const forgotPasswordRateLimit = rateLimit({
+  windowSeconds: 15 * 60,
+  max: 5,
+  keyPrefix: "rl:forgot-password",
+});
 
 export const authRouter = Router();
 authRouter.post("/register", validate(registerSchema), authController.register);
@@ -39,3 +57,11 @@ authRouter.post("/logout", authController.logout);
 authRouter.get("/sessions", authController.listSessions);
 authRouter.delete("/sessions/:id", authController.revokeSession);
 authRouter.get("/me", requireAuth, authController.me);
+authRouter.post("/set-password", validate(setPasswordSchema), authController.setPassword);
+authRouter.post(
+  "/forgot-password",
+  forgotPasswordRateLimit,
+  validate(forgotPasswordSchema),
+  authController.forgotPassword,
+);
+authRouter.post("/reset-password", validate(resetPasswordSchema), authController.resetPassword);

@@ -8,6 +8,7 @@ import {
   InsufficientStockError,
 } from "../../lib/errors.js";
 import { computeQtyBase } from "../../lib/qty-base.js";
+import { domainEvents } from "../../lib/events.js";
 
 /** `cancel()`da rezerv bo'shatiladigan (allaqachon `confirm()` bo'lgan) statuslar. */
 const RESERVED_STATUSES = ["confirmed", "picking"];
@@ -74,7 +75,8 @@ export class OrdersService {
    * @returns {Promise<import("@prisma/client").Order>}
    */
   async create(auth, dto) {
-    return withTenant(auth.companyId, auth.userId, async (tx) => {
+    let wasCreated = false;
+    const order = await withTenant(auth.companyId, auth.userId, async (tx) => {
       const existing = await this.ordersRepository.findByIdempotencyKey(
         tx,
         auth.companyId,
@@ -175,8 +177,24 @@ export class OrdersService {
         comment: null,
       });
 
+      wasCreated = true;
       return order;
     });
+
+    // Tranzaksiyadan TASHQARIDA emit qilinadi (event handler o'z DB
+    // yozuvini qiladi — bitta operatsiya = bitta tranzaksiya qoidasi).
+    // Idempotency replay'da (`existing` qaytarilganda) qayta bildirishnoma
+    // yuborilmaydi.
+    if (wasCreated) {
+      domainEvents.emit("order.new", {
+        companyId: auth.companyId,
+        orderId: order.id,
+        orderNumber: order.number,
+        salePointId: order.salePointId,
+      });
+    }
+
+    return order;
   }
 
   /**

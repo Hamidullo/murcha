@@ -28,6 +28,8 @@ export default [
         Buffer: "readonly",
         __dirname: "readonly",
         __filename: "readonly",
+        fetch: "readonly",
+        URLSearchParams: "readonly",
       },
     },
     rules: {
@@ -58,11 +60,25 @@ export default [
         cancelAnimationFrame: "readonly",
         BarcodeDetector: "readonly",
         crypto: "readonly",
+        atob: "readonly",
+        btoa: "readonly",
+        Notification: "readonly",
+        AudioContext: "readonly",
       },
     },
     rules: {
       "vue/multi-word-component-names": "off",
       "jsdoc/no-undefined-types": ["warn", { definedTypes: ["Response", "RequestInit", "File"] }],
+    },
+  },
+  {
+    // Service worker (`apps/web/src/sw.js`) — `window` emas, `self`/`clients`
+    // kabi worker global'lari alohida muhit.
+    files: ["apps/web/src/sw.js"],
+    languageOptions: {
+      globals: {
+        self: "readonly",
+      },
     },
   },
   {

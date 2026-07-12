@@ -73,6 +73,12 @@ async function onSubmit() {
           <Button type="submit" :disabled="isSubmitting" class="w-full">
             {{ isSubmitting ? "Kirilmoqda…" : "Kirish" }}
           </Button>
+          <router-link
+            :to="{ name: 'forgot-password' }"
+            class="text-center text-sm text-brand-brown/60"
+          >
+            Parolni unutdingizmi?
+          </router-link>
         </form>
       </CardContent>
     </Card>

@@ -4,6 +4,9 @@ const fakeTx = {};
 const withTenant = vi.fn((_companyId, _userId, callback) => callback(fakeTx));
 vi.mock("../../lib/tenant-context.js", () => ({ withTenant }));
 
+const domainEvents = { emit: vi.fn() };
+vi.mock("../../lib/events.js", () => ({ domainEvents }));
+
 const { OrdersService } = await import("./orders.service.js");
 const { NotFoundError, ForbiddenError, ConflictError, ValidationError, InsufficientStockError } =
   await import("../../lib/errors.js");
@@ -32,6 +35,7 @@ describe("OrdersService", () => {
 
   beforeEach(() => {
     withTenant.mockClear();
+    domainEvents.emit.mockClear();
     ordersRepository = {
       create: vi.fn(),
       findById: vi.fn(),
@@ -85,6 +89,7 @@ describe("OrdersService", () => {
       expect(result).toBe(existing);
       expect(userAssignmentsRepository.findSalePointIdForUser).not.toHaveBeenCalled();
       expect(ordersRepository.create).not.toHaveBeenCalled();
+      expect(domainEvents.emit).not.toHaveBeenCalled();
     });
 
     it("foydalanuvchi hech qanday nuqtaga biriktirilmagan bo'lsa ForbiddenError otadi", async () => {
@@ -137,7 +142,7 @@ describe("OrdersService", () => {
       productPricesRepository.listCurrentByProduct.mockResolvedValue([
         { priceTypeId: "pt1", price: 5000 },
       ]);
-      const createdOrder = { id: "o1", number: "ZAK-2026-00001" };
+      const createdOrder = { id: "o1", number: "ZAK-2026-00001", salePointId: "sp1" };
       ordersRepository.create.mockResolvedValue(createdOrder);
 
       const result = await service.create(auth, dto);
@@ -178,6 +183,12 @@ describe("OrdersService", () => {
         }),
       );
       expect(result).toBe(createdOrder);
+      expect(domainEvents.emit).toHaveBeenCalledWith("order.new", {
+        companyId: "c1",
+        orderId: "o1",
+        orderNumber: "ZAK-2026-00001",
+        salePointId: "sp1",
+      });
     });
   });
 

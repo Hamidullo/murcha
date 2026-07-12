@@ -15,6 +15,18 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: "/forgot-password",
+    name: "forgot-password",
+    component: () => import("../pages/ForgotPasswordPage.vue"),
+    meta: { public: true },
+  },
+  {
+    path: "/set-password",
+    name: "set-password",
+    component: () => import("../pages/SetPasswordPage.vue"),
+    meta: { public: true },
+  },
+  {
     path: "/",
     component: () => import("../layouts/ShopLayout.vue"),
     children: [

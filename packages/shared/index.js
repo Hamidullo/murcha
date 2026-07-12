@@ -11,3 +11,7 @@ export * from "./schemas/inventory-count.schemas.js";
 export * from "./schemas/sale-point.schemas.js";
 export * from "./schemas/order.schemas.js";
 export * from "./schemas/shop-catalog.schemas.js";
+export * from "./schemas/company-member.schemas.js";
+export * from "./schemas/role.schemas.js";
+export * from "./schemas/notification.schemas.js";
+export * from "./schemas/push-subscription.schemas.js";

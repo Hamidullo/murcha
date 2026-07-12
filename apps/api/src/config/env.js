@@ -14,4 +14,13 @@ export const env = {
   minioRootUser: process.env.MINIO_ROOT_USER,
   minioRootPassword: process.env.MINIO_ROOT_PASSWORD,
   minioBucket: process.env.MINIO_BUCKET ?? "murcha",
+  eskizBaseUrl: process.env.ESKIZ_BASE_URL ?? "https://notify.eskiz.uz/api",
+  eskizEmail: process.env.ESKIZ_EMAIL,
+  eskizPassword: process.env.ESKIZ_PASSWORD,
+  eskizSmsFrom: process.env.ESKIZ_SMS_FROM ?? "4546",
+  appWebUrl: process.env.APP_WEB_URL ?? "https://app.murcha.uz",
+  appShopUrl: process.env.APP_SHOP_URL ?? "https://shop.murcha.uz",
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+  vapidSubject: process.env.VAPID_SUBJECT ?? "mailto:support@murcha.uz",
 };

@@ -187,4 +187,43 @@ export class AuthController {
       next(err);
     }
   };
+
+  /**
+   * `POST /api/v1/auth/set-password` — taklif/parol-tiklash tokeni orqali.
+   * @type {import("express").RequestHandler}
+   */
+  setPassword = async (req, res, next) => {
+    try {
+      await this.authService.setPassword(req.body);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `POST /api/v1/auth/forgot-password`
+   * @type {import("express").RequestHandler}
+   */
+  forgotPassword = async (req, res, next) => {
+    try {
+      await this.authService.forgotPassword(req.body);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * `POST /api/v1/auth/reset-password`
+   * @type {import("express").RequestHandler}
+   */
+  resetPassword = async (req, res, next) => {
+    try {
+      await this.authService.resetPasswordWithOtp(req.body);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  };
 }
