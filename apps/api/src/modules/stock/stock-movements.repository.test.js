@@ -29,4 +29,26 @@ describe("StockMovementsRepository", () => {
       },
     });
   });
+
+  it("listByPeriod — filtrlarsiz companyId bo'yicha findMany qiladi", async () => {
+    const tx = { stockMovement: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new StockMovementsRepository();
+
+    await repo.listByPeriod(tx, "c1");
+
+    expect(tx.stockMovement.findMany).toHaveBeenCalledWith({ where: { companyId: "c1" } });
+  });
+
+  it("listByPeriod — from/to filtri bilan", async () => {
+    const from = new Date("2026-01-01");
+    const to = new Date("2026-02-01");
+    const tx = { stockMovement: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new StockMovementsRepository();
+
+    await repo.listByPeriod(tx, "c1", { from, to });
+
+    expect(tx.stockMovement.findMany).toHaveBeenCalledWith({
+      where: { companyId: "c1", createdAt: { gte: from, lte: to } },
+    });
+  });
 });

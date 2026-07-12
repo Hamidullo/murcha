@@ -21,6 +21,7 @@ describe("CompanyMembersService", () => {
   let userAssignmentsRepository;
   let sessionsRepository;
   let passwordResetRepository;
+  let auditLogsRepository;
   let service;
 
   beforeEach(() => {
@@ -39,6 +40,7 @@ describe("CompanyMembersService", () => {
     userAssignmentsRepository = { create: vi.fn() };
     sessionsRepository = { listByUser: vi.fn(), revoke: vi.fn() };
     passwordResetRepository = { createToken: vi.fn().mockResolvedValue("reset-token") };
+    auditLogsRepository = { create: vi.fn() };
     service = new CompanyMembersService({
       companyMembersRepository,
       usersRepository,
@@ -46,6 +48,7 @@ describe("CompanyMembersService", () => {
       userAssignmentsRepository,
       sessionsRepository,
       passwordResetRepository,
+      auditLogsRepository,
     });
   });
 

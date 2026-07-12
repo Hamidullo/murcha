@@ -5,6 +5,7 @@ import { generateOpaqueToken } from "../../lib/opaque-token.js";
 import { sendSms } from "../../lib/sms.js";
 import { env } from "../../config/env.js";
 import { NotFoundError, ConflictError } from "../../lib/errors.js";
+import { logAudit } from "../../lib/audit.js";
 
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). Hodim yaratish **parolsiz** —
@@ -28,6 +29,7 @@ export class CompanyMembersService {
    *   userAssignmentsRepository: import("../user-assignments/user-assignments.repository.js").UserAssignmentsRepository,
    *   sessionsRepository: import("../sessions/sessions.repository.js").SessionsRepository,
    *   passwordResetRepository: import("../auth/password-reset.repository.js").PasswordResetRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -37,6 +39,7 @@ export class CompanyMembersService {
     userAssignmentsRepository,
     sessionsRepository,
     passwordResetRepository,
+    auditLogsRepository,
   }) {
     this.companyMembersRepository = companyMembersRepository;
     this.usersRepository = usersRepository;
@@ -44,6 +47,7 @@ export class CompanyMembersService {
     this.userAssignmentsRepository = userAssignmentsRepository;
     this.sessionsRepository = sessionsRepository;
     this.passwordResetRepository = passwordResetRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   /**
@@ -93,6 +97,16 @@ export class CompanyMembersService {
         });
       }
 
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "create",
+        entityType: "company_member",
+        entityId: created.id,
+        before: null,
+        after: { phone: dto.phone, roleId: dto.roleId },
+      });
+
       return this.companyMembersRepository.findById(tx, created.id);
     });
 
@@ -124,6 +138,15 @@ export class CompanyMembersService {
       const unusablePassword = generateOpaqueToken();
       await this.usersRepository.update(tx, found.userId, {
         passwordHash: await hashPassword(unusablePassword),
+      });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "reset_password",
+        entityType: "company_member",
+        entityId: id,
+        before: null,
+        after: null,
       });
       return this.companyMembersRepository.findById(tx, id);
     });
@@ -185,6 +208,16 @@ export class CompanyMembersService {
           sessions.map((session) => this.sessionsRepository.revoke(session.id, member.userId)),
         );
       }
+
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "update",
+        entityType: "company_member",
+        entityId: id,
+        before: { status: member.status, roleId: member.roleId },
+        after: dto,
+      });
 
       return updated;
     });

@@ -85,6 +85,11 @@ function createFakeDb() {
         return { counter: next };
       },
     },
+    auditLog: {
+      async create({ data }) {
+        return data;
+      },
+    },
   };
 }
 
@@ -95,6 +100,7 @@ const { WarehouseDocsService } = await import("./warehouse-docs.service.js");
 const { WarehouseDocsRepository } = await import("./warehouse-docs.repository.js");
 const { StockRepository } = await import("../stock/stock.repository.js");
 const { StockMovementsRepository } = await import("../stock/stock-movements.repository.js");
+const { AuditLogsRepository } = await import("../audit-logs/audit-logs.repository.js");
 
 const auth = { userId: "u1", companyId: "c1", roleId: "r1" };
 const WAREHOUSE_A = "wh-a";
@@ -116,6 +122,7 @@ function buildService(fakeDb) {
     productUnitsRepository: { findByProductAndUnit: async () => null },
     stockRepository: new StockRepository(),
     stockMovementsRepository: new StockMovementsRepository(),
+    auditLogsRepository: new AuditLogsRepository(),
   });
 }
 

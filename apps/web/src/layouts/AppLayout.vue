@@ -57,6 +57,9 @@ async function onLogout() {
       <div class="flex items-center gap-6">
         <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto" />
         <nav class="flex items-center gap-4 text-sm text-brand-brown/70">
+          <router-link :to="{ name: 'dashboard' }" class="hover:text-brand-brown">
+            Dashboard
+          </router-link>
           <router-link :to="{ name: 'products' }" class="hover:text-brand-brown">
             Katalog
           </router-link>
@@ -92,6 +95,12 @@ async function onLogout() {
           </router-link>
           <router-link :to="{ name: 'cash-registers' }" class="hover:text-brand-brown">
             Kassa
+          </router-link>
+          <router-link :to="{ name: 'reports-sales' }" class="hover:text-brand-brown">
+            Hisobotlar
+          </router-link>
+          <router-link :to="{ name: 'audit-logs' }" class="hover:text-brand-brown">
+            Audit log
           </router-link>
           <router-link :to="{ name: 'company-settings' }" class="hover:text-brand-brown">
             Sozlamalar

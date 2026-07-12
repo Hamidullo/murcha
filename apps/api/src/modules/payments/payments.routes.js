@@ -9,6 +9,7 @@ import { CounterpartiesRepository } from "../counterparties/counterparties.repos
 import { RolesRepository } from "../roles/roles.repository.js";
 import { CashRegistersRepository } from "../cash/cash-registers.repository.js";
 import { TransactionsRepository } from "../cash/transactions.repository.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { PaymentsService } from "./payments.service.js";
 import { PaymentsController } from "./payments.controller.js";
 
@@ -20,6 +21,7 @@ const paymentsService = new PaymentsService({
   rolesRepository: new RolesRepository(),
   cashRegistersRepository: new CashRegistersRepository(),
   transactionsRepository: new TransactionsRepository(),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const paymentsController = new PaymentsController({ paymentsService });
 

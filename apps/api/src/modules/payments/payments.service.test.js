@@ -15,6 +15,7 @@ describe("PaymentsService", () => {
   let rolesRepository;
   let cashRegistersRepository;
   let transactionsRepository;
+  let auditLogsRepository;
   let service;
 
   const dto = { counterpartyId: "cp1", amount: 1000, currency: "UZS", method: "cash" };
@@ -30,6 +31,7 @@ describe("PaymentsService", () => {
     rolesRepository = { hasPermission: vi.fn() };
     cashRegistersRepository = { findById: vi.fn() };
     transactionsRepository = { create: vi.fn() };
+    auditLogsRepository = { create: vi.fn() };
     service = new PaymentsService({
       paymentsRepository,
       debtMovementsRepository,
@@ -37,6 +39,7 @@ describe("PaymentsService", () => {
       rolesRepository,
       cashRegistersRepository,
       transactionsRepository,
+      auditLogsRepository,
     });
   });
 

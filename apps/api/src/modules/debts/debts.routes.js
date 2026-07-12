@@ -9,6 +9,7 @@ import { CounterpartiesRepository } from "../counterparties/counterparties.repos
 import { UserAssignmentsRepository } from "../user-assignments/user-assignments.repository.js";
 import { RolesRepository } from "../roles/roles.repository.js";
 import { CompaniesRepository } from "../companies/companies.repository.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { DebtsService } from "./debts.service.js";
 import { DebtsController } from "./debts.controller.js";
 
@@ -20,6 +21,7 @@ const debtsService = new DebtsService({
   userAssignmentsRepository: new UserAssignmentsRepository(),
   rolesRepository: new RolesRepository(),
   companiesRepository: new CompaniesRepository(),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const debtsController = new DebtsController({ debtsService });
 

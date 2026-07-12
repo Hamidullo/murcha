@@ -3,6 +3,7 @@ import { withTenant } from "../../lib/tenant-context.js";
 import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
 import { computeOpenOrderBalances, AGING_BUCKETS } from "../../lib/debt-netting.js";
 import { renderDebtStatementPdf } from "./debts.pdf.js";
+import { logAudit } from "../../lib/audit.js";
 
 const VIEW_PERMISSION = "debts.view";
 const MANAGE_PERMISSION = "debts.manage";
@@ -23,6 +24,7 @@ export class DebtsService {
    *   userAssignmentsRepository: import("../user-assignments/user-assignments.repository.js").UserAssignmentsRepository,
    *   rolesRepository: import("../roles/roles.repository.js").RolesRepository,
    *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -32,6 +34,7 @@ export class DebtsService {
     userAssignmentsRepository,
     rolesRepository,
     companiesRepository,
+    auditLogsRepository,
   }) {
     this.debtMovementsRepository = debtMovementsRepository;
     this.salePointsRepository = salePointsRepository;
@@ -39,6 +42,7 @@ export class DebtsService {
     this.userAssignmentsRepository = userAssignmentsRepository;
     this.rolesRepository = rolesRepository;
     this.companiesRepository = companiesRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   /**
@@ -245,7 +249,7 @@ export class DebtsService {
       if (!counterparty || counterparty.companyId !== auth.companyId) {
         throw new NotFoundError("Kontragent topilmadi");
       }
-      return this.debtMovementsRepository.create(tx, {
+      const movement = await this.debtMovementsRepository.create(tx, {
         id: uuidv7(),
         companyId: auth.companyId,
         counterpartyId: dto.counterpartyId,
@@ -255,6 +259,16 @@ export class DebtsService {
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
         createdBy: auth.userId,
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "adjustment",
+        entityType: "debt_movement",
+        entityId: movement.id,
+        before: null,
+        after: { counterpartyId: dto.counterpartyId, type: dto.type, amount: dto.amount },
+      });
+      return movement;
     });
   }
 

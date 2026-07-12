@@ -17,6 +17,7 @@ const fakeTx = {
   userAssignment: { findFirst: vi.fn() },
   rolePermission: { findFirst: vi.fn() },
   company: { findUnique: vi.fn() },
+  auditLog: { create: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },

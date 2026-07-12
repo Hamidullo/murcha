@@ -16,6 +16,7 @@ import { CashRegistersRepository } from "./cash-registers.repository.js";
 import { ExpenseCategoriesRepository } from "./expense-categories.repository.js";
 import { TransactionsRepository } from "./transactions.repository.js";
 import { CashShiftsRepository } from "./cash-shifts.repository.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { CashService } from "./cash.service.js";
 import { CashController } from "./cash.controller.js";
 
@@ -25,6 +26,7 @@ const cashService = new CashService({
   expenseCategoriesRepository: new ExpenseCategoriesRepository(),
   transactionsRepository: new TransactionsRepository(),
   cashShiftsRepository: new CashShiftsRepository(),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const cashController = new CashController({ cashService });
 

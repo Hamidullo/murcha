@@ -19,6 +19,7 @@ import { DeliveriesRepository } from "../deliveries/deliveries.repository.js";
 import { DebtMovementsRepository } from "../debts/debts.repository.js";
 import { CompaniesRepository } from "../companies/companies.repository.js";
 import { ExchangeRatesRepository } from "../exchange-rates/exchange-rates.repository.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { OrdersService } from "./orders.service.js";
 import { OrdersController } from "./orders.controller.js";
 
@@ -40,6 +41,7 @@ const ordersService = new OrdersService({
   debtMovementsRepository: new DebtMovementsRepository(),
   companiesRepository: new CompaniesRepository(),
   exchangeRatesRepository: new ExchangeRatesRepository(),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const ordersController = new OrdersController({ ordersService });
 

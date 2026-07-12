@@ -21,3 +21,5 @@ export * from "./schemas/payment.schemas.js";
 export * from "./schemas/cash.schemas.js";
 export * from "./schemas/exchange-rate.schemas.js";
 export * from "./schemas/company.schemas.js";
+export * from "./schemas/audit-log.schemas.js";
+export * from "./schemas/report.schemas.js";

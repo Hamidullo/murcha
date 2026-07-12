@@ -139,10 +139,11 @@
 
 ## Faza 10 — Dashboard va hisobotlar (1 hafta)
 
-- [ ] Ega dashboardi (ECharts): sotuv, kassa, qarzdorlik, muddati o'tganlar, tugayotgan mahsulotlar
-- [ ] Hisobotlar: sotuv dinamikasi, foyda/marja, top mahsulotlar, sklad aylanmasi, qarzdorlik reestri
-- [ ] Audit log UI
-- [ ] ✅ **Natija: ega ertalab 5 daqiqada butun biznes holatini ko'radi**
+- [x] Ega dashboardi (ECharts): sotuv, kassa, qarzdorlik, muddati o'tganlar, tugayotgan mahsulotlar — `GET /reports/dashboard`, `DashboardPage.vue` (`vue-echarts` birinchi marta o'rnatildi)
+- [x] Hisobotlar: sotuv dinamikasi, foyda/marja, top mahsulotlar, sklad aylanmasi, qarzdorlik reestri — `reports` moduli (`sales`/`products`/`stock-turnover`), qarzdorlik reestri Faza 8'dagi `debts.getAging()`/`DebtsAgingPage.vue`ga havola (yangi backend kerak emas)
+- [x] Audit log UI — `audit-logs` moduli + `AuditLogListPage.vue`; yozish faqat tanlangan olti servis (orders/warehouse-docs/payments/debts/cash/company-members) — to'liq qamrov emas, `BACKLOG.md`da
+- [x] ✅ **Natija: ega ertalab 5 daqiqada butun biznes holatini ko'radi**
+      — barcha kod yozilgan va testlangan (930/930 backend test yashil, frontend build muvaffaqiyatli, Claude Browser'da dashboard/uchta hisobot/audit log sahifalari soxta `fetch` bilan uchdan-uchgacha tekshirildi, ECharts grafigi va audit log tafsilot-ochish ishlashi tasdiqlandi). Haqiqiy Postgres/Redis'siz (real ma'lumotlar bilan hisob-kitob) hali tasdiqlanmagan — oldingi fazalardagi bilan bir xil infratuzilma cheklovi
 
 ## Faza 11 — Landing, vitrina, super-admin (1–2 hafta)
 

@@ -51,6 +51,46 @@ export class OrdersRepository {
   }
 
   /**
+   * Hisobotlar uchun (`reports.service.js`) — faqat `status:"accepted"`
+   * zakazlar, item'lar mahsulot nomi/artikuli bilan (marja/top mahsulot
+   * hisobi shu yerdan). Sana filtri `confirmedAt` bo'yicha — haqiqiy qabul
+   * sanasi emas, MVP yaqinlashtirish (`OrderStatusHistory` join qo'shimcha
+   * murakkablik).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} companyId
+   * @param {{ from?: Date, to?: Date }} [filters]
+   * @returns {Promise<import("@prisma/client").Order[]>}
+   */
+  async listAcceptedForReports(tx, companyId, filters = {}) {
+    const { from, to } = filters;
+    return tx.order.findMany({
+      where: {
+        companyId,
+        status: "accepted",
+        ...(from || to
+          ? { confirmedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+          : {}),
+      },
+      include: {
+        items: { include: { product: { select: { nameUz: true, sku: true } } } },
+      },
+      orderBy: { confirmedAt: "asc" },
+    });
+  }
+
+  /**
+   * Dashboard uchun — hali yakunlanmagan zakazlar soni.
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} companyId
+   * @returns {Promise<number>}
+   */
+  async countPending(tx, companyId) {
+    return tx.order.count({
+      where: { companyId, status: { in: ["new", "confirmed", "picking"] } },
+    });
+  }
+
+  /**
    * Idempotency replay — bir xil kalit bilan qayta so'ralsa mavjud zakaz
    * qaytariladi, yangisi yaratilmaydi.
    * @param {import("@prisma/client").Prisma.TransactionClient} tx

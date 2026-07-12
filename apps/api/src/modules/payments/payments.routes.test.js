@@ -14,6 +14,7 @@ const fakeTx = {
   cashRegister: { findUnique: vi.fn() },
   transaction: { create: vi.fn() },
   rolePermission: { findFirst: vi.fn() },
+  auditLog: { create: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },

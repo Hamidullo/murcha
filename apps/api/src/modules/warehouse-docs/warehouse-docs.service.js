@@ -9,6 +9,7 @@ import {
 import { computeQtyBase } from "../../lib/qty-base.js";
 import { renderWarehouseDocPdf } from "../printing/printing.pdf.js";
 import { loadCompanyLogoBase64 } from "../printing/printing.logo.js";
+import { logAudit } from "../../lib/audit.js";
 
 /** Hujjat raqami prefiksi (DATABASE.md: `KIR-2026-00001` uslubi). */
 const NUMBER_PREFIX = {
@@ -32,6 +33,7 @@ export class WarehouseDocsService {
    *   stockRepository: import("../stock/stock.repository.js").StockRepository,
    *   stockMovementsRepository: import("../stock/stock-movements.repository.js").StockMovementsRepository,
    *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -42,6 +44,7 @@ export class WarehouseDocsService {
     stockRepository,
     stockMovementsRepository,
     companiesRepository,
+    auditLogsRepository,
   }) {
     this.warehouseDocsRepository = warehouseDocsRepository;
     this.warehousesRepository = warehousesRepository;
@@ -50,6 +53,7 @@ export class WarehouseDocsService {
     this.stockRepository = stockRepository;
     this.stockMovementsRepository = stockMovementsRepository;
     this.companiesRepository = companiesRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   /**
@@ -259,11 +263,21 @@ export class WarehouseDocsService {
       const operations = doc.items.flatMap((item) => this.#buildOperations(doc, item, 1));
       await this.#applyOperations(tx, doc, auth, operations);
 
-      return this.warehouseDocsRepository.update(tx, docId, {
+      const updated = await this.warehouseDocsRepository.update(tx, docId, {
         status: "confirmed",
         confirmedAt: new Date(),
         confirmedBy: auth.userId,
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "confirm",
+        entityType: "warehouse_doc",
+        entityId: docId,
+        before: { status: "draft" },
+        after: { status: "confirmed" },
+      });
+      return updated;
     });
   }
 
@@ -289,7 +303,19 @@ export class WarehouseDocsService {
       const operations = doc.items.flatMap((item) => this.#buildOperations(doc, item, -1));
       await this.#applyOperations(tx, doc, auth, operations);
 
-      return this.warehouseDocsRepository.update(tx, docId, { status: "cancelled" });
+      const updated = await this.warehouseDocsRepository.update(tx, docId, {
+        status: "cancelled",
+      });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "cancel",
+        entityType: "warehouse_doc",
+        entityId: docId,
+        before: { status: "confirmed" },
+        after: { status: "cancelled" },
+      });
+      return updated;
     });
   }
 

@@ -13,6 +13,7 @@ import { convertToUzs, resolveExchangeRate } from "../../lib/currency.js";
 import { domainEvents } from "../../lib/events.js";
 import { renderOrderInvoicePdf } from "../printing/printing.pdf.js";
 import { loadCompanyLogoBase64 } from "../printing/printing.logo.js";
+import { logAudit } from "../../lib/audit.js";
 
 /** `cancel()`da rezerv bo'shatiladigan (allaqachon `confirm()` bo'lgan) statuslar. */
 const RESERVED_STATUSES = ["confirmed", "picking"];
@@ -47,6 +48,7 @@ export class OrdersService {
    *   debtMovementsRepository: import("../debts/debts.repository.js").DebtMovementsRepository,
    *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
    *   exchangeRatesRepository: import("../exchange-rates/exchange-rates.repository.js").ExchangeRatesRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -66,6 +68,7 @@ export class OrdersService {
     debtMovementsRepository,
     companiesRepository,
     exchangeRatesRepository,
+    auditLogsRepository,
   }) {
     this.ordersRepository = ordersRepository;
     this.salePointsRepository = salePointsRepository;
@@ -83,6 +86,7 @@ export class OrdersService {
     this.debtMovementsRepository = debtMovementsRepository;
     this.companiesRepository = companiesRepository;
     this.exchangeRatesRepository = exchangeRatesRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   /**
@@ -378,6 +382,15 @@ export class OrdersService {
         byUser: auth.userId,
         comment: null,
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "confirm",
+        entityType: "order",
+        entityId: orderId,
+        before: { status: "new" },
+        after: { status: "confirmed" },
+      });
       return updated;
     });
   }
@@ -422,6 +435,15 @@ export class OrdersService {
         toStatus: "cancelled",
         byUser: auth.userId,
         comment: null,
+      });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "cancel",
+        entityType: "order",
+        entityId: orderId,
+        before: { status: order.status },
+        after: { status: "cancelled" },
       });
       return updated;
     });
@@ -672,6 +694,15 @@ export class OrdersService {
         dueDate: order.dueDate,
         createdBy: auth.userId,
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "accept",
+        entityType: "order",
+        entityId: orderId,
+        before: { status: "delivered" },
+        after: { status: "accepted", debtTotal },
+      });
       return updated;
     });
   }
@@ -806,6 +837,15 @@ export class OrdersService {
         amount: -docTotal,
         currency: order.currency,
         createdBy: auth.userId,
+      });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "return",
+        entityType: "order",
+        entityId: orderId,
+        before: null,
+        after: { docId: doc.id, docTotal },
       });
       return this.warehouseDocsRepository.findById(tx, doc.id);
     });

@@ -18,6 +18,7 @@ describe("DebtsService", () => {
   let userAssignmentsRepository;
   let rolesRepository;
   let companiesRepository;
+  let auditLogsRepository;
   let service;
 
   beforeEach(() => {
@@ -35,6 +36,7 @@ describe("DebtsService", () => {
     userAssignmentsRepository = { findSalePointIdForUser: vi.fn() };
     rolesRepository = { hasPermission: vi.fn() };
     companiesRepository = { findById: vi.fn().mockResolvedValue({ id: "c1", name: "Chaqqon" }) };
+    auditLogsRepository = { create: vi.fn() };
     service = new DebtsService({
       debtMovementsRepository,
       salePointsRepository,
@@ -42,6 +44,7 @@ describe("DebtsService", () => {
       userAssignmentsRepository,
       rolesRepository,
       companiesRepository,
+      auditLogsRepository,
     });
   });
 

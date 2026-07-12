@@ -1,4 +1,5 @@
 import { withTenant } from "../../lib/tenant-context.js";
+import { computeAverageCost } from "../../lib/inventory-cost.js";
 
 /** BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). Faqat o'qish — yozish `warehouse-docs` orqali. */
 export class StockService {
@@ -54,12 +55,9 @@ export class StockService {
       }),
     );
 
-    const totalQty = movements.reduce((sum, m) => sum + Number(m.qty), 0);
-    const totalCost = movements.reduce((sum, m) => sum + Number(m.qty) * Number(m.costPrice), 0);
-
     return {
       productId: filters.productId,
-      averageCost: totalQty > 0 ? totalCost / totalQty : null,
+      averageCost: computeAverageCost(movements),
     };
   }
 }

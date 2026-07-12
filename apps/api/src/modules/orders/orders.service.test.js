@@ -35,6 +35,7 @@ describe("OrdersService", () => {
   let debtMovementsRepository;
   let companiesRepository;
   let exchangeRatesRepository;
+  let auditLogsRepository;
   let service;
 
   const dto = {
@@ -78,6 +79,7 @@ describe("OrdersService", () => {
     debtMovementsRepository = { create: vi.fn(), getBalance: vi.fn().mockResolvedValue(0) };
     companiesRepository = { findById: vi.fn().mockResolvedValue({ id: "c1", settings: {} }) };
     exchangeRatesRepository = { findLatest: vi.fn() };
+    auditLogsRepository = { create: vi.fn() };
     service = new OrdersService({
       ordersRepository,
       salePointsRepository,
@@ -95,6 +97,7 @@ describe("OrdersService", () => {
       debtMovementsRepository,
       companiesRepository,
       exchangeRatesRepository,
+      auditLogsRepository,
     });
   });
 
@@ -399,6 +402,10 @@ describe("OrdersService", () => {
         fakeTx,
         expect.objectContaining({ orderId: "o1", fromStatus: "new", toStatus: "confirmed" }),
       );
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "confirm", entityType: "order", entityId: "o1" }),
+      );
       expect(result).toEqual({ ...order, status: "confirmed" });
     });
 
@@ -492,6 +499,10 @@ describe("OrdersService", () => {
       expect(ordersRepository.addStatusHistory).toHaveBeenCalledWith(
         fakeTx,
         expect.objectContaining({ orderId: "o1", fromStatus: "confirmed", toStatus: "cancelled" }),
+      );
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "cancel", entityType: "order", entityId: "o1" }),
       );
     });
   });
@@ -707,6 +718,10 @@ describe("OrdersService", () => {
           currency: "UZS",
         }),
       );
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "accept", entityType: "order", entityId: "o1" }),
+      );
       expect(result).toEqual({ id: "o1", status: "accepted" });
     });
 
@@ -805,6 +820,10 @@ describe("OrdersService", () => {
           amount: -10000,
           currency: "UZS",
         }),
+      );
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "return", entityType: "order", entityId: "o1" }),
       );
       expect(result).toEqual({ id: "doc1", status: "confirmed" });
     });

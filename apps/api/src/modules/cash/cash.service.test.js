@@ -13,6 +13,7 @@ describe("CashService", () => {
   let expenseCategoriesRepository;
   let transactionsRepository;
   let cashShiftsRepository;
+  let auditLogsRepository;
   let service;
 
   beforeEach(() => {
@@ -37,11 +38,13 @@ describe("CashService", () => {
       listByRegister: vi.fn(),
       update: vi.fn(),
     };
+    auditLogsRepository = { create: vi.fn() };
     service = new CashService({
       cashRegistersRepository,
       expenseCategoriesRepository,
       transactionsRepository,
       cashShiftsRepository,
+      auditLogsRepository,
     });
   });
 

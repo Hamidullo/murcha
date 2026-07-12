@@ -22,6 +22,7 @@ const fakeTx = {
   stock: { findUnique: vi.fn(), upsert: vi.fn() },
   company: { findUnique: vi.fn() },
   exchangeRate: { findFirst: vi.fn() },
+  auditLog: { create: vi.fn() },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },

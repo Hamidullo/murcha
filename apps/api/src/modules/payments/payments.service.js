@@ -2,6 +2,7 @@ import { uuidv7 } from "uuidv7";
 import { withTenant } from "../../lib/tenant-context.js";
 import { NotFoundError, ForbiddenError, ValidationError } from "../../lib/errors.js";
 import { computeOpenOrderBalances } from "../../lib/debt-netting.js";
+import { logAudit } from "../../lib/audit.js";
 
 const MANAGE_PERMISSION = "debts.manage";
 
@@ -23,6 +24,7 @@ export class PaymentsService {
    *   rolesRepository: import("../roles/roles.repository.js").RolesRepository,
    *   cashRegistersRepository: import("../cash/cash-registers.repository.js").CashRegistersRepository,
    *   transactionsRepository: import("../cash/transactions.repository.js").TransactionsRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -32,6 +34,7 @@ export class PaymentsService {
     rolesRepository,
     cashRegistersRepository,
     transactionsRepository,
+    auditLogsRepository,
   }) {
     this.paymentsRepository = paymentsRepository;
     this.debtMovementsRepository = debtMovementsRepository;
@@ -39,6 +42,7 @@ export class PaymentsService {
     this.rolesRepository = rolesRepository;
     this.cashRegistersRepository = cashRegistersRepository;
     this.transactionsRepository = transactionsRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   /**
@@ -139,6 +143,16 @@ export class PaymentsService {
           createdBy: auth.userId,
         });
       }
+
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "create",
+        entityType: "payment",
+        entityId: payment.id,
+        before: null,
+        after: { amount: dto.amount, currency: dto.currency, counterpartyId: dto.counterpartyId },
+      });
 
       return payment;
     });

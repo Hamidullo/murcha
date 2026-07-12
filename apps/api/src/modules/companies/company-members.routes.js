@@ -10,6 +10,7 @@ import { UserAssignmentsRepository } from "../user-assignments/user-assignments.
 import { SessionsRepository } from "../sessions/sessions.repository.js";
 import { PasswordResetRepository } from "../auth/password-reset.repository.js";
 import { redis } from "../../lib/redis.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { CompanyMembersService } from "./company-members.service.js";
 import { CompanyMembersController } from "./company-members.controller.js";
 
@@ -21,6 +22,7 @@ const companyMembersService = new CompanyMembersService({
   userAssignmentsRepository: new UserAssignmentsRepository(),
   sessionsRepository: new SessionsRepository(redis),
   passwordResetRepository: new PasswordResetRepository(redis),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const companyMembersController = new CompanyMembersController({ companyMembersService });
 

@@ -22,6 +22,9 @@ const fakeTx = {
   userAssignment: {
     create: vi.fn(),
   },
+  auditLog: {
+    create: vi.fn(),
+  },
 };
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },

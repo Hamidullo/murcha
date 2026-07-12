@@ -28,4 +28,25 @@ export class StockMovementsRepository {
       },
     });
   }
+
+  /**
+   * Sklad aylanmasi hisoboti uchun — davrdagi barcha harakatlar (kirim ham,
+   * chiqim ham; `reports.service.js` chiqim (`qty < 0`) qatorlarini o'zi
+   * ajratadi).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} companyId
+   * @param {{ from?: Date, to?: Date }} [filters]
+   * @returns {Promise<import("@prisma/client").StockMovement[]>}
+   */
+  async listByPeriod(tx, companyId, filters = {}) {
+    const { from, to } = filters;
+    return tx.stockMovement.findMany({
+      where: {
+        companyId,
+        ...(from || to
+          ? { createdAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+          : {}),
+      },
+    });
+  }
 }

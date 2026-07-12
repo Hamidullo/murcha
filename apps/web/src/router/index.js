@@ -185,6 +185,31 @@ const routes = [
         name: "company-settings",
         component: () => import("../pages/CompanySettingsPage.vue"),
       },
+      {
+        path: "dashboard",
+        name: "dashboard",
+        component: () => import("../pages/DashboardPage.vue"),
+      },
+      {
+        path: "reports/sales",
+        name: "reports-sales",
+        component: () => import("../pages/SalesReportPage.vue"),
+      },
+      {
+        path: "reports/products",
+        name: "reports-products",
+        component: () => import("../pages/ProductsReportPage.vue"),
+      },
+      {
+        path: "reports/stock-turnover",
+        name: "reports-stock-turnover",
+        component: () => import("../pages/StockTurnoverPage.vue"),
+      },
+      {
+        path: "audit-logs",
+        name: "audit-logs",
+        component: () => import("../pages/AuditLogListPage.vue"),
+      },
     ],
   },
 ];

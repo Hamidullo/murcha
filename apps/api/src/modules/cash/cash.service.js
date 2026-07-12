@@ -1,6 +1,7 @@
 import { uuidv7 } from "uuidv7";
 import { withTenant } from "../../lib/tenant-context.js";
 import { NotFoundError, ValidationError, ConflictError } from "../../lib/errors.js";
+import { logAudit } from "../../lib/audit.js";
 
 /** Yopiq tomonga ishora qiluvchi tur — smena balansini netto qilishda. */
 const INFLOW_TYPES = new Set(["income", "transfer_in"]);
@@ -17,6 +18,7 @@ export class CashService {
    *   expenseCategoriesRepository: import("./expense-categories.repository.js").ExpenseCategoriesRepository,
    *   transactionsRepository: import("./transactions.repository.js").TransactionsRepository,
    *   cashShiftsRepository: import("./cash-shifts.repository.js").CashShiftsRepository,
+   *   auditLogsRepository: import("../audit-logs/audit-logs.repository.js").AuditLogsRepository,
    * }} deps
    */
   constructor({
@@ -24,11 +26,13 @@ export class CashService {
     expenseCategoriesRepository,
     transactionsRepository,
     cashShiftsRepository,
+    auditLogsRepository,
   }) {
     this.cashRegistersRepository = cashRegistersRepository;
     this.expenseCategoriesRepository = expenseCategoriesRepository;
     this.transactionsRepository = transactionsRepository;
     this.cashShiftsRepository = cashShiftsRepository;
+    this.auditLogsRepository = auditLogsRepository;
   }
 
   // ---- Cash registers ----
@@ -132,7 +136,7 @@ export class CashService {
           throw new NotFoundError("Xarajat kategoriyasi topilmadi");
         }
       }
-      return this.transactionsRepository.create(tx, {
+      const transaction = await this.transactionsRepository.create(tx, {
         id: uuidv7(),
         companyId: auth.companyId,
         cashRegisterId: dto.cashRegisterId,
@@ -146,6 +150,16 @@ export class CashService {
         createdBy: auth.userId,
         occurredAt: dto.occurredAt ?? new Date(),
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "create",
+        entityType: "transaction",
+        entityId: transaction.id,
+        before: null,
+        after: { type: dto.type, amount: dto.amount, cashRegisterId: dto.cashRegisterId },
+      });
+      return transaction;
     });
   }
 
@@ -190,6 +204,19 @@ export class CashService {
         comment: dto.comment ?? null,
         createdBy: auth.userId,
         occurredAt,
+      });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "transfer",
+        entityType: "transaction",
+        entityId: out.id,
+        before: null,
+        after: {
+          fromCashRegisterId: dto.fromCashRegisterId,
+          toCashRegisterId: dto.toCashRegisterId,
+          amount: dto.amount,
+        },
       });
       return { out, in: incoming };
     });
@@ -261,14 +288,25 @@ export class CashService {
       });
       const expectedBalance = this.#computeExpectedBalance(shift.openingBalance, transactions);
       const countedBalance = dto.countedBalance;
-      return this.cashShiftsRepository.update(tx, shiftId, {
+      const diff = countedBalance - expectedBalance;
+      const updated = await this.cashShiftsRepository.update(tx, shiftId, {
         expectedBalance,
         countedBalance,
-        diff: countedBalance - expectedBalance,
+        diff,
         closedBy: auth.userId,
         closedAt: new Date(),
         comment: dto.comment ?? null,
       });
+      await logAudit(tx, this.auditLogsRepository, {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        action: "close_shift",
+        entityType: "cash_shift",
+        entityId: shiftId,
+        before: { expectedBalance },
+        after: { countedBalance, diff },
+      });
+      return updated;
     });
   }
 

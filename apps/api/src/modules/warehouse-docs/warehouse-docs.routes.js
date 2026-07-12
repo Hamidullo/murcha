@@ -14,6 +14,7 @@ import { ProductUnitsRepository } from "../products/product-units.repository.js"
 import { StockRepository } from "../stock/stock.repository.js";
 import { StockMovementsRepository } from "../stock/stock-movements.repository.js";
 import { CompaniesRepository } from "../companies/companies.repository.js";
+import { AuditLogsRepository } from "../audit-logs/audit-logs.repository.js";
 import { WarehouseDocsService } from "./warehouse-docs.service.js";
 import { WarehouseDocsController } from "./warehouse-docs.controller.js";
 
@@ -26,6 +27,7 @@ const warehouseDocsService = new WarehouseDocsService({
   stockRepository: new StockRepository(),
   stockMovementsRepository: new StockMovementsRepository(),
   companiesRepository: new CompaniesRepository(),
+  auditLogsRepository: new AuditLogsRepository(),
 });
 const warehouseDocsController = new WarehouseDocsController({ warehouseDocsService });
 

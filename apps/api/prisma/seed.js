@@ -31,6 +31,7 @@ const PERMISSIONS = [
   "cash.view",
   "cash.manage",
   "reports.view",
+  "audit.view",
 ];
 
 /** Owner'dan tashqari sklad tomoni rollariga beriladigan ruxsatlar (Faza 5/8/9). */

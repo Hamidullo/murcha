@@ -49,6 +49,48 @@ describe("OrdersRepository", () => {
     });
   });
 
+  it("listAcceptedForReports — status:accepted va item.product bilan include qiladi", async () => {
+    const tx = { order: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new OrdersRepository();
+
+    await repo.listAcceptedForReports(tx, "c1");
+
+    expect(tx.order.findMany).toHaveBeenCalledWith({
+      where: { companyId: "c1", status: "accepted" },
+      include: {
+        items: { include: { product: { select: { nameUz: true, sku: true } } } },
+      },
+      orderBy: { confirmedAt: "asc" },
+    });
+  });
+
+  it("listAcceptedForReports — from/to filtri bilan", async () => {
+    const from = new Date("2026-01-01");
+    const to = new Date("2026-02-01");
+    const tx = { order: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new OrdersRepository();
+
+    await repo.listAcceptedForReports(tx, "c1", { from, to });
+
+    expect(tx.order.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { companyId: "c1", status: "accepted", confirmedAt: { gte: from, lte: to } },
+      }),
+    );
+  });
+
+  it("countPending — status in [new,confirmed,picking] bo'yicha count qiladi", async () => {
+    const tx = { order: { count: vi.fn().mockResolvedValue(3) } };
+    const repo = new OrdersRepository();
+
+    const result = await repo.countPending(tx, "c1");
+
+    expect(tx.order.count).toHaveBeenCalledWith({
+      where: { companyId: "c1", status: { in: ["new", "confirmed", "picking"] } },
+    });
+    expect(result).toBe(3);
+  });
+
   it("findByIdempotencyKey — companyId_idempotencyKey unique kalit bilan qidiradi", async () => {
     const tx = { order: { findUnique: vi.fn().mockResolvedValue(null) } };
     const repo = new OrdersRepository();

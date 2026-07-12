@@ -17,6 +17,7 @@ describe("WarehouseDocsService", () => {
   let stockRepository;
   let stockMovementsRepository;
   let companiesRepository;
+  let auditLogsRepository;
   let service;
 
   beforeEach(() => {
@@ -39,6 +40,7 @@ describe("WarehouseDocsService", () => {
     stockRepository = { findOne: vi.fn(), applyDelta: vi.fn() };
     stockMovementsRepository = { create: vi.fn() };
     companiesRepository = { findById: vi.fn().mockResolvedValue({ name: "Chaqqon savdo" }) };
+    auditLogsRepository = { create: vi.fn() };
     service = new WarehouseDocsService({
       warehouseDocsRepository,
       warehousesRepository,
@@ -47,6 +49,7 @@ describe("WarehouseDocsService", () => {
       stockRepository,
       stockMovementsRepository,
       companiesRepository,
+      auditLogsRepository,
     });
   });
 
@@ -277,6 +280,10 @@ describe("WarehouseDocsService", () => {
         "d1",
         expect.objectContaining({ status: "confirmed", confirmedBy: "u1" }),
       );
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "confirm", entityType: "warehouse_doc", entityId: "d1" }),
+      );
       expect(result).toEqual({ id: "d1", status: "confirmed" });
     });
 
@@ -402,6 +409,10 @@ describe("WarehouseDocsService", () => {
       expect(warehouseDocsRepository.update).toHaveBeenCalledWith(fakeTx, "d1", {
         status: "cancelled",
       });
+      expect(auditLogsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({ action: "cancel", entityType: "warehouse_doc", entityId: "d1" }),
+      );
       expect(result).toEqual({ id: "d1", status: "cancelled" });
     });
 
