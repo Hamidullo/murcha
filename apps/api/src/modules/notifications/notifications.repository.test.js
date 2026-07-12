@@ -59,4 +59,33 @@ describe("NotificationsRepository", () => {
       data: { readAt: expect.any(Date) },
     });
   });
+
+  it("existsDebtReminderToday — topilmasa false qaytaradi", async () => {
+    const tx = { notification: { findFirst: vi.fn().mockResolvedValue(null) } };
+    const repo = new NotificationsRepository();
+
+    const result = await repo.existsDebtReminderToday(tx, "c1", "o1", "overdue", "2026-07-12");
+
+    expect(tx.notification.findFirst).toHaveBeenCalledWith({
+      where: {
+        companyId: "c1",
+        type: "debt.reminder",
+        data: { path: ["orderId"], equals: "o1" },
+        AND: [
+          { data: { path: ["bucket"], equals: "overdue" } },
+          { data: { path: ["dateKey"], equals: "2026-07-12" } },
+        ],
+      },
+    });
+    expect(result).toBe(false);
+  });
+
+  it("existsDebtReminderToday — topilsa true qaytaradi", async () => {
+    const tx = { notification: { findFirst: vi.fn().mockResolvedValue({ id: "n1" }) } };
+    const repo = new NotificationsRepository();
+
+    const result = await repo.existsDebtReminderToday(tx, "c1", "o1", "overdue", "2026-07-12");
+
+    expect(result).toBe(true);
+  });
 });

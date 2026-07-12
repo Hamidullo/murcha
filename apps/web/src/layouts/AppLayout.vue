@@ -87,6 +87,9 @@ async function onLogout() {
           <router-link :to="{ name: 'courier-deliveries' }" class="hover:text-brand-brown">
             Yetkazish
           </router-link>
+          <router-link :to="{ name: 'debts-aging' }" class="hover:text-brand-brown">
+            Qarzlar
+          </router-link>
         </nav>
       </div>
       <div class="flex items-center gap-3">

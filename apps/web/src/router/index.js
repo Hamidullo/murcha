@@ -160,6 +160,16 @@ const routes = [
         name: "courier-delivery-detail",
         component: () => import("../pages/CourierDeliveryDetailPage.vue"),
       },
+      {
+        path: "counterparties/:id/statement",
+        name: "counterparty-statement",
+        component: () => import("../pages/CounterpartyStatementPage.vue"),
+      },
+      {
+        path: "debts/aging",
+        name: "debts-aging",
+        component: () => import("../pages/DebtsAgingPage.vue"),
+      },
     ],
   },
 ];

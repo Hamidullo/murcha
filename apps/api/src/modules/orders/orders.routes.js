@@ -16,6 +16,8 @@ import { StockRepository } from "../stock/stock.repository.js";
 import { StockMovementsRepository } from "../stock/stock-movements.repository.js";
 import { WarehouseDocsRepository } from "../warehouse-docs/warehouse-docs.repository.js";
 import { DeliveriesRepository } from "../deliveries/deliveries.repository.js";
+import { DebtMovementsRepository } from "../debts/debts.repository.js";
+import { CompaniesRepository } from "../companies/companies.repository.js";
 import { OrdersService } from "./orders.service.js";
 import { OrdersController } from "./orders.controller.js";
 
@@ -34,6 +36,8 @@ const ordersService = new OrdersService({
   stockMovementsRepository: new StockMovementsRepository(),
   warehouseDocsRepository: new WarehouseDocsRepository(),
   deliveriesRepository: new DeliveriesRepository(),
+  debtMovementsRepository: new DebtMovementsRepository(),
+  companiesRepository: new CompaniesRepository(),
 });
 const ordersController = new OrdersController({ ordersService });
 

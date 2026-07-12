@@ -17,6 +17,10 @@ vi.mock("../../lib/opaque-token.js", () => ({
 }));
 const sendSms = vi.fn().mockResolvedValue(undefined);
 vi.mock("../../lib/sms.js", () => ({ sendSms: (...args) => sendSms(...args) }));
+const addActiveCompany = vi.fn().mockResolvedValue(undefined);
+vi.mock("../../lib/companies-registry.js", () => ({
+  addActiveCompany: (...args) => addActiveCompany(...args),
+}));
 
 const { AuthService } = await import("./auth.service.js");
 const { ConflictError, UnauthorizedError, ForbiddenError, NotFoundError } =

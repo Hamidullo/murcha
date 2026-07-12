@@ -19,6 +19,18 @@ export class SalePointsRepository {
   }
 
   /**
+   * Har kontragentga bitta sotuv nuqtasi (`create()`da avtomatik ochiladi,
+   * bo'lishilmaydi) — qarz eslatmasida "kim javobgar" degan savolga javob
+   * berish uchun (Faza 8).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} counterpartyId
+   * @returns {Promise<import("@prisma/client").SalePoint | null>}
+   */
+  async findByCounterpartyId(tx, counterpartyId) {
+    return tx.salePoint.findFirst({ where: { counterpartyId } });
+  }
+
+  /**
    * @param {import("@prisma/client").Prisma.TransactionClient} tx
    * @param {string} companyId
    * @returns {Promise<import("@prisma/client").SalePoint[]>}

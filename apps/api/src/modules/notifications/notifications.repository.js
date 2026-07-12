@@ -39,4 +39,30 @@ export class NotificationsRepository {
   async markRead(tx, id) {
     return tx.notification.update({ where: { id }, data: { readAt: new Date() } });
   }
+
+  /**
+   * Bugun shu `orderId`+`bucket` uchun qarz eslatmasi allaqachon
+   * yuborilganmi — kunlik eslatma job'ining dublikat oldini olishi uchun
+   * (`Notification.data` JSON ustuniga qidiradi, yangi migratsiyasiz).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} companyId
+   * @param {string} orderId
+   * @param {string} bucket
+   * @param {string} dateKey
+   * @returns {Promise<boolean>}
+   */
+  async existsDebtReminderToday(tx, companyId, orderId, bucket, dateKey) {
+    const found = await tx.notification.findFirst({
+      where: {
+        companyId,
+        type: "debt.reminder",
+        data: { path: ["orderId"], equals: orderId },
+        AND: [
+          { data: { path: ["bucket"], equals: bucket } },
+          { data: { path: ["dateKey"], equals: dateKey } },
+        ],
+      },
+    });
+    return found !== null;
+  }
 }

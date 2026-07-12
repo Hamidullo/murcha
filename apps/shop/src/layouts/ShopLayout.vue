@@ -70,6 +70,13 @@ async function onLogout() {
       >
         Zakazlarim
       </router-link>
+      <router-link
+        :to="{ name: 'my-debt' }"
+        class="flex-1 py-2 text-center text-sm text-brand-brown/70 hover:text-brand-brown"
+        active-class="font-semibold text-brand-amber"
+      >
+        Qarzim
+      </router-link>
     </nav>
   </div>
 </template>

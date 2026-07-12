@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword } from "../../lib/password.js";
 import { signAccessToken, signPendingToken, verifyToken } from "../../lib/jwt.js";
 import { generateOpaqueToken } from "../../lib/opaque-token.js";
 import { sendSms } from "../../lib/sms.js";
+import { addActiveCompany } from "../../lib/companies-registry.js";
 import {
   ConflictError,
   UnauthorizedError,
@@ -126,6 +127,10 @@ export class AuthService {
 
       return { user: createdUser, company: createdCompany, member: createdMember };
     });
+
+    // Tranzaksiyadan tashqarida — Redis yozuvi (kunlik qarz eslatma job'i
+    // uchun kompaniyalar ro'yxati, `lib/companies-registry.js`).
+    await addActiveCompany(company.id);
 
     const session = await this.createSession(
       { userId: user.id, companyId: company.id, roleId: member.roleId },

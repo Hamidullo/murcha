@@ -59,6 +59,13 @@ export class InsufficientStockError extends AppError {
   }
 }
 
+export class CreditLimitExceededError extends AppError {
+  /** @param {string} [message] */
+  constructor(message = "Kredit limiti oshadi") {
+    super(message, 409, "credit_limit_exceeded");
+  }
+}
+
 export class TooManyRequestsError extends AppError {
   /** @param {string} [message] */
   constructor(message = "Juda ko'p so'rov — birozdan keyin urinib ko'ring") {

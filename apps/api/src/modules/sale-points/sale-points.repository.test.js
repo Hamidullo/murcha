@@ -24,6 +24,17 @@ describe("SalePointsRepository", () => {
     expect(result).toBe(data);
   });
 
+  it("findByCounterpartyId — tx.salePoint.findFirst'ni counterpartyId bilan chaqiradi", async () => {
+    const data = { id: "sp1", counterpartyId: "cp1" };
+    const tx = { salePoint: { findFirst: vi.fn().mockResolvedValue(data) } };
+    const repo = new SalePointsRepository();
+
+    const result = await repo.findByCounterpartyId(tx, "cp1");
+
+    expect(tx.salePoint.findFirst).toHaveBeenCalledWith({ where: { counterpartyId: "cp1" } });
+    expect(result).toBe(data);
+  });
+
   it("list — companyId bo'yicha, nom bo'yicha tartiblangan", async () => {
     const tx = { salePoint: { findMany: vi.fn().mockResolvedValue([]) } };
     const repo = new SalePointsRepository();

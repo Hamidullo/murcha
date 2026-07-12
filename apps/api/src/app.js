@@ -26,6 +26,8 @@ import { rolesRouter } from "./modules/roles/roles.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { pushSubscriptionsRouter } from "./modules/push-subscriptions/push-subscriptions.routes.js";
 import { deliveriesRouter } from "./modules/deliveries/deliveries.routes.js";
+import { debtsRouter } from "./modules/debts/debts.routes.js";
+import { paymentsRouter } from "./modules/payments/payments.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -66,6 +68,8 @@ export function createApp() {
   app.use("/api/v1/notifications", notificationsRouter);
   app.use("/api/v1/push-subscriptions", pushSubscriptionsRouter);
   app.use("/api/v1/deliveries", deliveriesRouter);
+  app.use("/api/v1/debts", debtsRouter);
+  app.use("/api/v1/payments", paymentsRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

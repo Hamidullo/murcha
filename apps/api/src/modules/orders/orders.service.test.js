@@ -8,8 +8,14 @@ const domainEvents = { emit: vi.fn() };
 vi.mock("../../lib/events.js", () => ({ domainEvents }));
 
 const { OrdersService } = await import("./orders.service.js");
-const { NotFoundError, ForbiddenError, ConflictError, ValidationError, InsufficientStockError } =
-  await import("../../lib/errors.js");
+const {
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+  ValidationError,
+  InsufficientStockError,
+  CreditLimitExceededError,
+} = await import("../../lib/errors.js");
 
 describe("OrdersService", () => {
   const auth = { userId: "u1", companyId: "c1", roleId: "r1" };
@@ -26,6 +32,8 @@ describe("OrdersService", () => {
   let stockMovementsRepository;
   let warehouseDocsRepository;
   let deliveriesRepository;
+  let debtMovementsRepository;
+  let companiesRepository;
   let service;
 
   const dto = {
@@ -65,6 +73,8 @@ describe("OrdersService", () => {
       findById: vi.fn(),
     };
     deliveriesRepository = { findByOrderId: vi.fn() };
+    debtMovementsRepository = { create: vi.fn(), getBalance: vi.fn().mockResolvedValue(0) };
+    companiesRepository = { findById: vi.fn().mockResolvedValue({ id: "c1", settings: {} }) };
     service = new OrdersService({
       ordersRepository,
       salePointsRepository,
@@ -79,6 +89,8 @@ describe("OrdersService", () => {
       stockMovementsRepository,
       warehouseDocsRepository,
       deliveriesRepository,
+      debtMovementsRepository,
+      companiesRepository,
     });
   });
 
@@ -268,9 +280,17 @@ describe("OrdersService", () => {
       id: "o1",
       status: "new",
       warehouseId: "w1",
+      salePointId: "sp1",
+      currency: "UZS",
+      total: 1000,
       paymentTermDays: 15,
       items: [{ productId: "p1", variantId: null, qtyBaseOrdered: 5 }],
     };
+
+    beforeEach(() => {
+      salePointsRepository.findById.mockResolvedValue({ id: "sp1", counterpartyId: "cp1" });
+      counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", creditLimit: null });
+    });
 
     it("topilmasa NotFoundError otadi", async () => {
       ordersRepository.findById.mockResolvedValue(null);
@@ -320,6 +340,42 @@ describe("OrdersService", () => {
         expect.objectContaining({ orderId: "o1", fromStatus: "new", toStatus: "confirmed" }),
       );
       expect(result).toEqual({ ...order, status: "confirmed" });
+    });
+
+    it("kredit limiti oshsa CreditLimitExceededError otadi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", creditLimit: 500 });
+      debtMovementsRepository.getBalance.mockResolvedValue(0);
+      rolesRepository.hasPermission.mockResolvedValue(false);
+
+      await expect(service.confirm(auth, "o1")).rejects.toBeInstanceOf(CreditLimitExceededError);
+      expect(stockRepository.applyReservedDelta).not.toHaveBeenCalled();
+    });
+
+    it("debts.manage ruxsati bo'lsa limit oshsa ham o'tkaziladi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", creditLimit: 500 });
+      debtMovementsRepository.getBalance.mockResolvedValue(0);
+      rolesRepository.hasPermission.mockResolvedValue(true);
+      stockRepository.findOne.mockResolvedValue({ quantity: 10, reserved: 0 });
+      ordersRepository.update.mockResolvedValue({ ...order, status: "confirmed" });
+
+      await expect(service.confirm(auth, "o1")).resolves.toBeDefined();
+    });
+
+    it("settings.creditLimitMode 'warn' bo'lsa limit oshsa ham o'tkaziladi", async () => {
+      ordersRepository.findById.mockResolvedValue(order);
+      counterpartiesRepository.findById.mockResolvedValue({ id: "cp1", creditLimit: 500 });
+      debtMovementsRepository.getBalance.mockResolvedValue(0);
+      companiesRepository.findById.mockResolvedValue({
+        id: "c1",
+        settings: { creditLimitMode: "warn" },
+      });
+      rolesRepository.hasPermission.mockResolvedValue(false);
+      stockRepository.findOne.mockResolvedValue({ quantity: 10, reserved: 0 });
+      ordersRepository.update.mockResolvedValue({ ...order, status: "confirmed" });
+
+      await expect(service.confirm(auth, "o1")).resolves.toBeDefined();
     });
   });
 
@@ -554,10 +610,16 @@ describe("OrdersService", () => {
       ).rejects.toBeInstanceOf(ValidationError);
     });
 
-    it("to'g'ri holatda qtyAccepted yozadi va statusni 'accepted' qiladi", async () => {
-      ordersRepository.findById.mockResolvedValue(order);
+    it("to'g'ri holatda qtyAccepted yozadi va statusni 'accepted' qiladi, debt_movement yozadi", async () => {
+      ordersRepository.findById.mockResolvedValue({
+        ...order,
+        currency: "UZS",
+        dueDate: new Date("2026-08-01"),
+        items: [{ id: "oi1", qtyShipped: 10, qtyBaseShipped: 10, price: 500 }],
+      });
       rolesRepository.hasPermission.mockResolvedValue(true);
       deliveriesRepository.findByOrderId.mockResolvedValue({ acceptCode: "1234" });
+      salePointsRepository.findById.mockResolvedValue({ id: "sp1", counterpartyId: "cp1" });
       ordersRepository.update.mockResolvedValue({ id: "o1", status: "accepted" });
 
       const result = await service.accept(auth, "o1", {
@@ -573,6 +635,17 @@ describe("OrdersService", () => {
       expect(ordersRepository.addStatusHistory).toHaveBeenCalledWith(
         fakeTx,
         expect.objectContaining({ fromStatus: "delivered", toStatus: "accepted" }),
+      );
+      expect(debtMovementsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          companyId: "c1",
+          counterpartyId: "cp1",
+          type: "order",
+          orderId: "o1",
+          amount: 4000,
+          currency: "UZS",
+        }),
       );
       expect(result).toEqual({ id: "o1", status: "accepted" });
     });
@@ -660,6 +733,18 @@ describe("OrdersService", () => {
       expect(stockMovementsRepository.create).toHaveBeenCalledWith(
         fakeTx,
         expect.objectContaining({ docType: "receipt", docId: "doc1", qty: 2 }),
+      );
+      expect(debtMovementsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          companyId: "c1",
+          counterpartyId: "cp1",
+          type: "return",
+          orderId: "o1",
+          docId: "doc1",
+          amount: -10000,
+          currency: "UZS",
+        }),
       );
       expect(result).toEqual({ id: "doc1", status: "confirmed" });
     });

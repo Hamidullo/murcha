@@ -50,6 +50,11 @@ const routes = [
         name: "order-detail",
         component: () => import("../pages/OrderDetailPage.vue"),
       },
+      {
+        path: "debt",
+        name: "my-debt",
+        component: () => import("../pages/MyDebtPage.vue"),
+      },
     ],
   },
 ];

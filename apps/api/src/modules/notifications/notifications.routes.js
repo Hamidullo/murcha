@@ -4,6 +4,7 @@ import { NotificationsRepository } from "./notifications.repository.js";
 import { CompanyMembersRepository } from "../companies/company-members.repository.js";
 import { RolesRepository } from "../roles/roles.repository.js";
 import { PushSubscriptionsRepository } from "../push-subscriptions/push-subscriptions.repository.js";
+import { UserAssignmentsRepository } from "../user-assignments/user-assignments.repository.js";
 import { NotificationsService } from "./notifications.service.js";
 import { NotificationsController } from "./notifications.controller.js";
 import { domainEvents } from "../../lib/events.js";
@@ -15,6 +16,7 @@ const notificationsService = new NotificationsService({
   companyMembersRepository: new CompanyMembersRepository(),
   rolesRepository: new RolesRepository(),
   pushSubscriptionsRepository: new PushSubscriptionsRepository(),
+  userAssignmentsRepository: new UserAssignmentsRepository(),
 });
 const notificationsController = new NotificationsController({ notificationsService });
 

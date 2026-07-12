@@ -20,6 +20,7 @@ describe("NotificationsService", () => {
   let companyMembersRepository;
   let rolesRepository;
   let pushSubscriptionsRepository;
+  let userAssignmentsRepository;
   let service;
 
   beforeEach(() => {
@@ -32,15 +33,18 @@ describe("NotificationsService", () => {
       listByUser: vi.fn(),
       findById: vi.fn(),
       markRead: vi.fn(),
+      existsDebtReminderToday: vi.fn().mockResolvedValue(false),
     };
-    companyMembersRepository = { list: vi.fn() };
+    companyMembersRepository = { list: vi.fn().mockResolvedValue([]) };
     rolesRepository = { hasPermission: vi.fn() };
     pushSubscriptionsRepository = { listByUser: vi.fn().mockResolvedValue([]), remove: vi.fn() };
+    userAssignmentsRepository = { listByTarget: vi.fn().mockResolvedValue([]) };
     service = new NotificationsService({
       notificationsRepository,
       companyMembersRepository,
       rolesRepository,
       pushSubscriptionsRepository,
+      userAssignmentsRepository,
     });
   });
 
@@ -156,6 +160,63 @@ describe("NotificationsService", () => {
       expect(notificationsRepository.create).not.toHaveBeenCalled();
       expect(emitToCompany).not.toHaveBeenCalled();
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("notifyDebtReminder", () => {
+    const event = {
+      companyId: "c1",
+      counterpartyId: "cp1",
+      orderId: "o1",
+      orderNumber: "ZAK-2026-00001",
+      salePointId: "sp1",
+      amount: 50000,
+      currency: "UZS",
+      bucket: "overdue",
+    };
+
+    it("bugun allaqachon yuborilgan bo'lsa qayta yaratmaydi", async () => {
+      notificationsRepository.existsDebtReminderToday.mockResolvedValue(true);
+
+      const result = await service.notifyDebtReminder(event);
+
+      expect(notificationsRepository.create).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it("debts.manage egalari va sotuv nuqtasi operatorlariga bildirishnoma yaratadi", async () => {
+      companyMembersRepository.list.mockResolvedValue([
+        { userId: "u1", roleId: "r1", status: "active" },
+        { userId: "u2", roleId: "r2", status: "active" },
+      ]);
+      rolesRepository.hasPermission.mockImplementation((_tx, roleId) =>
+        Promise.resolve(roleId === "r1"),
+      );
+      userAssignmentsRepository.listByTarget.mockResolvedValue([
+        { companyMember: { user: { id: "u3" } } },
+      ]);
+      notificationsRepository.create.mockImplementation((_tx, data) => Promise.resolve(data));
+
+      const result = await service.notifyDebtReminder(event);
+
+      expect(withTenant).toHaveBeenCalledWith("c1", null, expect.any(Function));
+      const createdUserIds = notificationsRepository.create.mock.calls.map(
+        (call) => call[1].userId,
+      );
+      expect(createdUserIds.sort()).toEqual(["u1", "u3"]);
+      expect(notificationsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          type: "debt.reminder",
+          data: expect.objectContaining({
+            orderId: "o1",
+            kind: "debt_reminder",
+            bucket: "overdue",
+          }),
+        }),
+      );
+      expect(result).toHaveLength(2);
+      expect(emitToCompany).toHaveBeenCalledTimes(2);
     });
   });
 });

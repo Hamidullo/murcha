@@ -15,3 +15,9 @@ export const thumbnailQueue = new Queue(THUMBNAIL_QUEUE_NAME, { connection: queu
 export const IMPORT_QUEUE_NAME = "excel-import";
 
 export const importQueue = new Queue(IMPORT_QUEUE_NAME, { connection: queueConnection });
+
+export const DEBT_REMINDER_QUEUE_NAME = "debt-reminders";
+
+export const debtReminderQueue = new Queue(DEBT_REMINDER_QUEUE_NAME, {
+  connection: queueConnection,
+});

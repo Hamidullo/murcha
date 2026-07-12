@@ -161,9 +161,14 @@ describe("POST /api/v1/orders/:id/confirm", () => {
       id: "o1",
       status: "new",
       warehouseId: "w1",
+      salePointId: "sp1",
+      currency: "UZS",
+      total: 1000,
       paymentTermDays: 0,
       items: [{ productId: "p1", variantId: null, qtyBaseOrdered: 2 }],
     });
+    fakeTx.salePoint.findUnique.mockResolvedValue({ id: "sp1", counterpartyId: "cp1" });
+    fakeTx.counterparty.findUnique.mockResolvedValue({ id: "cp1", creditLimit: null });
     fakeTx.stock.findUnique.mockResolvedValue({ quantity: 10, reserved: 0 });
     fakeTx.stock.upsert.mockResolvedValue({ id: "s1" });
     fakeTx.order.update.mockImplementation((args) => Promise.resolve({ id: "o1", ...args.data }));
@@ -181,9 +186,14 @@ describe("POST /api/v1/orders/:id/confirm", () => {
       id: "o1",
       status: "new",
       warehouseId: "w1",
+      salePointId: "sp1",
+      currency: "UZS",
+      total: 1000,
       paymentTermDays: 0,
       items: [{ productId: "p1", variantId: null, qtyBaseOrdered: 20 }],
     });
+    fakeTx.salePoint.findUnique.mockResolvedValue({ id: "sp1", counterpartyId: "cp1" });
+    fakeTx.counterparty.findUnique.mockResolvedValue({ id: "cp1", creditLimit: null });
     fakeTx.stock.findUnique.mockResolvedValue({ quantity: 10, reserved: 0 });
 
     const res = await request(createApp())

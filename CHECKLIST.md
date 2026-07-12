@@ -115,16 +115,16 @@
 
 ## Faza 8 — Qarz (nasiya) boshqaruvi (2 hafta)
 
-- [ ] debt_movements jurnali
-- [ ] Kredit limiti + zakaz tasdiqlashda tekshiruv (Faza 5'ga ulanadi)
-- [ ] To'lov muddatlari, overdue belgilash
-- [ ] To'lovlar + taqsimlash (FIFO/qo'lda), qisman to'lovlar
-- [ ] Aging report (0–15/16–30/31–60/60+)
-- [ ] Solishtirish dalolatnomasi (PDF)
-- [ ] Realizatsiya (konsignatsiya) rejimi
-- [ ] Avtomatik eslatmalar
-- [ ] Do'kon PWA'da qarz balansi + to'lov tarixi
-- [ ] ✅ **Natija: nasiya oqimi testi — zakaz → qisman to'lov → aging to'g'ri → limitda blok**
+- [x] debt_movements jurnali — `debts` moduli, immutable (faqat `create`), `accept()`da `type:"order"`, `returnItems()`da `type:"return"`, to'lovda `type:"payment"`
+- [x] Kredit limiti + zakaz tasdiqlashda tekshiruv (Faza 5'ga ulanadi) — `confirm()`da, `settings.creditLimitMode` (`block`/`warn`), `debts.manage` bypass
+- [x] To'lov muddatlari, overdue belgilash — aging'da 5-bucket (`notDue`/`d0_15`/`d16_30`/`d31_60`/`d60plus`), UI'da qizil
+- [x] To'lovlar + taqsimlash (FIFO/qo'lda), qisman to'lovlar — `payments` moduli, ortiqcha to'lov `orderId:null` bilan yoziladi
+- [x] Aging report (0–15/16–30/31–60/60+) — `GET /debts/aging`, `DebtsAgingPage.vue`
+- [x] Solishtirish dalolatnomasi (PDF) — `pdfmake` (standart Helvetica), `GET /debts/counterparties/:id/statement.pdf`
+- [ ] Realizatsiya (konsignatsiya) rejimi — DB sxema qo'llab-quvvatlamaydi (yangi migratsiya kerak), `BACKLOG.md`ga o'tkazildi
+- [x] Avtomatik eslatmalar — kunlik BullMQ job (`worker.js`), Redis kompaniyalar ro'yxati (RLS bypass'siz), `debts.manage` + sotuv nuqtasi operatorlariga
+- [x] Do'kon PWA'da qarz balansi + to'lov tarixi — `MyDebtPage.vue`
+- [x] ✅ **Natija: nasiya oqimi testi — zakaz → qisman to'lov → aging to'g'ri → limitda blok**
 
 ## Faza 9 — Kassa, valyuta, chop etish (1–2 hafta)
 

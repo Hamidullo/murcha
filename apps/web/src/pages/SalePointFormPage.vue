@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { createSalePointSchema, updateSalePointSchema } from "@murcha/shared";
 import * as salePointsApi from "../api/sale-points.api.js";
 import * as priceTypesApi from "../api/priceTypes.api.js";
+import * as debtsApi from "../api/debts.api.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
@@ -42,6 +43,12 @@ const { data: salePointData } = useQuery({
   queryKey: computed(() => ["sale-point", salePointId.value]),
   queryFn: () => salePointsApi.getSalePoint(salePointId.value),
   enabled: isEdit,
+});
+
+const { data: balanceData } = useQuery({
+  queryKey: computed(() => ["debt-balance", salePointData.value?.counterpartyId]),
+  queryFn: () => debtsApi.getBalance(salePointData.value.counterpartyId),
+  enabled: computed(() => isEdit.value && Boolean(salePointData.value?.counterpartyId)),
 });
 
 watch(
@@ -227,6 +234,21 @@ async function onUnassignOperator(userId) {
           </Button>
         </div>
         <p v-if="operatorError" class="text-xs text-red-600">{{ operatorError }}</p>
+      </CardContent>
+    </Card>
+
+    <Card v-if="isEdit && salePointData?.counterpartyId" class="mt-4">
+      <CardHeader><CardTitle>Qarz holati</CardTitle></CardHeader>
+      <CardContent class="flex items-center justify-between">
+        <p class="text-lg font-semibold text-brand-brown">
+          {{ balanceData ? `${balanceData.balance} ${balanceData.currency}` : "…" }}
+        </p>
+        <router-link
+          :to="{ name: 'counterparty-statement', params: { id: salePointData.counterpartyId } }"
+          class="text-sm text-brand-brown/70 underline hover:text-brand-brown"
+        >
+          Batafsil / To'lov
+        </router-link>
       </CardContent>
     </Card>
   </div>

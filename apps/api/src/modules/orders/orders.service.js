@@ -6,6 +6,7 @@ import {
   ConflictError,
   ValidationError,
   InsufficientStockError,
+  CreditLimitExceededError,
 } from "../../lib/errors.js";
 import { computeQtyBase } from "../../lib/qty-base.js";
 import { domainEvents } from "../../lib/events.js";
@@ -40,6 +41,8 @@ export class OrdersService {
    *   stockMovementsRepository: import("../stock/stock-movements.repository.js").StockMovementsRepository,
    *   warehouseDocsRepository: import("../warehouse-docs/warehouse-docs.repository.js").WarehouseDocsRepository,
    *   deliveriesRepository: import("../deliveries/deliveries.repository.js").DeliveriesRepository,
+   *   debtMovementsRepository: import("../debts/debts.repository.js").DebtMovementsRepository,
+   *   companiesRepository: import("../companies/companies.repository.js").CompaniesRepository,
    * }} deps
    */
   constructor({
@@ -56,6 +59,8 @@ export class OrdersService {
     stockMovementsRepository,
     warehouseDocsRepository,
     deliveriesRepository,
+    debtMovementsRepository,
+    companiesRepository,
   }) {
     this.ordersRepository = ordersRepository;
     this.salePointsRepository = salePointsRepository;
@@ -70,6 +75,8 @@ export class OrdersService {
     this.stockMovementsRepository = stockMovementsRepository;
     this.warehouseDocsRepository = warehouseDocsRepository;
     this.deliveriesRepository = deliveriesRepository;
+    this.debtMovementsRepository = debtMovementsRepository;
+    this.companiesRepository = companiesRepository;
   }
 
   /**
@@ -258,6 +265,10 @@ export class OrdersService {
    * yetarli emas bo'lsa butun tasdiqlash bekor qilinadi (qisman rezerv yo'q).
    * Qulflar deadlock oldini olish uchun productId/variantId bo'yicha
    * leksikografik tartibda olinadi (`warehouse-docs`dagi bilan bir xil naqsh).
+   * Kredit limit tekshiruvi (Faza 8): kontragentning joriy qarzi + shu zakaz
+   * summasi `creditLimit`dan oshsa bloklanadi — `company.settings.creditLimitMode`
+   * `"warn"` bo'lsa yoki chaqiruvchida `debts.manage` ruxsati bo'lsa o'tkazib
+   * yuboriladi (PLAN.md: "(sozlanadi)").
    * @param {{ userId: string, companyId: string, roleId: string }} auth
    * @param {string} orderId
    * @returns {Promise<import("@prisma/client").Order>}
@@ -271,6 +282,8 @@ export class OrdersService {
       if (order.status !== "new") {
         throw new ConflictError("Faqat yangi zakazni tasdiqlash mumkin");
       }
+
+      await this.#assertCreditLimit(tx, auth, order);
 
       const sortedItems = [...order.items].sort((a, b) =>
         this.#lockKey(a) < this.#lockKey(b) ? -1 : 1,
@@ -530,7 +543,10 @@ export class OrdersService {
    * `deliverStop()`da yaratilgan) mos kelishi shart — yetkazish tasdig'i.
    * Har item uchun haqiqatda qabul qilingan miqdor (`qtyAccepted`)
    * yoziladi; `qtyShipped`dan kam bo'lsa farq shu ustunlar orqali ko'rinadi
-   * (moliyaviy oqibati — spisaniye/qarz — Faza 8/9'ga bog'liq, hali yo'q).
+   * (kam kelgan qism uchun alohida spisaniye hujjati yaratilmaydi — tovar
+   * `ship()`da allaqachon skladdan chiqqan). Qabul qilingan qiymat bo'yicha
+   * (`price × qtyAccepted`) bitta `debt_movement` (`type:"order"`) yoziladi —
+   * shu zakazning nasiyasi shu yerda tug'iladi (Faza 8).
    * @param {{ userId: string, companyId: string, roleId: string }} auth
    * @param {string} orderId
    * @param {import("@murcha/shared").acceptOrderSchema._type} dto
@@ -562,7 +578,10 @@ export class OrdersService {
         throw new ValidationError("Qabul qilish kodi noto'g'ri");
       }
 
+      const salePoint = await this.salePointsRepository.findById(tx, order.salePointId);
+
       const itemsById = new Map(order.items.map((item) => [item.id, item]));
+      let debtTotal = 0;
       for (const line of dto.items) {
         const item = itemsById.get(line.orderItemId);
         if (!item) {
@@ -580,6 +599,7 @@ export class OrdersService {
           qtyAccepted: line.qtyAccepted,
           qtyBaseAccepted,
         });
+        debtTotal += Number(item.price) * line.qtyAccepted;
       }
 
       const updated = await this.ordersRepository.update(tx, orderId, { status: "accepted" });
@@ -591,6 +611,17 @@ export class OrdersService {
         byUser: auth.userId,
         comment: null,
       });
+      await this.debtMovementsRepository.create(tx, {
+        id: uuidv7(),
+        companyId: auth.companyId,
+        counterpartyId: salePoint.counterpartyId,
+        type: "order",
+        orderId: order.id,
+        amount: debtTotal,
+        currency: order.currency,
+        dueDate: order.dueDate,
+        createdBy: auth.userId,
+      });
       return updated;
     });
   }
@@ -600,7 +631,8 @@ export class OrdersService {
    * o'tayotgan tovar skladga qaytariladi. `ship()`ning teskarisi: `receipt`
    * hujjat yaratiladi, `stock.quantity` oshadi. Order o'zi o'zgarmaydi
    * (tasdiqlangan hujjat immutable — CLAUDE.md) — qaytarish mustaqil
-   * hujjat. Qarz kamayishi — `debts` moduli hali yo'q (Faza 8), qoldiriladi.
+   * hujjat. Qarz `docTotal` summasiga kamayadi — bitta `debt_movement`
+   * (`type:"return"`, `amount:-docTotal`, shu `receipt` hujjatga bog'langan).
    * @param {{ userId: string, companyId: string, roleId: string }} auth
    * @param {string} orderId
    * @param {import("@murcha/shared").returnOrderSchema._type} dto
@@ -714,8 +746,50 @@ export class OrdersService {
       }
 
       await this.warehouseDocsRepository.update(tx, doc.id, { total: docTotal });
+      await this.debtMovementsRepository.create(tx, {
+        id: uuidv7(),
+        companyId: auth.companyId,
+        counterpartyId: salePoint.counterpartyId,
+        type: "return",
+        orderId: order.id,
+        docId: doc.id,
+        amount: -docTotal,
+        currency: order.currency,
+        createdBy: auth.userId,
+      });
       return this.warehouseDocsRepository.findById(tx, doc.id);
     });
+  }
+
+  /**
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {import("@prisma/client").Order} order
+   * @returns {Promise<void>}
+   */
+  async #assertCreditLimit(tx, auth, order) {
+    const salePoint = await this.salePointsRepository.findById(tx, order.salePointId);
+    const counterparty = await this.counterpartiesRepository.findById(tx, salePoint.counterpartyId);
+    if (counterparty?.creditLimit == null) return;
+
+    const company = await this.companiesRepository.findById(tx, auth.companyId);
+    const mode = company?.settings?.creditLimitMode ?? "block";
+    if (mode !== "block") return;
+
+    const canOverride = await this.rolesRepository.hasPermission(tx, auth.roleId, "debts.manage");
+    if (canOverride) return;
+
+    const currentBalance = await this.debtMovementsRepository.getBalance(
+      tx,
+      auth.companyId,
+      salePoint.counterpartyId,
+      order.currency,
+    );
+    if (currentBalance + Number(order.total) > Number(counterparty.creditLimit)) {
+      throw new CreditLimitExceededError(
+        `Kredit limiti oshadi: joriy qarz ${currentBalance} + zakaz ${order.total} > limit ${counterparty.creditLimit}`,
+      );
+    }
   }
 
   /**

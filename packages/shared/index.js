@@ -16,3 +16,5 @@ export * from "./schemas/role.schemas.js";
 export * from "./schemas/notification.schemas.js";
 export * from "./schemas/push-subscription.schemas.js";
 export * from "./schemas/delivery.schemas.js";
+export * from "./schemas/debt.schemas.js";
+export * from "./schemas/payment.schemas.js";

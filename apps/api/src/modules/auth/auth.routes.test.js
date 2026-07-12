@@ -35,6 +35,7 @@ const fakeRedis = {
   set: vi.fn().mockResolvedValue("OK"),
   del: vi.fn().mockResolvedValue(undefined),
   srem: vi.fn().mockResolvedValue(undefined),
+  sadd: vi.fn().mockResolvedValue(1),
   smembers: vi.fn().mockResolvedValue([]),
   incr: vi.fn().mockResolvedValue(1),
   expire: vi.fn().mockResolvedValue(undefined),

@@ -5,6 +5,7 @@ import { emitToCompany } from "../../lib/socket.js";
 import { sendWebPush } from "../../lib/web-push.js";
 
 const ORDER_NOTIFY_PERMISSION = "orders.confirm";
+const DEBT_NOTIFY_PERMISSION = "debts.manage";
 
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). `notifyOrderNew()` — `order.new`
@@ -21,6 +22,7 @@ export class NotificationsService {
    *   companyMembersRepository: import("../companies/company-members.repository.js").CompanyMembersRepository,
    *   rolesRepository: import("../roles/roles.repository.js").RolesRepository,
    *   pushSubscriptionsRepository: import("../push-subscriptions/push-subscriptions.repository.js").PushSubscriptionsRepository,
+   *   userAssignmentsRepository: import("../user-assignments/user-assignments.repository.js").UserAssignmentsRepository,
    * }} deps
    */
   constructor({
@@ -28,11 +30,13 @@ export class NotificationsService {
     companyMembersRepository,
     rolesRepository,
     pushSubscriptionsRepository,
+    userAssignmentsRepository,
   }) {
     this.notificationsRepository = notificationsRepository;
     this.companyMembersRepository = companyMembersRepository;
     this.rolesRepository = rolesRepository;
     this.pushSubscriptionsRepository = pushSubscriptionsRepository;
+    this.userAssignmentsRepository = userAssignmentsRepository;
   }
 
   /**
@@ -106,6 +110,83 @@ export class NotificationsService {
       });
     }
 
+    return created;
+  }
+
+  /**
+   * Kunlik qarz eslatma job'i chaqiradi (`worker.js`, `debt-reminders`
+   * navbati — `domainEvents`ga bog'lanmaydi, worker alohida process).
+   * Qabul qiluvchilar: `debts.manage` egalari + qarzdor sotuv nuqtasiga
+   * biriktirilgan operator(lar) (`shop_operator`da hozircha hech qanday
+   * ruxsat yo'q, shuning uchun to'g'ridan-to'g'ri userId bo'yicha). Bir kunda
+   * bitta `(orderId, bucket)` uchun bir marta (`existsDebtReminderToday`).
+   * @param {{ companyId: string, counterpartyId: string, orderId: string, orderNumber: string, salePointId: string | null, amount: number, currency: string, bucket: "due_soon" | "overdue" }} event
+   * @returns {Promise<import("@prisma/client").Notification[]>}
+   */
+  async notifyDebtReminder(event) {
+    const dateKey = new Date().toISOString().slice(0, 10);
+
+    const created = await withTenant(event.companyId, null, async (tx) => {
+      const already = await this.notificationsRepository.existsDebtReminderToday(
+        tx,
+        event.companyId,
+        event.orderId,
+        event.bucket,
+        dateKey,
+      );
+      if (already) return [];
+
+      const title =
+        event.bucket === "overdue" ? "Qarz muddati o'tdi" : "Qarz to'lov muddati yaqinlashmoqda";
+      const body = `№ ${event.orderNumber} — ${event.amount} ${event.currency}`;
+      const data = { orderId: event.orderId, kind: "debt_reminder", bucket: event.bucket, dateKey };
+
+      const recipientUserIds = new Set();
+      const members = await this.companyMembersRepository.list(tx, event.companyId);
+      for (const member of members) {
+        if (member.status !== "active") continue;
+        const allowed = await this.rolesRepository.hasPermission(
+          tx,
+          member.roleId,
+          DEBT_NOTIFY_PERMISSION,
+        );
+        if (allowed) recipientUserIds.add(member.userId);
+      }
+      if (event.salePointId) {
+        const assignments = await this.userAssignmentsRepository.listByTarget(
+          tx,
+          "sale_point",
+          event.salePointId,
+        );
+        for (const assignment of assignments)
+          recipientUserIds.add(assignment.companyMember.user.id);
+      }
+
+      const result = [];
+      for (const userId of recipientUserIds) {
+        const notification = await this.notificationsRepository.create(tx, {
+          id: uuidv7(),
+          companyId: event.companyId,
+          userId,
+          type: "debt.reminder",
+          title,
+          body,
+          data,
+          channel: "inapp",
+        });
+        result.push(notification);
+      }
+      return result;
+    });
+
+    for (const notification of created) {
+      emitToCompany(event.companyId, "notification", notification);
+      await this.#sendPushToUser(notification.userId, {
+        title: notification.title,
+        body: notification.body,
+        data: notification.data,
+      });
+    }
     return created;
   }
 
