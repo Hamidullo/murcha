@@ -45,7 +45,11 @@ async function throwApiError(res) {
 export async function apiFetch(path, options = {}, config = {}) {
   const authStore = useAuthStore();
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+  // FormData'da Content-Type qo'lda o'rnatilmaydi — brauzer o'zi boundary
+  // bilan qo'shadi (rasm yuklash, products.api.js `uploadProductImage`).
+  if (!(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   if (authStore.accessToken) {
     headers.set("Authorization", `Bearer ${authStore.accessToken}`);
   }

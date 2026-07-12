@@ -6,10 +6,12 @@ vi.mock("../../lib/tenant-context.js", () => ({ withTenant }));
 
 const putObject = vi.fn();
 const removeObject = vi.fn();
+const presignedGetObject = vi.fn();
 vi.mock("../../lib/minio.js", () => ({
   minioClient: {
     putObject: (...args) => putObject(...args),
     removeObject: (...args) => removeObject(...args),
+    presignedGetObject: (...args) => presignedGetObject(...args),
   },
   MINIO_BUCKET: "murcha-test",
 }));
@@ -161,6 +163,35 @@ describe("ProductImagesService", () => {
       await service.deleteImage(auth, "p1", "img1");
 
       expect(removeObject).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("getUrl", () => {
+    it("boshqa mahsulotga tegishli bo'lsa NotFoundError otadi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productImagesRepository.findById.mockResolvedValue({ id: "img1", productId: "p2" });
+
+      await expect(service.getUrl(auth, "p1", "img1")).rejects.toBeInstanceOf(NotFoundError);
+      expect(presignedGetObject).not.toHaveBeenCalled();
+    });
+
+    it("to'g'ri bo'lsa imzolangan URL qaytaradi", async () => {
+      productsRepository.findById.mockResolvedValue({ id: "p1" });
+      productImagesRepository.findById.mockResolvedValue({
+        id: "img1",
+        productId: "p1",
+        path: "products/p1/img1.jpg",
+      });
+      presignedGetObject.mockResolvedValue("https://minio.example/signed-url");
+
+      const result = await service.getUrl(auth, "p1", "img1");
+
+      expect(presignedGetObject).toHaveBeenCalledWith(
+        "murcha-test",
+        "products/p1/img1.jpg",
+        15 * 60,
+      );
+      expect(result).toEqual({ url: "https://minio.example/signed-url" });
     });
   });
 });

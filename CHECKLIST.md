@@ -3,7 +3,7 @@
 > Reja: [PLAN.md](PLAN.md). Har bajarilgan band `[x]` qilinadi. Faza "Natija" mezoni bajarilmaguncha yopilmaydi.
 > Vazifa darajasidagi mayda bo'linish har faza boshida `TASKS.md`da qilinadi (PLAN.md 8.0).
 
-**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) | Oxirgi yangilanish: 2026-07-11
+**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
 
 ---
 
@@ -57,8 +57,10 @@
 - [x] Rasm yuklash (MinIO + sharp thumbnail, BullMQ) — real MinIO/Redis worker bilan hali sinalmagan (mahalliy infratuzilma yo'q, Faza 0/1'dagi bilan bir xil cheklov)
 - [x] Skladlar CRUD (`warehouses` moduli)
 - [x] Frontend skelet + auth ekranlari (`apps/web`: Vue/Vite/Tailwind4/shadcn-vue/Pinia/TanStack Query/Vue Router, login→kompaniya tanlash→dashboard) — brauzerda tekshirildi (Claude Browser), haqiqiy DB'siz login backend xatosi to'g'ri ko'rsatiladi
-- [x] Katalog UI: ro'yxat + qidiruv/filter — full-text (`pg_trgm` GIN indeks, `prisma/search.sql`) — mahsulot forma Task 9'da
+- [x] Katalog UI: ro'yxat + qidiruv/filter — full-text (`pg_trgm` GIN indeks, `prisma/search.sql`)
+- [x] Katalog UI: mahsulot forma (`ProductFormPage.vue` — yaratish/tahrirlash, narx/variant/rasm boshqaruvi)
 - [ ] ✅ **Natija: 100 ta mahsulotli katalog rasmlari bilan telefonda tez ochiladi**
+      — barcha kod yozilgan va testlangan (304/304 backend test yashil, frontend build muvaffaqiyatli, Claude Browser'da UI/validatsiya/navigatsiya tekshirildi), lekin haqiqiy Postgres/Redis/MinIO'siz 100 ta mahsulotli haqiqiy katalog demo qilib bo'lmaydi — Faza 0/1'dagi bilan bir xil infratuzilma cheklovi. Postgres/Redis/MinIO mavjud muhitda birinchi marta tasdiqlanishi kerak
 
 ## Faza 3 — Sklad operatsiyalari (1–2 hafta)
 

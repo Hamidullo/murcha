@@ -12,4 +12,13 @@ describe("UnitsRepository", () => {
     expect(tx.unit.findUnique).toHaveBeenCalledWith({ where: { id: "unit-dona" } });
     expect(result).toBe(data);
   });
+
+  it("list — tx.unit.findMany'ni nom tartibida chaqiradi", async () => {
+    const tx = { unit: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new UnitsRepository();
+
+    await repo.list(tx);
+
+    expect(tx.unit.findMany).toHaveBeenCalledWith({ orderBy: { name: "asc" } });
+  });
 });

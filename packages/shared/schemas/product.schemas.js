@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 export const createProductSchema = z.object({
-  sku: z.string().min(1).max(100),
-  nameUz: z.string().min(2).max(300),
+  sku: z.string().min(1, "SKU kiritilishi shart").max(100),
+  nameUz: z.string().min(2, "Nom kamida 2 belgidan iborat bo'lishi kerak").max(300),
   nameRu: z.string().max(300).optional(),
   description: z.string().max(2000).optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.string().uuid("Noto'g'ri kategoriya").optional(),
   brand: z.string().max(200).optional(),
   country: z.string().max(100).optional(),
-  baseUnitId: z.string().uuid(),
+  baseUnitId: z.string().uuid("Asosiy birlik tanlanishi shart"),
   vatRate: z.number().min(0).max(100).optional(),
   ikpuCode: z.string().max(50).optional(),
   minOrderQty: z.number().positive().optional(),

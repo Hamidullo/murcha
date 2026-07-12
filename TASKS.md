@@ -14,6 +14,6 @@ Prisma sxemasi bu faza uchun kerakli barcha modellarni Faza 0'da o'z ichiga olad
 - [x] **Task 6 — Rasm yuklash**: MinIO klient (`lib/minio.js`), yuklash endpoint, BullMQ worker (`sharp` bilan thumbnail)
 - [x] **Task 7 — Frontend skelet + auth ekranlari**: `apps/web` (Vue 3.5 + Vite + Tailwind 4 + shadcn-vue + Pinia + TanStack Query + Vue Router), login → kompaniya tanlash → himoyalangan dashboard
 - [x] **Task 8 — Katalog UI: ro'yxat + qidiruv/filter** (full-text, `pg_trgm` GIN indeks)
-- [ ] **Task 9 — Katalog UI: mahsulot forma** (yaratish/tahrirlash, rasm/narx/variant boshqaruvi)
+- [x] **Task 9 — Katalog UI: mahsulot forma** (yaratish/tahrirlash, rasm/narx/variant boshqaruvi)
 
 Faza 2 "Natija" mezoni (CHECKLIST.md): 100 ta mahsulotli katalog rasmlari bilan telefonda tez ochiladi.

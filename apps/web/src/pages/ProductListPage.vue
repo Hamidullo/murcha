@@ -1,9 +1,13 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
 import * as productsApi from "../api/products.api.js";
 import * as categoriesApi from "../api/categories.api.js";
 import Input from "@/components/ui/input/Input.vue";
+import Button from "@/components/ui/button/Button.vue";
+
+const router = useRouter();
 
 const search = ref("");
 const debouncedSearch = ref("");
@@ -37,11 +41,22 @@ const {
     }),
 });
 const products = computed(() => productsData.value?.products ?? []);
+
+/**
+ * @param {string} productId
+ * @returns {void}
+ */
+function goToEdit(productId) {
+  router.push({ name: "product-edit", params: { id: productId } });
+}
 </script>
 
 <template>
   <div>
-    <h1 class="text-2xl font-semibold text-brand-brown">Katalog</h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-brand-brown">Katalog</h1>
+      <Button size="sm" @click="router.push({ name: 'product-new' })">Yangi mahsulot</Button>
+    </div>
 
     <div class="mt-4 flex flex-wrap gap-3">
       <Input
@@ -81,7 +96,8 @@ const products = computed(() => productsData.value?.products ?? []);
           <tr
             v-for="product in products"
             :key="product.id"
-            class="border-b border-brand-brown/5 last:border-0"
+            class="cursor-pointer border-b border-brand-brown/5 last:border-0 hover:bg-brand-cream"
+            @click="goToEdit(product.id)"
           >
             <td class="px-4 py-3 text-brand-brown">{{ product.nameUz }}</td>
             <td class="px-4 py-3 text-brand-brown/70">{{ product.sku }}</td>

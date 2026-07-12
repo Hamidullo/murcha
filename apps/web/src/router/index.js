@@ -23,6 +23,16 @@ const routes = [
         name: "products",
         component: () => import("../pages/ProductListPage.vue"),
       },
+      {
+        path: "products/new",
+        name: "product-new",
+        component: () => import("../pages/ProductFormPage.vue"),
+      },
+      {
+        path: "products/:id/edit",
+        name: "product-edit",
+        component: () => import("../pages/ProductFormPage.vue"),
+      },
     ],
   },
 ];

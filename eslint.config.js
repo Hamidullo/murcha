@@ -49,11 +49,13 @@ export default [
         URLSearchParams: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        FormData: "readonly",
+        confirm: "readonly",
       },
     },
     rules: {
       "vue/multi-word-component-names": "off",
-      "jsdoc/no-undefined-types": ["warn", { definedTypes: ["Response", "RequestInit"] }],
+      "jsdoc/no-undefined-types": ["warn", { definedTypes: ["Response", "RequestInit", "File"] }],
     },
   },
   {

@@ -99,4 +99,21 @@ export class ProductImagesController {
       next(err);
     }
   };
+
+  /**
+   * `GET /api/v1/products/:id/images/:imageId/url` — vaqtinchalik imzolangan URL.
+   * @type {import("express").RequestHandler}
+   */
+  getUrl = async (req, res, next) => {
+    try {
+      const result = await this.productImagesService.getUrl(
+        req.auth,
+        req.params.id,
+        req.params.imageId,
+      );
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  };
 }

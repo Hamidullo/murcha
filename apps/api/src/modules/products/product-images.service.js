@@ -10,6 +10,8 @@ const EXTENSION_BY_MIME = {
   "image/webp": "webp",
 };
 
+const PRESIGNED_URL_TTL_SECONDS = 15 * 60;
+
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). MinIO/BullMQ chaqiruvlari
  * (tarmoq I/O) Prisma tranzaksiyasi ichida ushlab turilmaydi — `auth.service`
@@ -128,5 +130,34 @@ export class ProductImagesService {
     await withTenant(auth.companyId, auth.userId, (tx) =>
       this.productImagesRepository.delete(tx, imageId),
     );
+  }
+
+  /**
+   * MinIO bucket'i ochiq emas — vaqtinchalik imzolangan URL orqali
+   * ko'rsatiladi (frontend `<img>` shu URL'ni ishlatadi).
+   * @param {{ userId: string, companyId: string, roleId: string }} auth
+   * @param {string} productId
+   * @param {string} imageId
+   * @returns {Promise<{ url: string }>}
+   */
+  async getUrl(auth, productId, imageId) {
+    const image = await withTenant(auth.companyId, auth.userId, async (tx) => {
+      const product = await this.productsRepository.findById(tx, productId);
+      if (!product) {
+        throw new NotFoundError("Mahsulot topilmadi");
+      }
+      const found = await this.productImagesRepository.findById(tx, imageId);
+      if (!found || found.productId !== productId) {
+        throw new NotFoundError("Rasm topilmadi");
+      }
+      return found;
+    });
+
+    const url = await minioClient.presignedGetObject(
+      MINIO_BUCKET,
+      image.path,
+      PRESIGNED_URL_TTL_SECONDS,
+    );
+    return { url };
   }
 }

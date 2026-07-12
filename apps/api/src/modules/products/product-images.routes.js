@@ -23,6 +23,7 @@ productImagesRouter.post(
   productImagesController.create,
 );
 productImagesRouter.get("/", productImagesController.list);
+productImagesRouter.get("/:imageId/url", productImagesController.getUrl);
 productImagesRouter.post(
   "/:imageId/main",
   requirePermission("products.manage"),
