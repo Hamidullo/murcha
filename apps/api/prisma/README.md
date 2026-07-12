@@ -20,7 +20,9 @@ pnpm db:migrate -- --create-only --name init
 #    - prisma/checks.sql — CHECK cheklovlar (enum o'rniga)
 #    - prisma/immutable.sql — stock_movements/debt_movements/audit_logs/
 #      order_status_history uchun UPDATE/DELETE taqiqi (trigger)
-#    (ikkalasini ham migration.sql oxiriga qo'shib qo'ying)
+#    - prisma/stock.sql — stock unique constraint'ni NULLS NOT DISTINCT
+#      qiladi (Faza 3 Task 2, `warehouse-docs` tasdiqlash oqimi kerak qiladi)
+#    (barchasini migration.sql oxiriga qo'shib qo'ying)
 
 # 3. Migratsiyani qo'llash
 pnpm db:migrate
@@ -46,4 +48,5 @@ yetarli, checks/rls fayllariga yangi qoida qo'shilsa alohida qo'llaniladi.
 - `immutable.sql` — immutable jurnal trigger'lari
 - `rls.sql` — Row-Level Security policy'lar (DATABASE.md 9-bo'lim)
 - `search.sql` — `pg_trgm` kengaytma + GIN indeks (katalog nom qidiruvi, Faza 2 Task 8)
+- `stock.sql` — `stock` unique constraint'ni NULLS NOT DISTINCT qiladi (Faza 3 Task 2)
 - `seed.js` — tizim rollari/ruxsatlari/birliklari

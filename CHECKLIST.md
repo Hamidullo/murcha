@@ -3,7 +3,7 @@
 > Reja: [PLAN.md](PLAN.md). Har bajarilgan band `[x]` qilinadi. Faza "Natija" mezoni bajarilmaguncha yopilmaydi.
 > Vazifa darajasidagi mayda bo'linish har faza boshida `TASKS.md`da qilinadi (PLAN.md 8.0).
 
-**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
+**Holat:** 🟡 Faza 0 tugadi (Docker sinovisiz) · Faza 1 tugadi (RLS/Postgres sinovisiz) · Faza 2 tugadi (real Postgres/Redis/MinIO demo sinovisiz) · Faza 3 tugadi (real Postgres demo sinovisiz) | Oxirgi yangilanish: 2026-07-12
 
 ---
 
@@ -64,13 +64,14 @@
 
 ## Faza 3 — Sklad operatsiyalari (1–2 hafta)
 
-- [ ] Kirim / chiqim / spisaniye / ko'chirish hujjatlari (tasdiqlash + storno)
-- [ ] stock_movements jurnali, qoldiq + rezerv hisobi
-- [ ] Tranzaksiya + qator qulfi (`SELECT ... FOR UPDATE`), manfiy qoldiq taqiqi
-- [ ] Boshlang'ich qoldiq kirimi, o'rtacha tannarx
-- [ ] Minimal qoldiq ogohlantirishi
-- [ ] Postavshchik zakazi (purchase order) → kirim shu asosda
-- [ ] ✅ **Natija: invariant test (movements = qoldiq) + parallel chiqim race-condition testi o'tadi**
+- [x] Kirim / chiqim / spisaniye / ko'chirish hujjatlari (tasdiqlash + storno) — `confirm()`/`cancel()` yozilgan
+- [x] stock_movements jurnali, qoldiq hisobi (rezerv — Faza 5 zakaz oqimida ishlatiladi)
+- [x] Atomik qulflash (Prisma `upsert`+`increment` → Postgres `INSERT...ON CONFLICT`, `SELECT...FOR UPDATE` o'rniga — `prisma/stock.sql`dagi `NULLS NOT DISTINCT` bilan birga), manfiy qoldiq taqiqi (DB CHECK + oldindan tekshiruv)
+- [x] Boshlang'ich qoldiq kirimi (oddiy `receipt` hujjati orqali — alohida turi yo'q), o'rtacha tannarx (`GET /api/v1/stock/average-cost` — `stock_movements`dan so'rov vaqtida hisoblanadi)
+- [x] Minimal qoldiq ogohlantirishi (`GET /api/v1/stock/low` — `quantity <= minQty`)
+- [x] Postavshchik zakazi (purchase order) → kirim shu asosda (`purchase-orders` moduli, `POST /:id/receive` — draft kirim hujjat yaratadi, tasdiqlash alohida)
+- [x] ✅ **Natija: invariant test (movements = qoldiq) + parallel chiqim race-condition testi o'tadi**
+      — `warehouse-docs.invariant.test.js`: real `WarehouseDocsService`/`StockRepository` kodi xotiradagi fake DB'ga qarshi ishlaydi (fake `stock.upsert` `checks.sql`dagi `stock_quantity_check`ni ham takrorlaydi). Mahalliy Postgres yo'qligi sababli haqiqiy DB bilan hali tasdiqlanmagan (Faza 0/1/2'dagi bilan bir xil cheklov) — Postgres mavjud bo'lganda shu fayl haqiqiy integratsion testga almashtirilishi mumkin
 
 ## Faza 4 — Shtrix-kod, Excel, inventarizatsiya (1 hafta)
 

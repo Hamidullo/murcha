@@ -33,6 +33,21 @@ const routes = [
         name: "product-edit",
         component: () => import("../pages/ProductFormPage.vue"),
       },
+      {
+        path: "warehouse-docs",
+        name: "warehouse-docs",
+        component: () => import("../pages/WarehouseDocListPage.vue"),
+      },
+      {
+        path: "warehouse-docs/new",
+        name: "warehouse-doc-new",
+        component: () => import("../pages/WarehouseDocFormPage.vue"),
+      },
+      {
+        path: "warehouse-docs/:id",
+        name: "warehouse-doc-edit",
+        component: () => import("../pages/WarehouseDocFormPage.vue"),
+      },
     ],
   },
 ];
