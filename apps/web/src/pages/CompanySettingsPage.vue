@@ -1,8 +1,11 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { computed } from "vue";
 import * as companiesApi from "../api/companies.api.js";
 import * as exchangeRatesApi from "../api/exchange-rates.api.js";
+import * as priceTypesApi from "../api/priceTypes.api.js";
+import * as categoriesApi from "../api/categories.api.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
@@ -24,11 +27,25 @@ const { data: currentRate } = useQuery({
   queryFn: () => exchangeRatesApi.getCurrentRate("USD"),
   retry: false,
 });
+const { data: priceTypesData } = useQuery({
+  queryKey: ["price-types"],
+  queryFn: priceTypesApi.listPriceTypes,
+});
+const priceTypes = computed(() => priceTypesData.value?.priceTypes ?? []);
+const { data: categoriesData } = useQuery({
+  queryKey: ["categories"],
+  queryFn: categoriesApi.listCategories,
+});
+const categories = computed(() => categoriesData.value?.categories ?? []);
 
 const name = ref("");
 const brandColor = ref("#8b5e34");
 const creditLimitMode = ref("block");
 const exchangeRateMode = ref("cbu");
+const slug = ref("");
+const showcaseEnabled = ref(false);
+const showcasePriceTypeId = ref("");
+const showcaseCategoryId = ref("");
 
 watch(
   company,
@@ -38,6 +55,10 @@ watch(
     brandColor.value = value.brandColor ?? "#8b5e34";
     creditLimitMode.value = value.settings?.creditLimitMode ?? "block";
     exchangeRateMode.value = value.settings?.exchangeRateMode ?? "cbu";
+    slug.value = value.slug ?? "";
+    showcaseEnabled.value = value.showcaseSettings?.enabled ?? false;
+    showcasePriceTypeId.value = value.showcaseSettings?.priceTypeId ?? "";
+    showcaseCategoryId.value = value.showcaseSettings?.categoryId ?? "";
   },
   { immediate: true },
 );
@@ -63,6 +84,30 @@ async function onSaveSettings() {
     settingsError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
   } finally {
     isSavingSettings.value = false;
+  }
+}
+
+const showcaseError = ref("");
+const isSavingShowcase = ref(false);
+
+/** @returns {Promise<void>} */
+async function onSaveShowcase() {
+  showcaseError.value = "";
+  isSavingShowcase.value = true;
+  try {
+    await companiesApi.updateMe({
+      slug: slug.value || undefined,
+      showcaseSettings: {
+        enabled: showcaseEnabled.value,
+        priceTypeId: showcasePriceTypeId.value || null,
+        categoryId: showcaseCategoryId.value || null,
+      },
+    });
+    queryClient.invalidateQueries({ queryKey: ["company-me"] });
+  } catch (err) {
+    showcaseError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+  } finally {
+    isSavingShowcase.value = false;
   }
 }
 
@@ -216,6 +261,53 @@ async function onSaveRate() {
           </div>
           <p v-if="rateError" class="mt-1 text-sm text-red-600">{{ rateError }}</p>
         </div>
+      </CardContent>
+    </Card>
+
+    <Card class="mt-4">
+      <CardHeader><CardTitle>Vitrina</CardTitle></CardHeader>
+      <CardContent class="flex flex-col gap-4">
+        <label class="flex items-center gap-2 text-sm text-brand-brown">
+          <input id="showcase-enabled" v-model="showcaseEnabled" type="checkbox" />
+          Vitrina yoqilgan (ochiq katalog + zakaz so'rovi)
+        </label>
+
+        <div class="flex flex-col gap-1.5">
+          <Label for="showcase-slug">Vitrina manzili (slug)</Label>
+          <Input id="showcase-slug" v-model="slug" placeholder="masalan: murcha-savdo" />
+          <p v-if="slug" class="text-xs text-brand-brown/60">murcha.uz/{{ slug }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <Label for="showcase-price-type">Narx turi</Label>
+          <select
+            id="showcase-price-type"
+            v-model="showcasePriceTypeId"
+            class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
+          >
+            <option value="">Standart narx turi</option>
+            <option v-for="pt in priceTypes" :key="pt.id" :value="pt.id">{{ pt.name }}</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <Label for="showcase-category">Kategoriya</Label>
+          <select
+            id="showcase-category"
+            v-model="showcaseCategoryId"
+            class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
+          >
+            <option value="">Barcha mahsulotlar</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.nameUz }}
+            </option>
+          </select>
+        </div>
+
+        <p v-if="showcaseError" class="text-sm text-red-600">{{ showcaseError }}</p>
+        <Button :disabled="isSavingShowcase" class="self-start" @click="onSaveShowcase">
+          {{ isSavingShowcase ? "Saqlanmoqda…" : "Vitrinani saqlash" }}
+        </Button>
       </CardContent>
     </Card>
   </div>

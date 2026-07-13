@@ -19,6 +19,16 @@ export class CompaniesRepository {
   }
 
   /**
+   * Vitrina (`showcase` moduli) va slug uniqueness tekshiruvi uchun.
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} slug
+   * @returns {Promise<import("@prisma/client").Company | null>}
+   */
+  async findBySlug(tx, slug) {
+    return tx.company.findUnique({ where: { slug } });
+  }
+
+  /**
    * @param {import("@prisma/client").Prisma.TransactionClient} tx
    * @param {string} id
    * @param {object} data

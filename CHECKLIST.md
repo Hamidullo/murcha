@@ -147,11 +147,11 @@
 
 ## Faza 11 — Landing, vitrina, super-admin (1–2 hafta)
 
-- [ ] murcha.uz landing (vite-ssg): hero, imkoniyatlar, tariflar, CTA — uz/ru
-- [ ] SEO: meta/OG, sitemap, Schema.org, hreflang
-- [ ] Kompaniya vitrinasi: profil + ochiq katalog + zakaz so'rovi (lead) — server-render
-- [ ] Super-admin panel: kompaniyalar, tarif limitlari, obuna holati
-- [ ] ✅ **Natija: Google "site:murcha.uz" indekslaydi; vitrinadan lid egaga tushadi**
+- [x] murcha.uz landing (`vite-ssg`, `apps/landing`): hero, imkoniyatlar (6 karta), tariflar (4 tarif, real narxsiz — biznes qarori hali qabul qilinmagan), CTA — uz/ru (`vue-i18n`, til almashtirish tugmasi)
+- [x] SEO: meta/OG (`@unhead/vue`), `sitemap.xml`/`robots.txt` (build-vaqtida generatsiya), `Organization` Schema.org JSON-LD. **hreflang qo'shilmadi** — hozircha bitta URL + client-side til almashtirish (alohida `/ru` route yo'q), hreflang uchun alohida til-URL kerak bo'ladi, kelgusi SEO-kengaytirish sifatida qoldirildi
+- [x] Kompaniya vitrinasi: profil + ochiq katalog + zakaz so'rovi (lead) — server-render (`apps/api` `showcase` moduli, to'liq HTML template literal bilan, Vue SSR emas), `Company.slug`/`showcaseSettings`/`Lead` (Faza 0'dan tayyor sxema) birinchi marta ishlatildi
+- [x] Super-admin panel: kompaniyalar ro'yxati+qidiruv, tarif/holat/muddat tahrirlash — `User.isPlatformAdmin` (yangi migratsiya), alohida `platform_access` token turi, `apps/web` ichida mustaqil auth filiali (`/platform/*`)
+- [x] ✅ **Natija: Google "site:murcha.uz" indekslaydi (texnik asos tayyor — server-render HTML+sitemap, real indekslash tasdiqlanmagan); vitrinadan kelgan lid `lead.new` hodisasi orqali `companies.manage` egalariga bildirishnoma sifatida tushadi**
 
 ## Faza 12 — Sayqal va ishga tushirish (1–2 hafta)
 

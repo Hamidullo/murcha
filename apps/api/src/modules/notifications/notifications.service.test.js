@@ -219,4 +219,51 @@ describe("NotificationsService", () => {
       expect(emitToCompany).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe("notifyLeadNew", () => {
+    const event = { companyId: "c1", leadId: "lead1", name: "Ali", phone: "+998901234567" };
+
+    it("faqat companies.manage ruxsatiga ega aktiv a'zolarga bildirishnoma yaratadi", async () => {
+      companyMembersRepository.list.mockResolvedValue([
+        { userId: "u1", roleId: "r1", status: "active" },
+        { userId: "u2", roleId: "r2", status: "active" },
+        { userId: "u3", roleId: "r1", status: "blocked" },
+      ]);
+      rolesRepository.hasPermission.mockImplementation((_tx, roleId) =>
+        Promise.resolve(roleId === "r1"),
+      );
+      notificationsRepository.create.mockImplementation((_tx, data) => Promise.resolve(data));
+
+      const result = await service.notifyLeadNew(event);
+
+      expect(withTenant).toHaveBeenCalledWith("c1", null, expect.any(Function));
+      expect(notificationsRepository.create).toHaveBeenCalledTimes(1);
+      expect(notificationsRepository.create).toHaveBeenCalledWith(
+        fakeTx,
+        expect.objectContaining({
+          companyId: "c1",
+          userId: "u1",
+          type: "lead.new",
+          title: "Yangi lid — vitrinadan",
+          body: "Ali — +998901234567",
+          data: { leadId: "lead1" },
+          channel: "inapp",
+        }),
+      );
+      expect(result).toHaveLength(1);
+      expect(emitToCompany).toHaveBeenCalledTimes(1);
+    });
+
+    it("hech kim ruxsatga ega bo'lmasa bo'sh ro'yxat qaytaradi", async () => {
+      companyMembersRepository.list.mockResolvedValue([
+        { userId: "u1", roleId: "r1", status: "active" },
+      ]);
+      rolesRepository.hasPermission.mockResolvedValue(false);
+
+      const result = await service.notifyLeadNew(event);
+
+      expect(notificationsRepository.create).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+  });
 });

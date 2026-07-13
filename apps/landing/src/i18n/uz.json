@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "title": "Murcha — ombor, zakaz va qarzlar bitta tizimda",
+    "description": "Murcha — distribyutorlar va do'kon tarmoqlari uchun bulutli sklad boshqaruvi: ko'p sklad, B2B zakaz, dostavka va qarzdorlik bitta platformada."
+  },
+  "nav": {
+    "features": "Imkoniyatlar",
+    "pricing": "Tariflar",
+    "login": "Kirish",
+    "start": "Bepul boshlash"
+  },
+  "hero": {
+    "title": "Savdoga ulgur!",
+    "subtitle": "Ombor, zakaz va qarzlar — bitta tizimda",
+    "cta_start": "Bepul boshlash",
+    "cta_demo": "Demo ko'rish"
+  },
+  "features": {
+    "title": "Nima uchun Murcha",
+    "items": [
+      {
+        "title": "Ko'p sklad, bitta tizim",
+        "desc": "Bir nechta sklad va sotuv nuqtasini bitta joydan boshqaring — qoldiqlar real vaqtda sinxron."
+      },
+      {
+        "title": "B2B zakaz portali",
+        "desc": "Do'konlar o'zi zakaz beradi, sklad yig'adi — Excel va Telegram'dagi tartibsizlikka barham."
+      },
+      {
+        "title": "Dostavka va kuryer xaritada",
+        "desc": "Kuryer marshruti, jonli joylashuv, yetkazib berishda tasdiqlash kodi."
+      },
+      {
+        "title": "Qarzdorlik avtomatik hisoblanadi",
+        "desc": "Nasiya, qisman to'lov, kredit limiti — hammasi avtomatik jurnalda, hech narsa qo'lda emas."
+      },
+      {
+        "title": "Ega uchun bitta dashboard",
+        "desc": "Sotuv, kassa, qarzdorlik — ertalab 5 daqiqada butun biznes holatini ko'ring."
+      },
+      {
+        "title": "O'zbek tili birinchi o'rinda",
+        "desc": "Interfeys, hujjatlar, chop etish — barchasi o'zbek tilida, mahalliy amaliyotga mos."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "Tariflar",
+    "subtitle": "Biznesingiz o'sishi bilan birga o'suvchi tariflar",
+    "cta": "Bog'lanish",
+    "plans": {
+      "free": { "name": "Bepul", "desc": "Kichik boshlash uchun — 1 sklad, 1 foydalanuvchi" },
+      "start": { "name": "Start", "desc": "O'sayotgan biznes uchun — ko'p sklad, jamoa" },
+      "business": {
+        "name": "Biznes",
+        "desc": "To'liq imkoniyatlar — dostavka, qarzdorlik, hisobotlar"
+      },
+      "corporate": {
+        "name": "Korporativ",
+        "desc": "Katta tarmoqlar uchun — moslashtirilgan limit va yordam"
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Savdoga ulgur!",
+    "rights": "Barcha huquqlar himoyalangan."
+  }
+}

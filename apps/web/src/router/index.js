@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth.store.js";
+import { usePlatformAuthStore } from "../stores/platform-auth.store.js";
 
 const routes = [
   {
@@ -25,6 +26,24 @@ const routes = [
     name: "set-password",
     component: () => import("../pages/SetPasswordPage.vue"),
     meta: { public: true },
+  },
+  {
+    path: "/platform/login",
+    name: "platform-login",
+    component: () => import("../pages/PlatformLoginPage.vue"),
+    meta: { platformPublic: true },
+  },
+  {
+    path: "/platform",
+    component: () => import("../layouts/PlatformLayout.vue"),
+    meta: { platform: true },
+    children: [
+      {
+        path: "companies",
+        name: "platform-companies",
+        component: () => import("../pages/PlatformCompaniesPage.vue"),
+      },
+    ],
   },
   {
     path: "/",
@@ -224,6 +243,16 @@ export const router = createRouter({
  * (CLAUDE.md: "frontend'dagi yashirish faqat UX uchun").
  */
 router.beforeEach((to) => {
+  // Platform-admin — kompaniya auth'idan butunlay mustaqil filial
+  // (`platform-auth.store.js`), qolgan guard mantig'iga aralashmaydi.
+  if (to.meta.platform || to.meta.platformPublic) {
+    const platformAuthStore = usePlatformAuthStore();
+    if (to.meta.platformPublic) {
+      return platformAuthStore.isAuthenticated ? { name: "platform-companies" } : true;
+    }
+    return platformAuthStore.isAuthenticated ? true : { name: "platform-login" };
+  }
+
   const authStore = useAuthStore();
 
   if (to.name === "select-company") {

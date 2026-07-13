@@ -18,6 +18,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@murcha/shop", "dev"],
       "port": 5174
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@murcha/landing", "dev"],
+      "port": 5175
     }
   ]
 }

@@ -33,6 +33,9 @@ import { cashRouter } from "./modules/cash/cash.routes.js";
 import { exchangeRatesRouter } from "./modules/exchange-rates/exchange-rates.routes.js";
 import { auditLogsRouter } from "./modules/audit-logs/audit-logs.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
+import { showcaseRouter } from "./modules/showcase/showcase.routes.js";
+import { platformAuthRouter } from "./modules/platform-auth/platform-auth.routes.js";
+import { platformRouter } from "./modules/platform/platform.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { Sentry } from "./lib/sentry.js";
 import { env } from "./config/env.js";
@@ -80,6 +83,9 @@ export function createApp() {
   app.use("/api/v1/exchange-rates", exchangeRatesRouter);
   app.use("/api/v1/audit-logs", auditLogsRouter);
   app.use("/api/v1/reports", reportsRouter);
+  app.use("/api/v1/showcase", showcaseRouter);
+  app.use("/api/v1/platform-auth", platformAuthRouter);
+  app.use("/api/v1/platform", platformRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Marshrut topilmadi" } });

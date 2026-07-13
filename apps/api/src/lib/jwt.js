@@ -32,8 +32,22 @@ export function signPendingToken(payload) {
 }
 
 /**
+ * Platform-admin token — kompaniyaga bog'lanmagan (super-admin panel,
+ * `apps/api/src/modules/platform-auth/`). Refresh-token/Redis-sessiya
+ * ataylab qo'shilmagan (MVP soddalashtirish, `BACKLOG.md`) — TTL uzunroq
+ * (`env.jwtPlatformExpiresIn`), muddati o'tsa qayta kirish.
+ * @param {{ userId: string }} payload
+ * @returns {string}
+ */
+export function signPlatformAccessToken(payload) {
+  return jwt.sign({ ...payload, type: "platform_access" }, requireSecret(), {
+    expiresIn: env.jwtPlatformExpiresIn,
+  });
+}
+
+/**
  * @param {string} token
- * @returns {{ userId: string, companyId?: string, roleId?: string, type: "access" | "pending", iat: number, exp: number }}
+ * @returns {{ userId: string, companyId?: string, roleId?: string, type: "access" | "pending" | "platform_access", iat: number, exp: number }}
  */
 export function verifyToken(token) {
   return /** @type {any} */ (jwt.verify(token, requireSecret()));

@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 
 process.env.JWT_ACCESS_SECRET = "test-secret-kamida-32-belgi-uzunlikda";
 
-const { signAccessToken, signPendingToken, verifyToken } = await import("./jwt.js");
+const { signAccessToken, signPendingToken, signPlatformAccessToken, verifyToken } =
+  await import("./jwt.js");
 
 describe("jwt", () => {
   it("access token sign+verify — payload va type:access", () => {
@@ -22,6 +23,15 @@ describe("jwt", () => {
 
     expect(decoded.userId).toBe("u1");
     expect(decoded.type).toBe("pending");
+    expect(decoded.companyId).toBeUndefined();
+  });
+
+  it("platform access token sign+verify — faqat userId va type:platform_access", () => {
+    const token = signPlatformAccessToken({ userId: "u1" });
+    const decoded = verifyToken(token);
+
+    expect(decoded.userId).toBe("u1");
+    expect(decoded.type).toBe("platform_access");
     expect(decoded.companyId).toBeUndefined();
   });
 

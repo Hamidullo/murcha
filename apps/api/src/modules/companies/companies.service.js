@@ -1,5 +1,5 @@
 import { withTenant } from "../../lib/tenant-context.js";
-import { NotFoundError } from "../../lib/errors.js";
+import { NotFoundError, ConflictError } from "../../lib/errors.js";
 import { minioClient, MINIO_BUCKET } from "../../lib/minio.js";
 
 const EXTENSION_BY_MIME = {
@@ -52,9 +52,18 @@ export class CompaniesService {
       if (!existing) {
         throw new NotFoundError("Kompaniya topilmadi");
       }
+      if (dto.slug && dto.slug !== existing.slug) {
+        const bySlug = await this.companiesRepository.findBySlug(tx, dto.slug);
+        if (bySlug && bySlug.id !== auth.companyId) {
+          throw new ConflictError("Bu slug band — boshqa kompaniya ishlatmoqda");
+        }
+      }
       const data = { ...dto };
       if (dto.settings) {
         data.settings = { ...existing.settings, ...dto.settings };
+      }
+      if (dto.showcaseSettings) {
+        data.showcaseSettings = { ...existing.showcaseSettings, ...dto.showcaseSettings };
       }
       return this.companiesRepository.update(tx, auth.companyId, data);
     });

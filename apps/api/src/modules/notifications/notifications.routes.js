@@ -29,6 +29,13 @@ domainEvents.on("order.new", (event) => {
     .catch((err) => logger.error({ err, event }, "order.new bildirishnomasini yaratishda xato"));
 });
 
+// `lead.new` — vitrinadan kelgan so'rov (`showcase.service.js createLead()`).
+domainEvents.on("lead.new", (event) => {
+  notificationsService
+    .notifyLeadNew(event)
+    .catch((err) => logger.error({ err, event }, "lead.new bildirishnomasini yaratishda xato"));
+});
+
 export const notificationsRouter = Router();
 notificationsRouter.use(requireAuth);
 

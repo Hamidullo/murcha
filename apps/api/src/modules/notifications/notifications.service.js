@@ -6,6 +6,7 @@ import { sendWebPush } from "../../lib/web-push.js";
 
 const ORDER_NOTIFY_PERMISSION = "orders.confirm";
 const DEBT_NOTIFY_PERMISSION = "debts.manage";
+const LEAD_NOTIFY_PERMISSION = "companies.manage";
 
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). `notifyOrderNew()` — `order.new`
@@ -172,6 +173,52 @@ export class NotificationsService {
           title,
           body,
           data,
+          channel: "inapp",
+        });
+        result.push(notification);
+      }
+      return result;
+    });
+
+    for (const notification of created) {
+      emitToCompany(event.companyId, "notification", notification);
+      await this.#sendPushToUser(notification.userId, {
+        title: notification.title,
+        body: notification.body,
+        data: notification.data,
+      });
+    }
+    return created;
+  }
+
+  /**
+   * `lead.new` hodisasi tinglovchisi (`showcase.service.js createLead()`,
+   * `notifyOrderNew()`dagi bilan bir xil naqsh). Qabul qiluvchilar —
+   * `companies.manage` egalari (kompaniya darajasidagi qaror qabul
+   * qiluvchilar, vitrina sozlamalarini ham shular boshqaradi).
+   * @param {{ companyId: string, leadId: string, name: string, phone: string }} event
+   * @returns {Promise<import("@prisma/client").Notification[]>}
+   */
+  async notifyLeadNew(event) {
+    const created = await withTenant(event.companyId, null, async (tx) => {
+      const members = await this.companyMembersRepository.list(tx, event.companyId);
+      const result = [];
+      for (const member of members) {
+        if (member.status !== "active") continue;
+        const allowed = await this.rolesRepository.hasPermission(
+          tx,
+          member.roleId,
+          LEAD_NOTIFY_PERMISSION,
+        );
+        if (!allowed) continue;
+        const notification = await this.notificationsRepository.create(tx, {
+          id: uuidv7(),
+          companyId: event.companyId,
+          userId: member.userId,
+          type: "lead.new",
+          title: "Yangi lid — vitrinadan",
+          body: `${event.name} — ${event.phone}`,
+          data: { leadId: event.leadId },
           channel: "inapp",
         });
         result.push(notification);

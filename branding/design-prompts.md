@@ -21,6 +21,7 @@ All UI text in Uzbek (Latin script). Currency: UZS (format: 1 250 000 so'm).
 ## 1. Landing sahifa (murcha.uz) — desktop + mobil
 
 **Stitch prompt:**
+
 ```
 Marketing landing page for "Murcha" B2B warehouse SaaS.
 Hero: left side — bold headline "Savdoga ulgur!", subheadline "Ombor, zakaz va qarzlar — bitta tizimda", primary amber CTA button "Bepul boshlash", secondary "Demo ko'rish"; right side — cute ant mascot carrying a box + floating app screenshot mockup.
@@ -34,6 +35,7 @@ Light theme, lots of whitespace, playful but professional.
 ## 2. Ega dashboardi (app.murcha.uz) — desktop
 
 **Stitch prompt:**
+
 ```
 Desktop admin dashboard screen for warehouse owner.
 Top bar: company logo placeholder, global search (Ctrl+K hint), notification bell, user avatar.
@@ -47,6 +49,7 @@ Clean data-dense but airy layout, cream card backgrounds.
 ## 3. Do'kon PWA — katalog + savat (shop.murcha.uz) — mobil
 
 **Stitch prompt:**
+
 ```
 Mobile PWA screen: B2B product catalog for shop owner ordering from supplier warehouse.
 Top: sticky header with warehouse name selector, search bar, cart icon with badge.
@@ -58,6 +61,7 @@ Big touch targets, one-hand friendly, light theme.
 ```
 
 **Stitch prompt (savat/checkout):**
+
 ```
 Mobile PWA cart screen "Savat".
 List of items: thumbnail, name, unit price, quantity stepper, line total, swipe-to-delete hint.
@@ -70,6 +74,7 @@ Offline hint chip at top: "Internet yo'q — zakaz saqlanadi, ulanishda yuborila
 ## 4. Do'kon PWA — qarz ekrani — mobil
 
 **Stitch prompt:**
+
 ```
 Mobile screen "Mening qarzim" for shop in B2B app.
 Top: big balance card — "Jami qarz: 18 400 000 so'm", due date info, red badge "Muddati o'tgan: 2 100 000 so'm".
@@ -82,6 +87,7 @@ Clean fintech feel, trustworthy.
 ## 5. Sklad — zakazlar navbati + pick list — desktop
 
 **Stitch prompt:**
+
 ```
 Desktop warehouse operator screen: incoming B2B orders queue.
 Left: orders list with status filter tabs (Yangi 12, Yig'ilmoqda 5, Yo'lda 8). Each order card: number, shop name, items count, total, elapsed time, credit-limit warning icon if exceeded.
@@ -93,6 +99,7 @@ Progress bar "12/18 yig'ildi". Amber accents, scanner-friendly large rows.
 ## 6. Kuryer — dostavka ro'yxati + jonli xarita — mobil
 
 **Stitch prompt:**
+
 ```
 Mobile courier delivery screen, map-first layout.
 Top 60%: map with numbered amber pins (delivery stops), courier location dot, current route highlighted.
@@ -105,6 +112,7 @@ High contrast for outdoor sunlight use, large buttons.
 ## 7. Mahsulot forma (admin) — desktop
 
 **Stitch prompt:**
+
 ```
 Desktop product editing form in warehouse admin, two-column layout.
 Left column cards: "Asosiy" (name uz/ru, SKU, category tree select, brand), "Narxlar" (table: narx turi / narx / valyuta UZS-USD toggle), "O'lchov birliklari" (rows: 1 blok = 20 dona, add row button), "Shtrix-kodlar" (list + scan button).
@@ -116,6 +124,7 @@ Form feels light despite many fields — grouped cards, clear section titles in 
 ## 8. Login + onboarding — mobil
 
 **Stitch prompt:**
+
 ```
 Mobile login screen: centered ant mascot illustration, "Murcha" wordmark, tagline "Savdoga ulgur!".
 Phone number input with +998 prefix, password field, amber "Kirish" button, link "Ro'yxatdan o'tish".
@@ -134,6 +143,7 @@ Build this as a single self-contained HTML file with Tailwind CSS (CDN), Uzbek U
 ```
 
 **Maslahatlar:**
+
 - Stitch'da bitta promptga bitta ekran — ko'p ekran so'rasang sifat tushadi
 - Stitch natijasini "Refine" bilan boyitish: "make stat cards bigger", "add empty state"
 - Claude'da iteratsiya oson: prototip → "savat bo'sh holatini qo'sh", "dark mode to'g'irla"

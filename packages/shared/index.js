@@ -23,3 +23,5 @@ export * from "./schemas/exchange-rate.schemas.js";
 export * from "./schemas/company.schemas.js";
 export * from "./schemas/audit-log.schemas.js";
 export * from "./schemas/report.schemas.js";
+export * from "./schemas/showcase.schemas.js";
+export * from "./schemas/platform.schemas.js";

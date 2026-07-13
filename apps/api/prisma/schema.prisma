@@ -68,15 +68,16 @@ model Company {
 }
 
 model User {
-  id           String    @id @db.Uuid
-  phone        String    @unique
-  passwordHash String    @map("password_hash")
-  fullName     String    @map("full_name")
-  locale       String    @default("uz")
-  status       String    @default("active")
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id              String    @id @db.Uuid
+  phone           String    @unique
+  passwordHash    String    @map("password_hash")
+  fullName        String    @map("full_name")
+  locale          String    @default("uz")
+  status          String    @default("active")
+  isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
+  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   companyMembers    CompanyMember[]
   auditLogs         AuditLog[]

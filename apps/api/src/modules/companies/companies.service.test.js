@@ -15,7 +15,7 @@ vi.mock("../../lib/minio.js", () => ({
 }));
 
 const { CompaniesService } = await import("./companies.service.js");
-const { NotFoundError } = await import("../../lib/errors.js");
+const { NotFoundError, ConflictError } = await import("../../lib/errors.js");
 
 describe("CompaniesService", () => {
   const auth = { userId: "u1", companyId: "c1", roleId: "r1" };
@@ -26,7 +26,7 @@ describe("CompaniesService", () => {
     withTenant.mockClear();
     putObject.mockClear();
     presignedGetObject.mockClear();
-    companiesRepository = { findById: vi.fn(), update: vi.fn() };
+    companiesRepository = { findById: vi.fn(), findBySlug: vi.fn(), update: vi.fn() };
     service = new CompaniesService({ companiesRepository });
   });
 
@@ -79,6 +79,41 @@ describe("CompaniesService", () => {
       expect(companiesRepository.update).toHaveBeenCalledWith(fakeTx, "c1", {
         brandColor: "#ff0000",
       });
+    });
+
+    it("showcaseSettings mavjud kalitlar bilan birlashtiriladi", async () => {
+      companiesRepository.findById.mockResolvedValue({
+        id: "c1",
+        settings: {},
+        showcaseSettings: { enabled: true, priceTypeId: "pt1" },
+      });
+      companiesRepository.update.mockResolvedValue({ id: "c1" });
+
+      await service.updateMe(auth, { showcaseSettings: { enabled: false } });
+
+      expect(companiesRepository.update).toHaveBeenCalledWith(fakeTx, "c1", {
+        showcaseSettings: { enabled: false, priceTypeId: "pt1" },
+      });
+    });
+
+    it("slug boshqa kompaniyada band bo'lsa ConflictError otadi", async () => {
+      companiesRepository.findById.mockResolvedValue({ id: "c1", settings: {}, slug: null });
+      companiesRepository.findBySlug.mockResolvedValue({ id: "c2" });
+
+      await expect(service.updateMe(auth, { slug: "band-slug" })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
+      expect(companiesRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("slug o'zgarmasa uniqueness tekshirilmaydi", async () => {
+      companiesRepository.findById.mockResolvedValue({ id: "c1", settings: {}, slug: "eski" });
+      companiesRepository.update.mockResolvedValue({ id: "c1" });
+
+      await service.updateMe(auth, { slug: "eski" });
+
+      expect(companiesRepository.findBySlug).not.toHaveBeenCalled();
+      expect(companiesRepository.update).toHaveBeenCalledWith(fakeTx, "c1", { slug: "eski" });
     });
   });
 
