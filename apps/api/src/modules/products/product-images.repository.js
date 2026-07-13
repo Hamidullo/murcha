@@ -36,6 +36,25 @@ export class ProductImagesRepository {
   }
 
   /**
+   * `list()`ning ko'p mahsulotli varianti — N ta alohida so'rov o'rniga
+   * bitta `findMany` (`showcase.service.js` kabi ko'p mahsulotli
+   * ro'yxatlarda N+1'ning oldini olish uchun). Har mahsulot ichida tartib
+   * `list()`dagi bilan bir xil (`isMain` birinchi) — chaqiruvchi har
+   * `productId` uchun ro'yxatdagi birinchi qatorni "asosiy rasm" sifatida
+   * oladi.
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string[]} productIds
+   * @returns {Promise<import("@prisma/client").ProductImage[]>}
+   */
+  async listByProducts(tx, productIds) {
+    if (productIds.length === 0) return [];
+    return tx.productImage.findMany({
+      where: { productId: { in: productIds } },
+      orderBy: [{ productId: "asc" }, { isMain: "desc" }, { sort: "asc" }],
+    });
+  }
+
+  /**
    * @param {import("@prisma/client").Prisma.TransactionClient} tx
    * @param {string} id
    * @param {object} data

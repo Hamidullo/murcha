@@ -6,8 +6,10 @@ const BASE_URL = "/api/v1";
 /**
  * `client.js apiFetch()`dagi bilan bir xil naqsh, lekin oddiyroq — platform
  * token uchun refresh/cookie oqimi yo'q (`platform-auth.store.js`da
- * hujjatlangan MVP soddalashtirish): 401 kelsa faqat xato otiladi, chaqiruvchi
- * (`PlatformLoginPage.vue`ga yo'naltirish) o'zi hal qiladi.
+ * hujjatlangan MVP soddalashtirish): 401 kelsa token tozalanadi VA
+ * `/platform/login`ga yo'naltiriladi bu yerning o'zida — aks holda
+ * foydalanuvchi navigatsiya qilmaguncha (router `beforeEach` faqat
+ * navigatsiyada tekshiradi) o'sha sahifada "o'lik" holatda qolib ketardi.
  * @param {string} path — `/platform/companies` kabi, `BASE_URL`ga qo'shiladi
  * @param {RequestInit} [options]
  * @returns {Promise<unknown>}
@@ -24,6 +26,13 @@ export async function platformApiFetch(path, options = {}) {
 
   if (res.status === 401) {
     platformAuthStore.logout();
+    // Dinamik import — `router/index.js` bu faylni statik import qilmaydi
+    // (aylanma bog'lanish: router → platform-auth.store.js → platform-auth.api.js
+    // → platform-client.js), shuning uchun chaqiruv vaqtida yuklanadi.
+    const { router } = await import("../router/index.js");
+    if (router.currentRoute.value.name !== "platform-login") {
+      router.push({ name: "platform-login" });
+    }
   }
 
   if (!res.ok) {

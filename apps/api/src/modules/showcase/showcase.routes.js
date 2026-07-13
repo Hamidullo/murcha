@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validate } from "../../middleware/validate.js";
 import { rateLimit } from "../../middleware/rate-limit.js";
-import { createLeadSchema } from "@murcha/shared";
+import { createLeadSchema } from "./showcase.schemas.js";
 import { ShowcaseService } from "./showcase.service.js";
 import { ShowcaseController } from "./showcase.controller.js";
 import { ShowcaseRepository } from "./showcase.repository.js";

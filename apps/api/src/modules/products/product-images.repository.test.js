@@ -36,6 +36,28 @@ describe("ProductImagesRepository", () => {
     });
   });
 
+  it("listByProducts — bo'sh ro'yxatda so'rov qilmasdan [] qaytaradi", async () => {
+    const tx = { productImage: { findMany: vi.fn() } };
+    const repo = new ProductImagesRepository();
+
+    const result = await repo.listByProducts(tx, []);
+
+    expect(tx.productImage.findMany).not.toHaveBeenCalled();
+    expect(result).toEqual([]);
+  });
+
+  it("listByProducts — productId:{in:[...]}, productId+isMain+sort tartibida", async () => {
+    const tx = { productImage: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new ProductImagesRepository();
+
+    await repo.listByProducts(tx, ["p1", "p2"]);
+
+    expect(tx.productImage.findMany).toHaveBeenCalledWith({
+      where: { productId: { in: ["p1", "p2"] } },
+      orderBy: [{ productId: "asc" }, { isMain: "desc" }, { sort: "asc" }],
+    });
+  });
+
   it("update — tx.productImage.update'ni id va data bilan chaqiradi", async () => {
     const data = { isMain: true };
     const updated = { id: "img1", ...data };

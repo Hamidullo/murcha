@@ -31,8 +31,8 @@ describe("ShowcaseService", () => {
     domainEvents.emit.mockClear();
     companiesRepository = { findBySlug: vi.fn() };
     productsRepository = { list: vi.fn() };
-    productPricesRepository = { listCurrentByProduct: vi.fn() };
-    productImagesRepository = { list: vi.fn() };
+    productPricesRepository = { listCurrentByProducts: vi.fn() };
+    productImagesRepository = { listByProducts: vi.fn() };
     priceTypesRepository = { list: vi.fn() };
     showcaseRepository = { createLead: vi.fn() };
     service = new ShowcaseService({
@@ -76,13 +76,10 @@ describe("ShowcaseService", () => {
         { id: "p2", nameUz: "Arxiv", nameRu: null, status: "archived" },
         { id: "p3", nameUz: "Narxsiz", nameRu: null, status: "active" },
       ]);
-      productPricesRepository.listCurrentByProduct.mockImplementation((_tx, productId) => {
-        if (productId === "p1") {
-          return Promise.resolve([{ priceTypeId: "pt1", price: 5000, currency: "UZS" }]);
-        }
-        return Promise.resolve([]);
-      });
-      productImagesRepository.list.mockResolvedValue([]);
+      productPricesRepository.listCurrentByProducts.mockResolvedValue([
+        { productId: "p1", priceTypeId: "pt1", price: 5000, currency: "UZS" },
+      ]);
+      productImagesRepository.listByProducts.mockResolvedValue([]);
 
       const result = await service.getShowcase("slug1");
 
@@ -90,6 +87,12 @@ describe("ShowcaseService", () => {
         { id: "p1", nameUz: "Non", nameRu: null, price: 5000, currency: "UZS", imageUrl: null },
       ]);
       expect(result.company).toMatchObject({ id: "c1", name: "Test Sklad", slug: "slug1" });
+      // faqat active mahsulotlar id'lari bilan batch chaqiriladi (p2 tashlab ketiladi)
+      expect(productPricesRepository.listCurrentByProducts).toHaveBeenCalledWith(
+        fakeTx,
+        ["p1", "p3"],
+        expect.any(Date),
+      );
     });
 
     it("priceTypeId sozlanmagan bo'lsa isDefault narx turini ishlatadi", async () => {
@@ -105,14 +108,45 @@ describe("ShowcaseService", () => {
       productsRepository.list.mockResolvedValue([
         { id: "p1", nameUz: "Non", nameRu: null, status: "active" },
       ]);
-      productPricesRepository.listCurrentByProduct.mockResolvedValue([
-        { priceTypeId: "pt-default", price: 3000, currency: "UZS" },
+      productPricesRepository.listCurrentByProducts.mockResolvedValue([
+        { productId: "p1", priceTypeId: "pt-default", price: 3000, currency: "UZS" },
       ]);
-      productImagesRepository.list.mockResolvedValue([]);
+      productImagesRepository.listByProducts.mockResolvedValue([]);
 
       const result = await service.getShowcase("slug1");
 
       expect(result.catalog).toHaveLength(1);
+    });
+
+    it("mahsulotning birinchi rasmini (isMain) imageUrl sifatida qaytaradi", async () => {
+      companiesRepository.findBySlug.mockResolvedValue({
+        id: "c1",
+        name: "Test",
+        slug: "slug1",
+        brandColor: null,
+        logoPath: null,
+        showcaseSettings: { enabled: true, priceTypeId: "pt1" },
+      });
+      priceTypesRepository.list.mockResolvedValue([{ id: "pt1", isDefault: true }]);
+      productsRepository.list.mockResolvedValue([
+        { id: "p1", nameUz: "Non", nameRu: null, status: "active" },
+      ]);
+      productPricesRepository.listCurrentByProducts.mockResolvedValue([
+        { productId: "p1", priceTypeId: "pt1", price: 5000, currency: "UZS" },
+      ]);
+      productImagesRepository.listByProducts.mockResolvedValue([
+        { productId: "p1", isMain: true, path: "products/p1/main.jpg", thumbPath: null },
+        { productId: "p1", isMain: false, path: "products/p1/second.jpg", thumbPath: null },
+      ]);
+
+      const result = await service.getShowcase("slug1");
+
+      expect(result.catalog[0].imageUrl).toBe("https://minio/signed-url");
+      expect(presignedGetObject).toHaveBeenCalledWith(
+        "murcha-test",
+        "products/p1/main.jpg",
+        expect.any(Number),
+      );
     });
 
     it("hech qanday narx turi bo'lmasa bo'sh katalog qaytaradi", async () => {

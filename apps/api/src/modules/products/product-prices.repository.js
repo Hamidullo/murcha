@@ -41,4 +41,22 @@ export class ProductPricesRepository {
       distinct: ["priceTypeId"],
     });
   }
+
+  /**
+   * `listCurrentByProduct()`ning ko'p mahsulotli varianti — N ta alohida
+   * so'rov o'rniga bitta `findMany` (`showcase.service.js` kabi ko'p
+   * mahsulotli ro'yxatlarda N+1'ning oldini olish uchun).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string[]} productIds
+   * @param {Date} asOf
+   * @returns {Promise<import("@prisma/client").ProductPrice[]>}
+   */
+  async listCurrentByProducts(tx, productIds, asOf) {
+    if (productIds.length === 0) return [];
+    return tx.productPrice.findMany({
+      where: { productId: { in: productIds }, validFrom: { lte: asOf } },
+      orderBy: [{ productId: "asc" }, { priceTypeId: "asc" }, { validFrom: "desc" }],
+      distinct: ["productId", "priceTypeId"],
+    });
+  }
 }

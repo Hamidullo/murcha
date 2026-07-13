@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validate } from "../../middleware/validate.js";
 import { rateLimit } from "../../middleware/rate-limit.js";
-import { loginSchema } from "@murcha/shared";
+import { loginSchema } from "./platform-auth.schemas.js";
 import { PlatformAuthService } from "./platform-auth.service.js";
 import { PlatformAuthController } from "./platform-auth.controller.js";
 import { UsersRepository } from "../users/users.repository.js";

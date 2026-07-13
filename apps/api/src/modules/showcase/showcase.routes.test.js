@@ -68,7 +68,7 @@ describe("GET /api/v1/showcase/:slug", () => {
       { id: "p1", nameUz: "Non", nameRu: null, status: "active" },
     ]);
     fakeTx.productPrice.findMany.mockResolvedValue([
-      { priceTypeId: "pt1", price: 5000, currency: "UZS" },
+      { productId: "p1", priceTypeId: "pt1", price: 5000, currency: "UZS" },
     ]);
     fakeTx.productImage.findMany.mockResolvedValue([]);
 

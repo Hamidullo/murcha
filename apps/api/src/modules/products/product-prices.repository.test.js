@@ -38,4 +38,28 @@ describe("ProductPricesRepository", () => {
       distinct: ["priceTypeId"],
     });
   });
+
+  it("listCurrentByProducts — bo'sh ro'yxatda so'rov qilmasdan [] qaytaradi", async () => {
+    const tx = { productPrice: { findMany: vi.fn() } };
+    const repo = new ProductPricesRepository();
+
+    const result = await repo.listCurrentByProducts(tx, [], new Date());
+
+    expect(tx.productPrice.findMany).not.toHaveBeenCalled();
+    expect(result).toEqual([]);
+  });
+
+  it("listCurrentByProducts — productId:{in:[...]}, distinct productId+priceTypeId bilan", async () => {
+    const tx = { productPrice: { findMany: vi.fn().mockResolvedValue([]) } };
+    const repo = new ProductPricesRepository();
+    const asOf = new Date("2026-01-01T00:00:00Z");
+
+    await repo.listCurrentByProducts(tx, ["p1", "p2"], asOf);
+
+    expect(tx.productPrice.findMany).toHaveBeenCalledWith({
+      where: { productId: { in: ["p1", "p2"] }, validFrom: { lte: asOf } },
+      orderBy: [{ productId: "asc" }, { priceTypeId: "asc" }, { validFrom: "desc" }],
+      distinct: ["productId", "priceTypeId"],
+    });
+  });
 });

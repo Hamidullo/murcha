@@ -39,6 +39,10 @@ const routes = [
     meta: { platform: true },
     children: [
       {
+        path: "",
+        redirect: { name: "platform-companies" },
+      },
+      {
         path: "companies",
         name: "platform-companies",
         component: () => import("../pages/PlatformCompaniesPage.vue"),

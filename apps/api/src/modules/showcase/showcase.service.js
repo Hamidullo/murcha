@@ -65,68 +65,91 @@ export class ShowcaseService {
    * }>}
    */
   async getShowcase(slug) {
-    return withoutTenant(async (tx) => {
-      const company = await this.#findEnabledCompany(tx, slug);
-      const settings = company.showcaseSettings;
+    // DB o'qishlar — tranzaksiya ICHIDA, hammasi batch (`{in: [...]}`,
+    // N+1 emas). MinIO presign (tarmoq I/O) tranzaksiyadan TASHQARIDA,
+    // parallel — aks holda ko'p mahsulotli katalogda ketma-ket MinIO
+    // so'rovlari `withoutTenant`ning Prisma interaktiv tranzaksiya
+    // standart muddatidan (5s) oshib, butun ochiq (autentifikatsiyasiz)
+    // sahifani P2028 bilan yiqitishi mumkin edi.
+    const { company, catalogDraft } = await withoutTenant(async (tx) => {
+      const foundCompany = await this.#findEnabledCompany(tx, slug);
+      const settings = foundCompany.showcaseSettings;
 
-      const priceTypes = await this.priceTypesRepository.list(tx, company.id);
+      const priceTypes = await this.priceTypesRepository.list(tx, foundCompany.id);
       const priceTypeId = settings.priceTypeId ?? priceTypes.find((p) => p.isDefault)?.id ?? null;
 
-      const catalog = [];
+      const draft = [];
       if (priceTypeId) {
-        const products = await this.productsRepository.list(tx, company.id, {
+        const products = await this.productsRepository.list(tx, foundCompany.id, {
           categoryId: settings.categoryId ?? undefined,
         });
+        const activeProducts = products.filter((p) => p.status === "active");
+        const productIds = activeProducts.map((p) => p.id);
         const now = new Date();
-        for (const product of products.filter((p) => p.status === "active")) {
-          const prices = await this.productPricesRepository.listCurrentByProduct(
-            tx,
-            product.id,
-            now,
-          );
-          const priceRow = prices.find((p) => p.priceTypeId === priceTypeId);
+
+        const [prices, images] = await Promise.all([
+          this.productPricesRepository.listCurrentByProducts(tx, productIds, now),
+          this.productImagesRepository.listByProducts(tx, productIds),
+        ]);
+
+        const priceByProduct = new Map();
+        for (const price of prices) {
+          if (price.priceTypeId === priceTypeId) priceByProduct.set(price.productId, price);
+        }
+        // `images` `productId` bo'yicha guruhlangan, har guruh ichida
+        // `isMain` birinchi (`listByProducts()`) — birinchi uchragan
+        // qator shu mahsulotning asosiy rasmi.
+        const imageByProduct = new Map();
+        for (const image of images) {
+          if (!imageByProduct.has(image.productId)) imageByProduct.set(image.productId, image);
+        }
+
+        for (const product of activeProducts) {
+          const priceRow = priceByProduct.get(product.id);
           if (!priceRow) continue;
-
-          const images = await this.productImagesRepository.list(tx, product.id);
-          const main = images.find((img) => img.isMain) ?? images[0] ?? null;
-          const imageUrl = main
-            ? await minioClient.presignedGetObject(
-                MINIO_BUCKET,
-                main.thumbPath ?? main.path,
-                PRESIGNED_URL_TTL_SECONDS,
-              )
-            : null;
-
-          catalog.push({
+          const image = imageByProduct.get(product.id) ?? null;
+          draft.push({
             id: product.id,
             nameUz: product.nameUz,
             nameRu: product.nameRu,
             price: Number(priceRow.price),
             currency: priceRow.currency,
-            imageUrl,
+            imagePath: image ? (image.thumbPath ?? image.path) : null,
           });
         }
       }
 
-      const logoUrl = company.logoPath
-        ? await minioClient.presignedGetObject(
-            MINIO_BUCKET,
-            company.logoPath,
-            PRESIGNED_URL_TTL_SECONDS,
-          )
-        : null;
-
-      return {
-        company: {
-          id: company.id,
-          name: company.name,
-          slug: company.slug,
-          brandColor: company.brandColor,
-          logoUrl,
-        },
-        catalog,
-      };
+      return { company: foundCompany, catalogDraft: draft };
     });
+
+    const [catalog, logoUrl] = await Promise.all([
+      Promise.all(
+        catalogDraft.map(async ({ imagePath, ...item }) => ({
+          ...item,
+          imageUrl: imagePath
+            ? await minioClient.presignedGetObject(
+                MINIO_BUCKET,
+                imagePath,
+                PRESIGNED_URL_TTL_SECONDS,
+              )
+            : null,
+        })),
+      ),
+      company.logoPath
+        ? minioClient.presignedGetObject(MINIO_BUCKET, company.logoPath, PRESIGNED_URL_TTL_SECONDS)
+        : null,
+    ]);
+
+    return {
+      company: {
+        id: company.id,
+        name: company.name,
+        slug: company.slug,
+        brandColor: company.brandColor,
+        logoUrl,
+      },
+      catalog,
+    };
   }
 
   /**
