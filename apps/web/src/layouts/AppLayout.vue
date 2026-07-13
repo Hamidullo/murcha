@@ -79,11 +79,13 @@ async function onLogout() {
 <template>
   <div class="min-h-screen">
     <header
-      class="flex items-center justify-between border-b border-brand-brown/10 bg-white px-6 py-3"
+      class="flex items-center justify-between gap-4 border-b border-brand-brown/10 bg-white px-6 py-3"
     >
-      <div class="flex items-center gap-6">
-        <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto" />
-        <nav class="flex items-center gap-4 text-sm text-brand-brown/70">
+      <div class="flex min-w-0 flex-1 items-center gap-6">
+        <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto shrink-0" />
+        <nav
+          class="flex min-w-0 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm text-brand-brown/70"
+        >
           <router-link :to="{ name: 'dashboard' }" class="hover:text-brand-brown">
             {{ t("nav.dashboard") }}
           </router-link>
@@ -137,21 +139,26 @@ async function onLogout() {
           </router-link>
         </nav>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex shrink-0 items-center gap-3">
         <PushSubscribeButton />
-        <span v-if="authStore.company" class="text-sm text-brand-brown/60">
+        <span v-if="authStore.company" class="max-w-32 truncate text-sm text-brand-brown/60">
           {{ authStore.company.name }}
         </span>
         <span
           v-if="queuedCount > 0"
-          class="rounded-full bg-brand-amber/20 px-2 py-0.5 text-xs text-brand-amber"
+          class="whitespace-nowrap rounded-full bg-brand-amber/20 px-2 py-0.5 text-xs text-brand-amber"
         >
           {{ t("common.queuedActions", { count: queuedCount }) }}
         </span>
-        <button class="text-sm text-brand-brown/70 hover:text-brand-brown" @click="toggleLocale">
+        <button
+          class="shrink-0 text-sm text-brand-brown/70 hover:text-brand-brown"
+          @click="toggleLocale"
+        >
           {{ locale === "uz" ? "RU" : "UZ" }}
         </button>
-        <Button variant="ghost" size="sm" @click="onLogout">{{ t("common.logout") }}</Button>
+        <Button variant="ghost" size="sm" class="shrink-0" @click="onLogout">
+          {{ t("common.logout") }}
+        </Button>
       </div>
     </header>
     <main class="p-6">

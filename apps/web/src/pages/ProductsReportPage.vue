@@ -2,7 +2,10 @@
 import { ref, computed } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { useI18n } from "vue-i18n";
+import "../lib/echarts-setup.js";
+import VChart from "vue-echarts";
 import * as reportsApi from "../api/reports.api.js";
+import { barGradientStyle, tooltipStyle, axisStyle } from "../lib/chart-theme.js";
 import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,6 +22,29 @@ const { data: productsData } = useQuery({
 });
 
 const products = computed(() => productsData.value?.products ?? []);
+
+/** Daromad bo'yicha top-8 — gorizontal bar-chart, jadvaldagi bilan bir xil ma'lumot. */
+const chartOption = computed(() => {
+  const top = [...products.value]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 8)
+    .reverse();
+  return {
+    tooltip: tooltipStyle(),
+    grid: { left: 120, right: 30, top: 10, bottom: 10 },
+    xAxis: { type: "value", ...axisStyle() },
+    yAxis: { type: "category", data: top.map((p) => p.name), ...axisStyle() },
+    series: [
+      {
+        type: "bar",
+        data: top.map((p) => p.revenue),
+        barMaxWidth: 20,
+        borderRadius: [0, 6, 6, 0],
+        color: barGradientStyle().color,
+      },
+    ],
+  };
+});
 
 /**
  * @param {number | null} value
@@ -53,6 +79,15 @@ function formatOrDash(value) {
           <Label for="to">{{ t("productsReport.filters.to") }}</Label>
           <Input id="to" v-model="to" type="date" />
         </div>
+      </CardContent>
+    </Card>
+
+    <Card v-if="products.length > 0" class="mt-4">
+      <CardHeader
+        ><CardTitle>{{ t("productsReport.chartTitle") }}</CardTitle></CardHeader
+      >
+      <CardContent>
+        <VChart :option="chartOption" style="height: 320px" autoresize />
       </CardContent>
     </Card>
 

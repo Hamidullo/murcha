@@ -809,6 +809,7 @@
     "title": "Dashboard",
     "loading": "Yuklanmoqda…",
     "chartTitle": "Sotuv dinamikasi (30 kun)",
+    "cashByCurrencyTitle": "Kassa qoldig'i valyuta bo'yicha",
     "cards": {
       "todaySales": "Bugungi sotuv",
       "pendingOrders": "Kutilayotgan zakazlar",
@@ -840,6 +841,7 @@
   },
   "productsReport": {
     "title": "Top mahsulotlar va marja",
+    "chartTitle": "Top 8 mahsulot (daromad bo'yicha)",
     "tableTitle": "Mahsulotlar (daromad bo'yicha)",
     "empty": "Ma'lumot yo'q",
     "nav": {

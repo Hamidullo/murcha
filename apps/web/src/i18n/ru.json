@@ -809,6 +809,7 @@
     "title": "Дашборд",
     "loading": "Загрузка…",
     "chartTitle": "Динамика продаж (30 дней)",
+    "cashByCurrencyTitle": "Остаток кассы по валютам",
     "cards": {
       "todaySales": "Продажи за сегодня",
       "pendingOrders": "Заказы в ожидании",
@@ -840,6 +841,7 @@
   },
   "productsReport": {
     "title": "Топ товаров и маржа",
+    "chartTitle": "Топ 8 товаров (по выручке)",
     "tableTitle": "Товары (по выручке)",
     "empty": "Нет данных",
     "nav": {

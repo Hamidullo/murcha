@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import "../lib/echarts-setup.js";
 import VChart from "vue-echarts";
 import * as reportsApi from "../api/reports.api.js";
+import { barGradientStyle, tooltipStyle, axisStyle } from "../lib/chart-theme.js";
 import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -23,11 +24,13 @@ const sales = computed(() => salesData.value?.sales ?? []);
 const totalSum = computed(() => sales.value.reduce((sum, s) => sum + s.total, 0));
 
 const chartOption = computed(() => ({
-  tooltip: { trigger: "axis" },
+  tooltip: tooltipStyle(),
   grid: { left: 60, right: 20, top: 20, bottom: 30 },
-  xAxis: { type: "category", data: sales.value.map((s) => s.date) },
-  yAxis: { type: "value" },
-  series: [{ type: "bar", data: sales.value.map((s) => s.total) }],
+  xAxis: { type: "category", data: sales.value.map((s) => s.date), ...axisStyle() },
+  yAxis: { type: "value", ...axisStyle() },
+  series: [
+    { type: "bar", data: sales.value.map((s) => s.total), barMaxWidth: 32, ...barGradientStyle() },
+  ],
 }));
 </script>
 
