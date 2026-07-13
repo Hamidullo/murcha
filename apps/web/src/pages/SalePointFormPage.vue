@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import { createSalePointSchema, updateSalePointSchema } from "@murcha/shared";
 import * as salePointsApi from "../api/sale-points.api.js";
 import * as priceTypesApi from "../api/priceTypes.api.js";
@@ -12,6 +13,7 @@ import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const queryClient = useQueryClient();
@@ -107,7 +109,7 @@ async function onSubmit() {
     }
     queryClient.invalidateQueries({ queryKey: ["sale-points"] });
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("salePointForm.unexpectedError");
   } finally {
     isSubmitting.value = false;
   }
@@ -135,7 +137,8 @@ async function onAssignOperator() {
     newOperatorPhone.value = "";
     await refetchOperators();
   } catch (err) {
-    operatorError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    operatorError.value =
+      err instanceof ApiError ? err.message : t("salePointForm.unexpectedError");
   } finally {
     isAssigning.value = false;
   }
@@ -154,25 +157,25 @@ async function onUnassignOperator(userId) {
 <template>
   <div class="mx-auto max-w-lg">
     <h1 class="text-2xl font-semibold text-brand-brown">
-      {{ isEdit ? "Sotuv nuqtasini tahrirlash" : "Yangi sotuv nuqtasi" }}
+      {{ isEdit ? t("salePointForm.titleEdit") : t("salePointForm.titleNew") }}
     </h1>
 
     <Card class="mt-4">
       <CardContent class="pt-6">
         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="flex flex-col gap-1.5">
-            <Label for="name">Nomi</Label>
+            <Label for="name">{{ t("salePointForm.name") }}</Label>
             <Input id="name" v-model="form.name" />
             <p v-if="fieldErrors.name" class="text-xs text-red-600">{{ fieldErrors.name }}</p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="priceTypeId">Narx turi</Label>
+            <Label for="priceTypeId">{{ t("salePointForm.priceType") }}</Label>
             <select
               id="priceTypeId"
               v-model="form.priceTypeId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="" disabled>Tanlang</option>
+              <option value="" disabled>{{ t("salePointForm.selectPlaceholder") }}</option>
               <option v-for="pt in priceTypes" :key="pt.id" :value="pt.id">{{ pt.name }}</option>
             </select>
             <p v-if="fieldErrors.priceTypeId" class="text-xs text-red-600">
@@ -180,31 +183,33 @@ async function onUnassignOperator(userId) {
             </p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="address">Manzil</Label>
+            <Label for="address">{{ t("salePointForm.address") }}</Label>
             <Input id="address" v-model="form.address" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="phone">Telefon</Label>
-            <Input id="phone" v-model="form.phone" placeholder="O'zgartirmasa bo'sh qoldiring" />
+            <Label for="phone">{{ t("salePointForm.phone") }}</Label>
+            <Input id="phone" v-model="form.phone" :placeholder="t('salePointForm.phoneHint')" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="creditLimit">Kredit limiti (so'm)</Label>
+            <Label for="creditLimit">{{ t("salePointForm.creditLimit") }}</Label>
             <Input id="creditLimit" v-model="form.creditLimit" type="number" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="paymentTermDays">To'lov muddati (kun)</Label>
+            <Label for="paymentTermDays">{{ t("salePointForm.paymentTermDays") }}</Label>
             <Input id="paymentTermDays" v-model="form.paymentTermDays" type="number" />
           </div>
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Saqlanmoqda…" : "Saqlash" }}
+            {{ isSubmitting ? t("salePointForm.saving") : t("salePointForm.save") }}
           </Button>
         </form>
       </CardContent>
     </Card>
 
     <Card v-if="isEdit" class="mt-4">
-      <CardHeader><CardTitle>Operatorlar</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("salePointForm.operatorsCardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-3">
         <div
           v-for="op in operators"
@@ -216,21 +221,21 @@ async function onUnassignOperator(userId) {
             <p class="text-xs text-brand-brown/60">{{ op.companyMember.user.phone }}</p>
           </div>
           <Button variant="ghost" size="sm" @click="onUnassignOperator(op.companyMember.user.id)">
-            Olib tashlash
+            {{ t("salePointForm.remove") }}
           </Button>
         </div>
         <p v-if="operators.length === 0" class="text-sm text-brand-brown/60">
-          Operator biriktirilmagan
+          {{ t("salePointForm.noOperators") }}
         </p>
 
         <div class="flex gap-2">
           <Input
             v-model="newOperatorPhone"
-            placeholder="+998901234567"
+            :placeholder="t('salePointForm.phonePlaceholder')"
             @keyup.enter="onAssignOperator"
           />
           <Button :disabled="isAssigning" @click="onAssignOperator">
-            {{ isAssigning ? "…" : "Biriktirish" }}
+            {{ isAssigning ? t("salePointForm.assigning") : t("salePointForm.assign") }}
           </Button>
         </div>
         <p v-if="operatorError" class="text-xs text-red-600">{{ operatorError }}</p>
@@ -238,7 +243,9 @@ async function onUnassignOperator(userId) {
     </Card>
 
     <Card v-if="isEdit && salePointData?.counterpartyId" class="mt-4">
-      <CardHeader><CardTitle>Qarz holati</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("salePointForm.debtCardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex items-center justify-between">
         <p class="text-lg font-semibold text-brand-brown">
           {{ balanceData ? `${balanceData.balance} ${balanceData.currency}` : "…" }}
@@ -247,7 +254,7 @@ async function onUnassignOperator(userId) {
           :to="{ name: 'counterparty-statement', params: { id: salePointData.counterpartyId } }"
           class="text-sm text-brand-brown/70 underline hover:text-brand-brown"
         >
-          Batafsil / To'lov
+          {{ t("salePointForm.detailsPayment") }}
         </router-link>
       </CardContent>
     </Card>

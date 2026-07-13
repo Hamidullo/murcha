@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { setPasswordSchema } from "@murcha/shared";
 import * as authApi from "../api/auth.api.js";
 import { ApiError } from "../api/client.js";
@@ -11,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const token = /** @type {string} */ (route.query.token ?? "");
 const password = ref("");
@@ -34,7 +36,7 @@ async function onSubmit() {
     isDone.value = true;
     setTimeout(() => router.push({ name: "login" }), 1500);
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("setPassword.errors.unexpected");
   } finally {
     isSubmitting.value = false;
   }
@@ -46,17 +48,17 @@ async function onSubmit() {
     <Card class="w-full max-w-sm">
       <CardHeader>
         <img src="/murcha-logo.svg" alt="Murcha" class="h-10 w-auto" />
-        <CardTitle>Parol o'rnatish</CardTitle>
-        <CardDescription>Ilovaga kirish uchun yangi parol o'rnating</CardDescription>
+        <CardTitle>{{ t("setPassword.title") }}</CardTitle>
+        <CardDescription>{{ t("setPassword.subtitle") }}</CardDescription>
       </CardHeader>
       <CardContent>
-        <p v-if="!token" class="text-sm text-red-600">Havola yaroqsiz — token yo'q</p>
+        <p v-if="!token" class="text-sm text-red-600">{{ t("setPassword.invalidLink") }}</p>
         <p v-else-if="isDone" class="text-sm text-green-700">
-          Parol o'rnatildi, kirish sahifasiga o'tilmoqda…
+          {{ t("setPassword.done") }}
         </p>
         <form v-else class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="flex flex-col gap-1.5">
-            <Label for="password">Yangi parol</Label>
+            <Label for="password">{{ t("setPassword.newPasswordLabel") }}</Label>
             <Input id="password" v-model="password" type="password" />
             <p v-if="fieldErrors.password" class="text-xs text-red-600">
               {{ fieldErrors.password }}
@@ -64,7 +66,7 @@ async function onSubmit() {
           </div>
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Saqlanmoqda…" : "O'rnatish" }}
+            {{ isSubmitting ? t("setPassword.submitting") : t("setPassword.submit") }}
           </Button>
         </form>
       </CardContent>

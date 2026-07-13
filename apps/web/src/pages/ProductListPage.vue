@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import * as productsApi from "../api/products.api.js";
 import * as categoriesApi from "../api/categories.api.js";
@@ -12,6 +13,7 @@ import Button from "@/components/ui/button/Button.vue";
 
 const router = useRouter();
 const queryClient = useQueryClient();
+const { t } = useI18n();
 
 const search = ref("");
 const debouncedSearch = ref("");
@@ -68,7 +70,7 @@ async function onExport() {
     await exportsApi.downloadExport("products", "mahsulotlar.xlsx");
   } catch (err) {
     importState.value = "error";
-    importError.value = err instanceof ApiError ? err.message : "Yuklab bo'lmadi";
+    importError.value = err instanceof ApiError ? err.message : t("products.downloadFailed");
   } finally {
     isExporting.value = false;
   }
@@ -92,7 +94,7 @@ async function onImportFileSelected(event) {
     await pollImportStatus(jobId);
   } catch (err) {
     importState.value = "error";
-    importError.value = err instanceof ApiError ? err.message : "Yuklab bo'lmadi";
+    importError.value = err instanceof ApiError ? err.message : t("products.downloadFailed");
   }
 }
 
@@ -110,7 +112,7 @@ async function pollImportStatus(jobId) {
   }
   if (status.state === "failed") {
     importState.value = "error";
-    importError.value = status.failedReason ?? "Import muvaffaqiyatsiz";
+    importError.value = status.failedReason ?? t("products.importFailed");
     return;
   }
   await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -121,12 +123,14 @@ async function pollImportStatus(jobId) {
 <template>
   <div>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold text-brand-brown">Katalog</h1>
+      <h1 class="text-2xl font-semibold text-brand-brown">{{ t("products.title") }}</h1>
       <div class="flex gap-2">
         <Button variant="outline" size="sm" :disabled="isExporting" @click="onExport">
-          {{ isExporting ? "Yuklanmoqda…" : "Excel eksport" }}
+          {{ isExporting ? t("products.exporting") : t("products.export") }}
         </Button>
-        <Button variant="outline" size="sm" @click="fileInputRef?.click()">Excel import</Button>
+        <Button variant="outline" size="sm" @click="fileInputRef?.click()">
+          {{ t("products.import") }}
+        </Button>
         <input
           ref="fileInputRef"
           type="file"
@@ -134,20 +138,24 @@ async function pollImportStatus(jobId) {
           class="hidden"
           @change="onImportFileSelected"
         />
-        <Button size="sm" @click="router.push({ name: 'product-new' })">Yangi mahsulot</Button>
+        <Button size="sm" @click="router.push({ name: 'product-new' })">
+          {{ t("products.new") }}
+        </Button>
       </div>
     </div>
 
     <p v-if="importState === 'uploading'" class="mt-2 text-sm text-brand-brown/60">
-      Fayl yuklanmoqda…
+      {{ t("products.importUploading") }}
     </p>
     <p v-else-if="importState === 'processing'" class="mt-2 text-sm text-brand-brown/60">
-      Qayta ishlanmoqda…
+      {{ t("products.importProcessing") }}
     </p>
     <p v-else-if="importState === 'done'" class="mt-2 text-sm text-brand-brown">
-      Import tugadi: {{ importResult.succeeded }}/{{ importResult.total }} muvaffaqiyatli
+      {{
+        t("products.importDone", { succeeded: importResult.succeeded, total: importResult.total })
+      }}
       <span v-if="importResult.failed > 0" class="text-red-600">
-        ({{ importResult.failed }} xato)
+        {{ t("products.importFailedCount", { count: importResult.failed }) }}
       </span>
     </p>
     <p v-else-if="importState === 'error'" class="mt-2 text-sm text-red-600">
@@ -157,7 +165,7 @@ async function pollImportStatus(jobId) {
     <div class="mt-4 flex flex-wrap gap-3">
       <Input
         v-model="search"
-        placeholder="Mahsulot nomi bo'yicha qidirish…"
+        :placeholder="t('products.searchPlaceholder')"
         class="max-w-xs"
         @input="onSearchInput"
       />
@@ -165,27 +173,27 @@ async function pollImportStatus(jobId) {
         v-model="categoryId"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha kategoriyalar</option>
+        <option value="">{{ t("products.allCategories") }}</option>
         <option v-for="category in categories" :key="category.id" :value="category.id">
           {{ category.nameUz }}
         </option>
       </select>
     </div>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="mt-6 text-sm text-red-600">Mahsulotlarni yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">{{ t("products.loading") }}</p>
+    <p v-else-if="isError" class="mt-6 text-sm text-red-600">{{ t("products.loadError") }}</p>
     <p v-else-if="products.length === 0" class="mt-6 text-sm text-brand-brown/60">
-      Mahsulot topilmadi
+      {{ t("products.notFound") }}
     </p>
     <div v-else class="mt-6 overflow-x-auto rounded-xl border border-brand-brown/10 bg-white">
       <table class="w-full text-left text-sm">
         <thead class="border-b border-brand-brown/10 text-brand-brown/60">
           <tr>
-            <th class="px-4 py-3 font-medium">Nomi</th>
-            <th class="px-4 py-3 font-medium">SKU</th>
-            <th class="px-4 py-3 font-medium">Kategoriya</th>
-            <th class="px-4 py-3 font-medium">Birlik</th>
-            <th class="px-4 py-3 font-medium">Holat</th>
+            <th class="px-4 py-3 font-medium">{{ t("products.columns.name") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("products.columns.sku") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("products.columns.category") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("products.columns.unit") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("products.columns.status") }}</th>
           </tr>
         </thead>
         <tbody>

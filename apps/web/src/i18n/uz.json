@@ -1,0 +1,914 @@
+{
+  "common": {
+    "logout": "Chiqish",
+    "queuedActions": "{count} ta amal navbatda"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Katalog",
+    "warehouses": "Skladlar",
+    "warehouseDocs": "Sklad hujjatlari",
+    "barcodeScan": "Shtrix-kod",
+    "inventoryCounts": "Inventarizatsiya",
+    "salePoints": "Sotuv nuqtalari",
+    "orders": "Zakazlar",
+    "employees": "Hodimlar",
+    "deliveries": "Dostavkalar",
+    "deliveryMap": "Xarita",
+    "courierDeliveries": "Yetkazish",
+    "debtsAging": "Qarzlar",
+    "cashRegisters": "Kassa",
+    "reportsSales": "Hisobotlar",
+    "auditLogs": "Audit log",
+    "companySettings": "Sozlamalar"
+  },
+  "warehouses": {
+    "title": "Skladlar",
+    "newTitle": "Yangi sklad",
+    "nameLabel": "Nomi",
+    "addressLabel": "Manzil",
+    "creating": "Yaratilmoqda…",
+    "createButton": "Qo'shish",
+    "listTitle": "Ro'yxat",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Skladlarni yuklab bo'lmadi",
+    "empty": "Sklad yo'q",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "onboarding": {
+    "title": "Boshlash uchun qadamlar",
+    "steps": {
+      "warehouse": "Sklad qo'shish",
+      "products": "Mahsulot qo'shish",
+      "salePoint": "Sotuv nuqtasi qo'shish",
+      "firstOrder": "Birinchi zakazni yaratish"
+    }
+  },
+  "pushSubscribe": {
+    "label": "Bildirishnomalar",
+    "subscribedTitle": "Bildirishnomalarga obuna bo'lgansiz",
+    "notConfigured": "Web Push sozlanmagan",
+    "permissionDenied": "Ruxsat berilmadi",
+    "subscribeError": "Obuna bo'lishda xato"
+  },
+  "login": {
+    "title": "Kirish",
+    "subtitle": "Savdoga ulgur!",
+    "phoneLabel": "Telefon",
+    "phonePlaceholder": "+998901234567",
+    "passwordLabel": "Parol",
+    "submit": "Kirish",
+    "submitting": "Kirilmoqda…",
+    "forgotPasswordLink": "Parolni unutdingizmi?",
+    "registerLink": "Kompaniya ro'yxatdan o'tkazish",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "register": {
+    "title": "Ro'yxatdan o'tish",
+    "subtitle": "Kompaniyangizni Murcha'ga ulang",
+    "fullNameLabel": "Ismingiz",
+    "companyNameLabel": "Kompaniya nomi",
+    "phoneLabel": "Telefon",
+    "passwordLabel": "Parol",
+    "demoLabel": "Namunaviy ma'lumot bilan boshlash (demo-rejim)",
+    "demoHint": "Belgilansa, ro'yxatdan o'tgach 1 sklad, 5 mahsulot va 1 sotuv nuqtasi avtomatik yaratiladi — darhol sinab ko'rish uchun.",
+    "submit": "Ro'yxatdan o'tish",
+    "submitting": "Yaratilmoqda…",
+    "loginLink": "Hisobingiz bormi? Kirish",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "forgotPassword": {
+    "title": "Parolni tiklash",
+    "subtitlePhone": "Telefon raqamingizni kiriting, SMS orqali kod yuboramiz",
+    "subtitleReset": "SMS'dagi kodni va yangi parolni kiriting",
+    "phoneLabel": "Telefon",
+    "phonePlaceholder": "+998901234567",
+    "submitCode": "Kod yuborish",
+    "submittingCode": "Yuborilmoqda…",
+    "backToLogin": "Kirish sahifasiga qaytish",
+    "codeLabel": "SMS kod",
+    "codePlaceholder": "000000",
+    "newPasswordLabel": "Yangi parol",
+    "submitReset": "Parolni o'rnatish",
+    "submittingReset": "Saqlanmoqda…",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "setPassword": {
+    "title": "Parol o'rnatish",
+    "subtitle": "Ilovaga kirish uchun yangi parol o'rnating",
+    "invalidLink": "Havola yaroqsiz — token yo'q",
+    "done": "Parol o'rnatildi, kirish sahifasiga o'tilmoqda…",
+    "newPasswordLabel": "Yangi parol",
+    "submit": "O'rnatish",
+    "submitting": "Saqlanmoqda…",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "selectCompany": {
+    "title": "Kompaniyani tanlang",
+    "subtitle": "Siz bir nechta kompaniyaga a'zosiz",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "products": {
+    "title": "Katalog",
+    "export": "Excel eksport",
+    "exporting": "Yuklanmoqda…",
+    "import": "Excel import",
+    "new": "Yangi mahsulot",
+    "importUploading": "Fayl yuklanmoqda…",
+    "importProcessing": "Qayta ishlanmoqda…",
+    "importDone": "Import tugadi: {succeeded}/{total} muvaffaqiyatli",
+    "importFailedCount": "({count} xato)",
+    "downloadFailed": "Yuklab bo'lmadi",
+    "importFailed": "Import muvaffaqiyatsiz",
+    "searchPlaceholder": "Mahsulot nomi bo'yicha qidirish…",
+    "allCategories": "Barcha kategoriyalar",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Mahsulotlarni yuklab bo'lmadi",
+    "notFound": "Mahsulot topilmadi",
+    "columns": {
+      "name": "Nomi",
+      "sku": "SKU",
+      "category": "Kategoriya",
+      "unit": "Birlik",
+      "status": "Holat"
+    }
+  },
+  "productForm": {
+    "editTitle": "Mahsulotni tahrirlash",
+    "newTitle": "Yangi mahsulot",
+    "archive": "Arxivlash",
+    "archiveConfirm": "Mahsulotni arxivlashni tasdiqlaysizmi?",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "genericError": "Xato yuz berdi",
+    "mainInfo": "Asosiy ma'lumot",
+    "fields": {
+      "sku": "SKU",
+      "name": "Nomi",
+      "category": "Kategoriya",
+      "notSelected": "Tanlanmagan",
+      "baseUnit": "Asosiy birlik",
+      "selectPlaceholder": "Tanlang",
+      "brand": "Brend",
+      "country": "Ishlab chiqarilgan mamlakat",
+      "description": "Tavsif"
+    },
+    "saving": "Saqlanmoqda…",
+    "save": "Saqlash",
+    "prices": {
+      "title": "Narxlar",
+      "empty": "Narx kiritilmagan",
+      "typePlaceholder": "Narx turi",
+      "pricePlaceholder": "Narx",
+      "add": "Qo'shish"
+    },
+    "variants": {
+      "title": "Variantlar",
+      "remove": "O'chirish",
+      "empty": "Variant yo'q",
+      "namePlaceholder": "Variant nomi (masalan: Qizil)",
+      "add": "Qo'shish"
+    },
+    "images": {
+      "title": "Rasmlar",
+      "main": "Asosiy",
+      "makeMain": "Asosiy qilish",
+      "remove": "O'chirish"
+    },
+    "barcodes": {
+      "title": "Shtrix-kodlar",
+      "print": "Yorliq chop etish",
+      "remove": "O'chirish",
+      "empty": "Shtrix-kod yo'q",
+      "placeholder": "Shtrix-kod raqami",
+      "add": "Qo'shish"
+    }
+  },
+  "barcodeScan": {
+    "title": "Shtrix-kod skaner",
+    "subtitle": "USB skaner bilan o'qiting yoki qo'lda kiriting va Enter bosing.",
+    "placeholder": "Shtrix-kod",
+    "search": "Qidirish",
+    "startCamera": "Kamera bilan skanerlash",
+    "stopCamera": "To'xtatish",
+    "noCameraSupport": "Bu brauzer kamera orqali skanerlashni qo'llab-quvvatlamaydi — USB skaner yoki qo'lda kiritish ishlatilsin.",
+    "loading": "Qidirilmoqda…",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "cameraPermissionDenied": "Kameraga ruxsat berilmadi",
+    "skuLabel": "SKU: {sku}"
+  },
+  "warehouseDocs": {
+    "title": "Sklad hujjatlari",
+    "new": "Yangi hujjat",
+    "allTypes": "Barcha turlar",
+    "allStatuses": "Barcha holatlar",
+    "allWarehouses": "Barcha skladlar",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Hujjatlarni yuklab bo'lmadi",
+    "notFound": "Hujjat topilmadi",
+    "columns": {
+      "number": "Raqami",
+      "type": "Turi",
+      "warehouse": "Sklad",
+      "status": "Holat",
+      "total": "Jami"
+    },
+    "type": {
+      "receipt": "Kirim",
+      "issue": "Chiqim",
+      "writeoff": "Spisaniye",
+      "transfer": "Ko'chirish"
+    },
+    "status": {
+      "draft": "Qoralama",
+      "confirmed": "Tasdiqlangan",
+      "cancelled": "Bekor qilingan"
+    }
+  },
+  "warehouseDocForm": {
+    "newTitle": "Yangi sklad hujjati",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "genericError": "Xato yuz berdi",
+    "actionQueued": "Internet aloqasi yo'q — amal navbatga qo'yildi, aloqa tiklanganda avtomatik yuboriladi",
+    "invalidRow": "Noto'g'ri qator",
+    "confirmDoc": "Hujjatni tasdiqlaysizmi? Skladdagi qoldiq shu zahoti yangilanadi.",
+    "cancelDoc": "Hujjatni bekor qilasizmi (storno)? Teskari harakat yoziladi.",
+    "fields": {
+      "type": "Turi",
+      "warehouseFrom": "Chiqish sklad",
+      "warehouse": "Sklad",
+      "selectPlaceholder": "Tanlang",
+      "toWarehouse": "Qabul qiluvchi sklad"
+    },
+    "creating": "Yaratilmoqda…",
+    "createDraft": "Qoralama yaratish",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Hujjatni yuklab bo'lmadi",
+    "confirm": "Tasdiqlash",
+    "cancel": "Bekor qilish",
+    "print": "Chop etish",
+    "rows": {
+      "title": "Qatorlar",
+      "product": "Mahsulot",
+      "qty": "Miqdor",
+      "price": "Narx",
+      "total": "Jami",
+      "remove": "O'chirish",
+      "empty": "Qator yo'q",
+      "unitPlaceholder": "Birlik",
+      "add": "Qo'shish"
+    },
+    "totalLabel": "Jami: {total}",
+    "type": {
+      "receipt": "Kirim",
+      "issue": "Chiqim",
+      "writeoff": "Spisaniye",
+      "transfer": "Ko'chirish"
+    },
+    "status": {
+      "draft": "Qoralama",
+      "confirmed": "Tasdiqlangan",
+      "cancelled": "Bekor qilingan"
+    }
+  },
+  "inventoryCounts": {
+    "title": "Inventarizatsiya",
+    "newButton": "Yangi inventarizatsiya",
+    "allWarehouses": "Barcha skladlar",
+    "allStatuses": "Barcha holatlar",
+    "status": {
+      "in_progress": "Jarayonda",
+      "review": "Ko'rib chiqilmoqda",
+      "approved": "Tasdiqlangan"
+    },
+    "loading": "Yuklanmoqda…",
+    "loadError": "Inventarizatsiyalarni yuklab bo'lmadi",
+    "empty": "Inventarizatsiya topilmadi",
+    "table": {
+      "warehouse": "Sklad",
+      "status": "Holat",
+      "startedAt": "Boshlangan"
+    }
+  },
+  "inventoryCountNew": {
+    "title": "Yangi inventarizatsiya",
+    "cardTitle": "Sklad tanlang",
+    "warehouseLabel": "Sklad",
+    "selectPlaceholder": "Tanlang",
+    "submitting": "Boshlanmoqda…",
+    "submit": "Sanoqni boshlash",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "inventoryCountDetail": {
+    "status": {
+      "in_progress": "Jarayonda",
+      "review": "Ko'rib chiqilmoqda",
+      "approved": "Tasdiqlangan"
+    },
+    "loading": "Yuklanmoqda…",
+    "loadError": "Inventarizatsiyani yuklab bo'lmadi",
+    "approveConfirm": "Inventarizatsiyani tasdiqlaysizmi? Farqlar bo'yicha tuzatish hujjatlari darhol yaratiladi.",
+    "approving": "Tasdiqlanmoqda…",
+    "approve": "Tasdiqlash",
+    "approveHint": "Tasdiqlashdan oldin barcha qatorlarga sanoq natijasi kiritilishi kerak.",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "saveError": "Xato yuz berdi",
+    "rowsCardTitle": "Qatorlar",
+    "table": {
+      "product": "Mahsulot",
+      "systemQty": "Tizim qoldig'i",
+      "countedQty": "Sanalgan",
+      "diff": "Farq"
+    },
+    "saving": "saqlanmoqda…",
+    "noRows": "Qator yo'q"
+  },
+  "salePoints": {
+    "title": "Sotuv nuqtalari",
+    "newButton": "Yangi nuqta",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Ro'yxatni yuklab bo'lmadi",
+    "empty": "Sotuv nuqtasi yo'q",
+    "table": {
+      "name": "Nomi",
+      "address": "Manzil",
+      "status": "Holat"
+    },
+    "statusActive": "Faol",
+    "statusInactive": "Nofaol"
+  },
+  "salePointForm": {
+    "titleEdit": "Sotuv nuqtasini tahrirlash",
+    "titleNew": "Yangi sotuv nuqtasi",
+    "name": "Nomi",
+    "priceType": "Narx turi",
+    "selectPlaceholder": "Tanlang",
+    "address": "Manzil",
+    "phone": "Telefon",
+    "phoneHint": "O'zgartirmasa bo'sh qoldiring",
+    "creditLimit": "Kredit limiti (so'm)",
+    "paymentTermDays": "To'lov muddati (kun)",
+    "saving": "Saqlanmoqda…",
+    "save": "Saqlash",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "operatorsCardTitle": "Operatorlar",
+    "remove": "Olib tashlash",
+    "noOperators": "Operator biriktirilmagan",
+    "phonePlaceholder": "+998901234567",
+    "assigning": "…",
+    "assign": "Biriktirish",
+    "debtCardTitle": "Qarz holati",
+    "detailsPayment": "Batafsil / To'lov"
+  },
+  "orders": {
+    "title": "Zakazlar",
+    "filter": {
+      "allStatuses": "Barcha holatlar"
+    },
+    "status": {
+      "new": "Yangi",
+      "confirmed": "Tasdiqlangan",
+      "picking": "Yig'ilmoqda",
+      "shipped": "Yo'lda",
+      "delivered": "Yetkazildi",
+      "accepted": "Qabul qilindi",
+      "cancelled": "Bekor qilindi"
+    },
+    "loading": "Yuklanmoqda…",
+    "loadError": "Zakazlarni yuklab bo'lmadi",
+    "empty": "Zakaz yo'q",
+    "table": {
+      "number": "Raqami",
+      "salePoint": "Sotuv nuqtasi",
+      "warehouse": "Sklad",
+      "status": "Holat",
+      "total": "Jami"
+    }
+  },
+  "orderDetail": {
+    "status": {
+      "new": "Yangi",
+      "confirmed": "Tasdiqlangan",
+      "picking": "Yig'ilmoqda",
+      "shipped": "Yo'lda",
+      "delivered": "Yetkazildi",
+      "accepted": "Qabul qilindi",
+      "cancelled": "Bekor qilindi"
+    },
+    "loading": "Yuklanmoqda…",
+    "loadError": "Zakazni yuklab bo'lmadi",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "cancelConfirm": "Zakazni bekor qilishni tasdiqlaysizmi?",
+    "actions": {
+      "confirm": "Tasdiqlash",
+      "startPicking": "Yig'ishni boshlash",
+      "ship": "Jo'natish",
+      "cancel": "Bekor qilish",
+      "printInvoice": "Chop etish"
+    },
+    "items": {
+      "title": "Qatorlar (pick list)",
+      "product": "Mahsulot",
+      "ordered": "Buyurtma",
+      "price": "Narx",
+      "shipping": "Jo'natiladi",
+      "shipped": "Jo'natilgan"
+    },
+    "total": "Jami"
+  },
+  "employees": {
+    "title": "Hodimlar",
+    "rolesButton": "Rollar",
+    "newButton": "Yangi hodim",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Ro'yxatni yuklab bo'lmadi",
+    "empty": "Hodim yo'q",
+    "table": {
+      "name": "Ism",
+      "phone": "Telefon",
+      "role": "Rol",
+      "status": "Holat"
+    },
+    "status": {
+      "active": "Faol",
+      "blocked": "Bloklangan"
+    }
+  },
+  "employeeForm": {
+    "titleEdit": "Hodimni tahrirlash",
+    "titleNew": "Yangi hodim",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "fields": {
+      "phone": "Telefon",
+      "fullName": "F.I.O",
+      "role": "Rol",
+      "status": "Holat"
+    },
+    "selectPlaceholder": "Tanlang",
+    "status": {
+      "active": "Faol",
+      "blocked": "Bloklangan"
+    },
+    "assignments": {
+      "label": "Biriktirish (sklad/nuqta)",
+      "warehouse": "Sklad",
+      "salePoint": "Sotuv nuqtasi",
+      "remove": "O'chirish",
+      "add": "+ Biriktirish qo'shish"
+    },
+    "saving": "Saqlanmoqda…",
+    "save": "Saqlash",
+    "resetPassword": {
+      "title": "Parolni tiklash",
+      "description": "Eski parol darhol bekor qilinadi, hodimga SMS orqali yangi havola yuboriladi.",
+      "button": "Parolni tiklash",
+      "done": "SMS yuborildi"
+    }
+  },
+  "roles": {
+    "title": "Rollar",
+    "employeesButton": "Hodimlar",
+    "newRolePlaceholder": "Yangi rol nomi",
+    "add": "Qo'shish",
+    "invalidValue": "Noto'g'ri qiymat",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Ro'yxatni yuklab bo'lmadi",
+    "table": {
+      "name": "Nomi",
+      "type": "Turi"
+    },
+    "type": {
+      "system": "Tizim",
+      "custom": "Maxsus"
+    }
+  },
+  "rolePermissions": {
+    "defaultRoleName": "Rol",
+    "title": "{name} — ruxsatlar",
+    "systemNotice": "Tizim roli — ruxsatlarni ko'rish mumkin, o'zgartirib bo'lmaydi",
+    "saving": "Saqlanmoqda…",
+    "save": "Saqlash",
+    "saved": "Saqlandi",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "deliveries": {
+    "title": "Dostavkalar",
+    "newButton": "Yangi dostavka",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Ro'yxatni yuklab bo'lmadi",
+    "empty": "Dostavka yo'q",
+    "unknownCourier": "—",
+    "table": {
+      "date": "Sana",
+      "courier": "Kuryer",
+      "status": "Holat",
+      "cashExpected": "Kutilgan naqd",
+      "cashCollected": "Yig'ilgan naqd"
+    },
+    "status": {
+      "assigned": "Yo'lda",
+      "done": "Yakunlangan"
+    }
+  },
+  "deliveryForm": {
+    "title": "Yangi dostavka",
+    "courierLabel": "Kuryer",
+    "courierPlaceholder": "Tanlang",
+    "ordersLabel": "Yo'ldagi zakazlar",
+    "loading": "Yuklanmoqda…",
+    "noOrders": "Biriktirish uchun yo'ldagi zakaz yo'q",
+    "unknownSalePoint": "—",
+    "cashExpectedLabel": "Kutilayotgan naqd",
+    "submitButton": "Biriktirish",
+    "errors": {
+      "selectRequired": "Kuryer va kamida bitta zakaz tanlang",
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "deliveryDetail": {
+    "loading": "Yuklanmoqda…",
+    "loadError": "Dostavkani yuklab bo'lmadi",
+    "title": "Dostavka — {courier}",
+    "unknownCourier": "—",
+    "status": {
+      "assigned": "Yo'lda",
+      "done": "Yakunlangan"
+    },
+    "cashExpectedLabel": "Kutilgan naqd",
+    "cashCollectedLabel": "Yig'ilgan naqd",
+    "cashTransactionComment": "Inkassatsiya: dostavka (kuryer {courier})",
+    "settleCard": {
+      "title": "Kassaga topshirish",
+      "settledMessage": "Kassaga topshirildi ({amount} UZS).",
+      "registerPlaceholder": "Kassani tanlang",
+      "submitButton": "Kassaga topshirish",
+      "submitting": "Topshirilmoqda…"
+    },
+    "errors": {
+      "registerRequired": "Kassani tanlang",
+      "unexpected": "Kutilmagan xato yuz berdi"
+    },
+    "stopsCard": {
+      "title": "Bekatlar"
+    },
+    "stopStatus": {
+      "delivered": "Yetkazildi (kod: {code})",
+      "inTransit": "Yo'lda"
+    }
+  },
+  "deliveryMap": {
+    "title": "Kuryerlar xaritasi",
+    "unknownCourier": "Kuryer"
+  },
+  "courierDeliveries": {
+    "title": "Bugungi marshrut",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Yuklab bo'lmadi",
+    "empty": "Bugun sizga biriktirilgan dostavka yo'q",
+    "stopStatus": {
+      "delivered": "Yetkazildi (kod: {code})",
+      "inTransit": "Yo'lda"
+    },
+    "deliverButton": "Yetkazildi"
+  },
+  "courierDeliveryDetail": {
+    "deliveredMessage": "Yetkazildi. Do'konga shu kodni ayting:",
+    "backButton": "Marshrutga qaytish",
+    "cashLabel": "Qabul qilingan naqd summa",
+    "deliverButton": "Yetkazildi",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "counterpartyStatement": {
+    "titleFallback": "Qarz holati",
+    "filters": {
+      "from": "Dan",
+      "to": "Gacha",
+      "downloadPdf": "Akt sverki (PDF)"
+    },
+    "closingBalance": "Yakuniy qoldiq",
+    "movements": {
+      "title": "Harakatlar",
+      "columns": {
+        "date": "Sana",
+        "type": "Turi",
+        "document": "Hujjat",
+        "amount": "Summa",
+        "balance": "Qoldiq"
+      },
+      "empty": "Harakatlar yo'q"
+    },
+    "payment": {
+      "title": "To'lov yozish",
+      "amount": "Summa",
+      "method": "Usul",
+      "methods": {
+        "cash": "Naqd",
+        "bank": "Bank",
+        "card": "Karta"
+      },
+      "allocationFifo": "Avtomatik (eng eski qarzdan)",
+      "allocationManual": "Qo'lda taqsimlash",
+      "noOpenOrders": "Ochiq qarzli zakaz yo'q",
+      "orderLine": "№ {number} — ochiq: {balance}",
+      "placeholderAmount": "0",
+      "submit": "To'lovni saqlash",
+      "submitting": "Saqlanmoqda…",
+      "errors": {
+        "amountRequired": "To'lov summasini kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "defaultCounterpartyName": "kontragent"
+  },
+  "debtsAging": {
+    "title": "Qarz yoshi hisoboti",
+    "loading": "Yuklanmoqda…",
+    "empty": "Ochiq qarz yo'q",
+    "columns": {
+      "counterparty": "Kontragent",
+      "total": "Jami"
+    },
+    "buckets": {
+      "notDue": "Muddati kelmagan",
+      "d0_15": "0–15 kun",
+      "d16_30": "16–30 kun",
+      "d31_60": "31–60 kun",
+      "d60plus": "60+ kun"
+    }
+  },
+  "cashRegisters": {
+    "title": "Kassa",
+    "registers": {
+      "cardTitle": "Kassa/hisob raqamlar",
+      "inactive": "faol emas",
+      "empty": "Hali kassa yo'q",
+      "nameLabel": "Yangi kassa nomi",
+      "namePlaceholder": "Bosh kassa",
+      "typeLabel": "Turi",
+      "currencyLabel": "Valyuta",
+      "add": "Qo'shish",
+      "adding": "Saqlanmoqda…",
+      "errors": {
+        "nameRequired": "Nomini kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "categories": {
+      "cardTitle": "Xarajat kategoriyalari",
+      "empty": "Hali kategoriya yo'q",
+      "nameLabel": "Yangi kategoriya",
+      "namePlaceholder": "Transport",
+      "add": "Qo'shish",
+      "adding": "Saqlanmoqda…",
+      "errors": {
+        "nameRequired": "Nomini kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "types": {
+      "cash": "Naqd",
+      "bank": "Bank",
+      "card": "Karta"
+    }
+  },
+  "cashRegisterLedger": {
+    "titleFallback": "Kassa",
+    "shift": {
+      "cardTitle": "Smena",
+      "openInfo": "Ochiq smena — boshlang'ich qoldiq: {balance} {currency}",
+      "countedLabel": "Sanoq natijasi (naqd)",
+      "close": "Smena yopish",
+      "closing": "Yopilmoqda…",
+      "openingLabel": "Boshlang'ich qoldiq",
+      "open": "Smena ochish",
+      "opening": "Ochilmoqda…",
+      "columns": {
+        "closedAt": "Yopilgan",
+        "expected": "Kutilgan",
+        "counted": "Sanoq",
+        "diff": "Farq"
+      },
+      "errors": {
+        "countedRequired": "Sanoq natijasini kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "transaction": {
+      "cardTitle": "Tranzaksiya qo'shish",
+      "typeLabel": "Turi",
+      "amountLabel": "Summa",
+      "categoryLabel": "Kategoriya",
+      "categoryNone": "—",
+      "commentPlaceholder": "Izoh (ixtiyoriy)",
+      "save": "Saqlash",
+      "saving": "Saqlanmoqda…",
+      "errors": {
+        "amountRequired": "Summani kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "transfer": {
+      "cardTitle": "Kassalar orasida ko'chirish",
+      "toLabel": "Qabul qiluvchi kassa",
+      "selectPlaceholder": "Tanlang",
+      "amountLabel": "Summa",
+      "submit": "Ko'chirish",
+      "submitting": "Ko'chirilmoqda…",
+      "errors": {
+        "required": "Qabul qiluvchi kassa va summani kiriting",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "list": {
+      "cardTitle": "Tranzaksiyalar",
+      "columns": {
+        "date": "Sana",
+        "type": "Turi",
+        "category": "Kategoriya",
+        "comment": "Izoh",
+        "amount": "Summa"
+      },
+      "empty": "Tranzaksiya yo'q"
+    },
+    "types": {
+      "income": "Kirim",
+      "expense": "Chiqim",
+      "transfer_in": "Ko'chirish (kirim)",
+      "transfer_out": "Ko'chirish (chiqim)"
+    }
+  },
+  "companySettings": {
+    "title": "Kompaniya sozlamalari",
+    "branding": {
+      "cardTitle": "Brending",
+      "noLogo": "Logo yo'q",
+      "upload": "Yuklash",
+      "uploading": "Yuklanmoqda…",
+      "nameLabel": "Kompaniya nomi",
+      "colorLabel": "Brend rangi",
+      "errors": {
+        "fileRequired": "Rasm faylini tanlang",
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    },
+    "creditCurrency": {
+      "cardTitle": "Qarz va valyuta sozlamalari",
+      "creditModeLabel": "Kredit limiti oshganda",
+      "creditModes": {
+        "block": "Bloklansin",
+        "warn": "Faqat ogohlantirilsin"
+      },
+      "rateModeLabel": "USD kursi manbasi",
+      "rateModes": {
+        "cbu": "CBU rasmiy kursi (kompaniya kursi qo'yilmaguncha)",
+        "manual": "Faqat kompaniya kursi"
+      },
+      "save": "Sozlamalarni saqlash",
+      "saving": "Saqlanmoqda…",
+      "currentRateLabel": "Joriy USD kursi:",
+      "currentRateValue": "{rate} ({source})",
+      "sourceCbu": "CBU",
+      "sourceCompany": "kompaniya",
+      "rateUnset": "belgilanmagan",
+      "manualRateLabel": "Kompaniya kursi (1 USD = ? UZS)",
+      "setRate": "Kursni qo'yish",
+      "savingRate": "Saqlanmoqda…",
+      "errors": {
+        "unexpected": "Kutilmagan xato yuz berdi",
+        "rateRequired": "Kursni kiriting"
+      }
+    },
+    "showcase": {
+      "cardTitle": "Vitrina",
+      "enabledLabel": "Vitrina yoqilgan (ochiq katalog + zakaz so'rovi)",
+      "slugLabel": "Vitrina manzili (slug)",
+      "slugPlaceholder": "masalan: murcha-savdo",
+      "slugPreview": "murcha.uz/{slug}",
+      "priceTypeLabel": "Narx turi",
+      "priceTypeDefault": "Standart narx turi",
+      "categoryLabel": "Kategoriya",
+      "categoryAll": "Barcha mahsulotlar",
+      "save": "Vitrinani saqlash",
+      "saving": "Saqlanmoqda…",
+      "errors": {
+        "unexpected": "Kutilmagan xato yuz berdi"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "loading": "Yuklanmoqda…",
+    "chartTitle": "Sotuv dinamikasi (30 kun)",
+    "cards": {
+      "todaySales": "Bugungi sotuv",
+      "pendingOrders": "Kutilayotgan zakazlar",
+      "cashBalance": "Kassa qoldig'i",
+      "totalDebt": "Jami qarzdorlik",
+      "overdueDebt": "Muddati o'tgan qarz",
+      "lowStock": "Tugayotgan mahsulotlar"
+    }
+  },
+  "salesReport": {
+    "title": "Hisobotlar — sotuv dinamikasi",
+    "chartTitle": "Kunlik dinamika",
+    "total": "Jami",
+    "empty": "Ma'lumot yo'q",
+    "nav": {
+      "products": "Top mahsulotlar",
+      "stockTurnover": "Sklad aylanmasi",
+      "debtsAging": "Qarzdorlik reestri"
+    },
+    "filters": {
+      "from": "Dan",
+      "to": "Gacha"
+    },
+    "table": {
+      "date": "Sana",
+      "ordersCount": "Zakazlar soni",
+      "total": "Summa"
+    }
+  },
+  "productsReport": {
+    "title": "Top mahsulotlar va marja",
+    "tableTitle": "Mahsulotlar (daromad bo'yicha)",
+    "empty": "Ma'lumot yo'q",
+    "nav": {
+      "sales": "Sotuv dinamikasi",
+      "stockTurnover": "Sklad aylanmasi"
+    },
+    "filters": {
+      "from": "Dan",
+      "to": "Gacha"
+    },
+    "table": {
+      "product": "Mahsulot",
+      "qty": "Miqdor",
+      "revenue": "Daromad",
+      "cost": "Tannarx",
+      "margin": "Marja",
+      "marginPct": "Marja %"
+    }
+  },
+  "stockTurnover": {
+    "title": "Sklad aylanmasi",
+    "tableTitle": "Mahsulot bo'yicha aylanma",
+    "hint": "O'rtacha qoldiq joriy qoldiq × joriy o'rtacha tannarx bilan yaqinlashtiriladi.",
+    "empty": "Ma'lumot yo'q",
+    "nav": {
+      "sales": "Sotuv dinamikasi",
+      "products": "Top mahsulotlar"
+    },
+    "filters": {
+      "from": "Dan",
+      "to": "Gacha"
+    },
+    "table": {
+      "product": "Mahsulot",
+      "outboundQty": "Chiqim miqdori",
+      "outboundValue": "Chiqim summasi",
+      "avgStock": "O'rtacha qoldiq",
+      "turnover": "Aylanma"
+    }
+  },
+  "auditLogs": {
+    "title": "Audit log",
+    "tableTitle": "Yozuvlar",
+    "loading": "Yuklanmoqda…",
+    "empty": "Yozuv yo'q",
+    "details": "Tafsilot",
+    "close": "Yopish",
+    "before": "Oldin",
+    "after": "Keyin",
+    "filters": {
+      "entityType": "Obyekt turi",
+      "all": "Barchasi",
+      "from": "Dan",
+      "to": "Gacha"
+    },
+    "table": {
+      "date": "Sana",
+      "user": "Foydalanuvchi",
+      "action": "Amal",
+      "entity": "Obyekt"
+    },
+    "entityTypes": {
+      "order": "Zakaz",
+      "warehouse_doc": "Sklad hujjati",
+      "payment": "To'lov",
+      "debt_movement": "Qarz tuzatish",
+      "transaction": "Kassa tranzaksiyasi",
+      "cash_shift": "Kassa smenasi",
+      "company_member": "Hodim"
+    }
+  }
+}

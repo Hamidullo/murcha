@@ -10,6 +10,24 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // Katalog/sklad ro'yxati offline'da ham ko'rinishi uchun — so'nggi
+      // muvaffaqiyatli javob keshlanadi, tarmoq bo'lsa avval tarmoqdan
+      // so'raladi (yangi narx/qoldiqni imkon qadar tezroq ko'rsatish uchun).
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith("/api/v1/shop-catalog") ||
+              url.pathname.startsWith("/api/v1/warehouses"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "shop-catalog-cache",
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
       manifest: {
         name: "Murcha — Do'kon",
         short_name: "Murcha",

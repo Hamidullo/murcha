@@ -2,15 +2,18 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as inventoryCountsApi from "../api/inventory-counts.api.js";
 import * as warehousesApi from "../api/warehouses.api.js";
 import Button from "@/components/ui/button/Button.vue";
 
-const STATUS_LABELS = {
-  in_progress: "Jarayonda",
-  review: "Ko'rib chiqilmoqda",
-  approved: "Tasdiqlangan",
-};
+const { t } = useI18n();
+
+const STATUS_LABELS = computed(() => ({
+  in_progress: t("inventoryCounts.status.in_progress"),
+  review: t("inventoryCounts.status.review"),
+  approved: t("inventoryCounts.status.approved"),
+}));
 
 const router = useRouter();
 
@@ -57,9 +60,9 @@ function goToCount(id) {
 <template>
   <div>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold text-brand-brown">Inventarizatsiya</h1>
+      <h1 class="text-2xl font-semibold text-brand-brown">{{ t("inventoryCounts.title") }}</h1>
       <Button size="sm" @click="router.push({ name: 'inventory-count-new' })">
-        Yangi inventarizatsiya
+        {{ t("inventoryCounts.newButton") }}
       </Button>
     </div>
 
@@ -68,7 +71,7 @@ function goToCount(id) {
         v-model="warehouseId"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha skladlar</option>
+        <option value="">{{ t("inventoryCounts.allWarehouses") }}</option>
         <option v-for="warehouse in warehouses" :key="warehouse.id" :value="warehouse.id">
           {{ warehouse.name }}
         </option>
@@ -77,27 +80,29 @@ function goToCount(id) {
         v-model="status"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha holatlar</option>
+        <option value="">{{ t("inventoryCounts.allStatuses") }}</option>
         <option v-for="(label, value) in STATUS_LABELS" :key="value" :value="value">
           {{ label }}
         </option>
       </select>
     </div>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Yuklanmoqda…</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">
+      {{ t("inventoryCounts.loading") }}
+    </p>
     <p v-else-if="isError" class="mt-6 text-sm text-red-600">
-      Inventarizatsiyalarni yuklab bo'lmadi
+      {{ t("inventoryCounts.loadError") }}
     </p>
     <p v-else-if="counts.length === 0" class="mt-6 text-sm text-brand-brown/60">
-      Inventarizatsiya topilmadi
+      {{ t("inventoryCounts.empty") }}
     </p>
     <div v-else class="mt-6 overflow-x-auto rounded-xl border border-brand-brown/10 bg-white">
       <table class="w-full text-left text-sm">
         <thead class="border-b border-brand-brown/10 text-brand-brown/60">
           <tr>
-            <th class="px-4 py-3 font-medium">Sklad</th>
-            <th class="px-4 py-3 font-medium">Holat</th>
-            <th class="px-4 py-3 font-medium">Boshlangan</th>
+            <th class="px-4 py-3 font-medium">{{ t("inventoryCounts.table.warehouse") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("inventoryCounts.table.status") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("inventoryCounts.table.startedAt") }}</th>
           </tr>
         </thead>
         <tbody>

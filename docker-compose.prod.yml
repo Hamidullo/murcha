@@ -1,0 +1,165 @@
+name: murcha-prod
+
+# Ishga tushirish: docker compose -f docker-compose.prod.yml up -d
+# `docker-compose.yml` (dev) bilan farqi: postgres/redis/minio portlari
+# hostga ochilmaydi (faqat ichki tarmoq), web/shop statik build+nginx
+# (`Dockerfile.prod`/`Dockerfile`, dev-server emas), asosiy `nginx` 4
+# subdomenni SSL bilan marshrutlaydi (`nginx/nginx.prod.conf`), yangi
+# `certbot`/`uptime-kuma` xizmatlari qo'shildi.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-murcha}
+      POSTGRES_USER: ${POSTGRES_USER:-murcha}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-murcha}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-murcha}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-murcha}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-murcha123}
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://localhost:3000/healthz'').then(r=>process.exit(r.ok?0:1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["node", "src/worker.js"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.prod
+    restart: unless-stopped
+
+  shop:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/shop:latest
+    build:
+      context: .
+      dockerfile: apps/shop/Dockerfile
+    restart: unless-stopped
+
+  landing:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/landing:latest
+    build:
+      context: .
+      dockerfile: apps/landing/Dockerfile
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - web
+      - shop
+      - landing
+    restart: unless-stopped
+
+  # Sertifikatlarni davriy yangilash (~har 12 soatda urinadi, muddati
+  # 30 kundan kam qolganda haqiqatan yangilaydi — certbot'ning o'z mantiqi).
+  # Birinchi sertifikatni olish uchun (bootstrap) `nginx/nginx.prod.conf`dagi
+  # izohga qarang — `run --rm certbot certonly ...` qo'lda bir marta.
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w
+      /var/www/certbot; sleep 12h & wait $${!}; done"
+    restart: unless-stopped
+
+  # Monitoring (PLAN.md "Kuzatuv va ishonchlilik") — barcha xizmatlar
+  # (api/web/shop/landing/postgres/redis) uchun uptime tekshiruvi va
+  # muammo bo'lsa bildirishnoma (Telegram/email — Uptime Kuma o'z UI'sidan
+  # sozlanadi, `.env`da alohida kalit kerak emas).
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    volumes:
+      - uptime_kuma_data:/app/data
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  certbot_certs:
+  certbot_webroot:
+  uptime_kuma_data:

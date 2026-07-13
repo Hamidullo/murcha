@@ -2,11 +2,13 @@
 import { computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as deliveriesApi from "../api/deliveries.api.js";
 import { getSocket } from "../lib/socket.js";
 import Button from "@/components/ui/button/Button.vue";
 import { Card, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const router = useRouter();
 
 const {
@@ -70,12 +72,16 @@ onUnmounted(() => {
 
 <template>
   <div class="mx-auto max-w-2xl">
-    <h1 class="text-2xl font-semibold text-brand-brown">Bugungi marshrut</h1>
+    <h1 class="text-2xl font-semibold text-brand-brown">{{ t("courierDeliveries.title") }}</h1>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="mt-6 text-sm text-red-600">Yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">
+      {{ t("courierDeliveries.loading") }}
+    </p>
+    <p v-else-if="isError" class="mt-6 text-sm text-red-600">
+      {{ t("courierDeliveries.loadError") }}
+    </p>
     <p v-else-if="!activeDelivery" class="mt-6 text-sm text-brand-brown/60">
-      Bugun sizga biriktirilgan dostavka yo'q
+      {{ t("courierDeliveries.empty") }}
     </p>
 
     <div v-else class="mt-6 flex flex-col gap-3">
@@ -84,7 +90,11 @@ onUnmounted(() => {
           <div>
             <p class="font-medium text-brand-brown">№ {{ stop.order.number }}</p>
             <p class="text-sm text-brand-brown/60">
-              {{ stop.deliveredAt ? `Yetkazildi (kod: ${stop.acceptCode})` : "Yo'lda" }}
+              {{
+                stop.deliveredAt
+                  ? t("courierDeliveries.stopStatus.delivered", { code: stop.acceptCode })
+                  : t("courierDeliveries.stopStatus.inTransit")
+              }}
             </p>
           </div>
           <Button
@@ -97,7 +107,7 @@ onUnmounted(() => {
               })
             "
           >
-            Yetkazildi
+            {{ t("courierDeliveries.deliverButton") }}
           </Button>
         </CardContent>
       </Card>

@@ -16,7 +16,6 @@ export default defineConfig({
       srcDir: "src",
       filename: "sw.js",
       registerType: "autoUpdate",
-      injectManifest: { injectionPoint: undefined },
       manifest: {
         name: "Murcha — Sklad",
         short_name: "Murcha",

@@ -1,24 +1,26 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery } from "@tanstack/vue-query";
 import * as warehouseDocsApi from "../api/warehouse-docs.api.js";
 import * as warehousesApi from "../api/warehouses.api.js";
 import Button from "@/components/ui/button/Button.vue";
 
+const router = useRouter();
+const { t } = useI18n();
+
 const TYPE_LABELS = {
-  receipt: "Kirim",
-  issue: "Chiqim",
-  writeoff: "Spisaniye",
-  transfer: "Ko'chirish",
+  receipt: t("warehouseDocs.type.receipt"),
+  issue: t("warehouseDocs.type.issue"),
+  writeoff: t("warehouseDocs.type.writeoff"),
+  transfer: t("warehouseDocs.type.transfer"),
 };
 const STATUS_LABELS = {
-  draft: "Qoralama",
-  confirmed: "Tasdiqlangan",
-  cancelled: "Bekor qilingan",
+  draft: t("warehouseDocs.status.draft"),
+  confirmed: t("warehouseDocs.status.confirmed"),
+  cancelled: t("warehouseDocs.status.cancelled"),
 };
-
-const router = useRouter();
 
 const type = ref("");
 const status = ref("");
@@ -65,8 +67,10 @@ function goToDoc(docId) {
 <template>
   <div>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold text-brand-brown">Sklad hujjatlari</h1>
-      <Button size="sm" @click="router.push({ name: 'warehouse-doc-new' })">Yangi hujjat</Button>
+      <h1 class="text-2xl font-semibold text-brand-brown">{{ t("warehouseDocs.title") }}</h1>
+      <Button size="sm" @click="router.push({ name: 'warehouse-doc-new' })">
+        {{ t("warehouseDocs.new") }}
+      </Button>
     </div>
 
     <div class="mt-4 flex flex-wrap gap-3">
@@ -74,7 +78,7 @@ function goToDoc(docId) {
         v-model="type"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha turlar</option>
+        <option value="">{{ t("warehouseDocs.allTypes") }}</option>
         <option v-for="(label, value) in TYPE_LABELS" :key="value" :value="value">
           {{ label }}
         </option>
@@ -83,7 +87,7 @@ function goToDoc(docId) {
         v-model="status"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha holatlar</option>
+        <option value="">{{ t("warehouseDocs.allStatuses") }}</option>
         <option v-for="(label, value) in STATUS_LABELS" :key="value" :value="value">
           {{ label }}
         </option>
@@ -92,25 +96,31 @@ function goToDoc(docId) {
         v-model="warehouseId"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
       >
-        <option value="">Barcha skladlar</option>
+        <option value="">{{ t("warehouseDocs.allWarehouses") }}</option>
         <option v-for="warehouse in warehouses" :key="warehouse.id" :value="warehouse.id">
           {{ warehouse.name }}
         </option>
       </select>
     </div>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="mt-6 text-sm text-red-600">Hujjatlarni yuklab bo'lmadi</p>
-    <p v-else-if="docs.length === 0" class="mt-6 text-sm text-brand-brown/60">Hujjat topilmadi</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">
+      {{ t("warehouseDocs.loading") }}
+    </p>
+    <p v-else-if="isError" class="mt-6 text-sm text-red-600">
+      {{ t("warehouseDocs.loadError") }}
+    </p>
+    <p v-else-if="docs.length === 0" class="mt-6 text-sm text-brand-brown/60">
+      {{ t("warehouseDocs.notFound") }}
+    </p>
     <div v-else class="mt-6 overflow-x-auto rounded-xl border border-brand-brown/10 bg-white">
       <table class="w-full text-left text-sm">
         <thead class="border-b border-brand-brown/10 text-brand-brown/60">
           <tr>
-            <th class="px-4 py-3 font-medium">Raqami</th>
-            <th class="px-4 py-3 font-medium">Turi</th>
-            <th class="px-4 py-3 font-medium">Sklad</th>
-            <th class="px-4 py-3 font-medium">Holat</th>
-            <th class="px-4 py-3 font-medium">Jami</th>
+            <th class="px-4 py-3 font-medium">{{ t("warehouseDocs.columns.number") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("warehouseDocs.columns.type") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("warehouseDocs.columns.warehouse") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("warehouseDocs.columns.status") }}</th>
+            <th class="px-4 py-3 font-medium">{{ t("warehouseDocs.columns.total") }}</th>
           </tr>
         </thead>
         <tbody>

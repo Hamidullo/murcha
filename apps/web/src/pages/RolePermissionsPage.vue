@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery } from "@tanstack/vue-query";
 import * as rolesApi from "../api/roles.api.js";
 import { ApiError } from "../api/client.js";
@@ -9,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const roleId = computed(() => route.params.id);
 
@@ -60,7 +62,7 @@ async function onSave() {
     await rolesApi.setRolePermissions(roleId.value, [...checked]);
     saveDone.value = true;
   } catch (err) {
-    saveError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    saveError.value = err instanceof ApiError ? err.message : t("rolePermissions.unexpectedError");
   } finally {
     isSaving.value = false;
   }
@@ -71,10 +73,14 @@ async function onSave() {
   <div class="mx-auto max-w-lg">
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="sm" @click="router.push({ name: 'roles' })">←</Button>
-      <h1 class="text-2xl font-semibold text-brand-brown">{{ role?.name ?? "Rol" }} — ruxsatlar</h1>
+      <h1 class="text-2xl font-semibold text-brand-brown">
+        {{
+          t("rolePermissions.title", { name: role?.name ?? t("rolePermissions.defaultRoleName") })
+        }}
+      </h1>
     </div>
     <p v-if="role?.isSystem" class="mt-1 text-sm text-brand-brown/60">
-      Tizim roli — ruxsatlarni ko'rish mumkin, o'zgartirib bo'lmaydi
+      {{ t("rolePermissions.systemNotice") }}
     </p>
 
     <Card class="mt-4">
@@ -94,9 +100,9 @@ async function onSave() {
         </label>
 
         <Button v-if="!role?.isSystem" :disabled="isSaving" class="mt-2 w-fit" @click="onSave">
-          {{ isSaving ? "Saqlanmoqda…" : "Saqlash" }}
+          {{ isSaving ? t("rolePermissions.saving") : t("rolePermissions.save") }}
         </Button>
-        <p v-if="saveDone" class="text-xs text-green-700">Saqlandi</p>
+        <p v-if="saveDone" class="text-xs text-green-700">{{ t("rolePermissions.saved") }}</p>
         <p v-if="saveError" class="text-xs text-red-600">{{ saveError }}</p>
       </CardContent>
     </Card>

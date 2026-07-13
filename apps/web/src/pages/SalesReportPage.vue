@@ -1,12 +1,15 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import "../lib/echarts-setup.js";
 import VChart from "vue-echarts";
 import * as reportsApi from "../api/reports.api.js";
 import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+const { t } = useI18n();
 
 const from = ref("");
 const to = ref("");
@@ -31,16 +34,16 @@ const chartOption = computed(() => ({
 <template>
   <div class="mx-auto max-w-4xl">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold text-brand-brown">Hisobotlar — sotuv dinamikasi</h1>
+      <h1 class="text-2xl font-semibold text-brand-brown">{{ t("salesReport.title") }}</h1>
       <nav class="flex gap-3 text-sm">
         <router-link :to="{ name: 'reports-products' }" class="text-brand-brown underline">
-          Top mahsulotlar
+          {{ t("salesReport.nav.products") }}
         </router-link>
         <router-link :to="{ name: 'reports-stock-turnover' }" class="text-brand-brown underline">
-          Sklad aylanmasi
+          {{ t("salesReport.nav.stockTurnover") }}
         </router-link>
         <router-link :to="{ name: 'debts-aging' }" class="text-brand-brown underline">
-          Qarzdorlik reestri
+          {{ t("salesReport.nav.debtsAging") }}
         </router-link>
       </nav>
     </div>
@@ -48,25 +51,27 @@ const chartOption = computed(() => ({
     <Card class="mt-4">
       <CardContent class="flex flex-wrap items-end gap-3 pt-6">
         <div class="flex flex-col gap-1.5">
-          <Label for="from">Dan</Label>
+          <Label for="from">{{ t("salesReport.filters.from") }}</Label>
           <Input id="from" v-model="from" type="date" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label for="to">Gacha</Label>
+          <Label for="to">{{ t("salesReport.filters.to") }}</Label>
           <Input id="to" v-model="to" type="date" />
         </div>
         <div class="ml-auto text-right">
-          <p class="text-sm text-brand-brown/60">Jami</p>
+          <p class="text-sm text-brand-brown/60">{{ t("salesReport.total") }}</p>
           <p class="text-xl font-semibold text-brand-brown">{{ totalSum }} UZS</p>
         </div>
       </CardContent>
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Kunlik dinamika</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("salesReport.chartTitle") }}</CardTitle></CardHeader
+      >
       <CardContent>
         <VChart v-if="sales.length > 0" :option="chartOption" style="height: 320px" autoresize />
-        <p v-else class="text-sm text-brand-brown/60">Ma'lumot yo'q</p>
+        <p v-else class="text-sm text-brand-brown/60">{{ t("salesReport.empty") }}</p>
       </CardContent>
     </Card>
 
@@ -75,9 +80,9 @@ const chartOption = computed(() => ({
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-brand-brown/10 text-left text-brand-brown/60">
-              <th class="py-2">Sana</th>
-              <th class="text-right">Zakazlar soni</th>
-              <th class="text-right">Summa</th>
+              <th class="py-2">{{ t("salesReport.table.date") }}</th>
+              <th class="text-right">{{ t("salesReport.table.ordersCount") }}</th>
+              <th class="text-right">{{ t("salesReport.table.total") }}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,7 +92,9 @@ const chartOption = computed(() => ({
               <td class="text-right font-medium">{{ s.total }}</td>
             </tr>
             <tr v-if="sales.length === 0">
-              <td colspan="3" class="py-4 text-center text-brand-brown/50">Ma'lumot yo'q</td>
+              <td colspan="3" class="py-4 text-center text-brand-brown/50">
+                {{ t("salesReport.empty") }}
+              </td>
             </tr>
           </tbody>
         </table>

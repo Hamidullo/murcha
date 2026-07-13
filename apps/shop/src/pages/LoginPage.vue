@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { loginSchema } from "@murcha/shared";
 import { useAuthStore } from "../stores/auth.store.js";
 import { ApiError } from "../api/client.js";
@@ -11,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const phone = ref("");
 const password = ref("");
@@ -40,7 +42,7 @@ async function onSubmit() {
       router.push({ name: "home" });
     }
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("login.unexpectedError");
   } finally {
     isSubmitting.value = false;
   }
@@ -52,18 +54,18 @@ async function onSubmit() {
     <Card class="w-full max-w-sm">
       <CardHeader>
         <img src="/murcha-logo.svg" alt="Murcha" class="h-10 w-auto" />
-        <CardTitle>Kirish</CardTitle>
-        <CardDescription>Do'kon uchun zakaz ilovasi</CardDescription>
+        <CardTitle>{{ t("login.title") }}</CardTitle>
+        <CardDescription>{{ t("login.subtitle") }}</CardDescription>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="flex flex-col gap-1.5">
-            <Label for="phone">Telefon</Label>
+            <Label for="phone">{{ t("login.phoneLabel") }}</Label>
             <Input id="phone" v-model="phone" type="tel" placeholder="+998901234567" />
             <p v-if="fieldErrors.phone" class="text-xs text-red-600">{{ fieldErrors.phone }}</p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="password">Parol</Label>
+            <Label for="password">{{ t("login.passwordLabel") }}</Label>
             <Input id="password" v-model="password" type="password" />
             <p v-if="fieldErrors.password" class="text-xs text-red-600">
               {{ fieldErrors.password }}
@@ -71,13 +73,13 @@ async function onSubmit() {
           </div>
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Kirilmoqda…" : "Kirish" }}
+            {{ isSubmitting ? t("login.submitting") : t("login.submit") }}
           </Button>
           <router-link
             :to="{ name: 'forgot-password' }"
             class="text-center text-sm text-brand-brown/60"
           >
-            Parolni unutdingizmi?
+            {{ t("login.forgotPasswordLink") }}
           </router-link>
         </form>
       </CardContent>

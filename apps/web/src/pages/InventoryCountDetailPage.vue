@@ -2,6 +2,7 @@
 import { reactive, computed, watch, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as inventoryCountsApi from "../api/inventory-counts.api.js";
 import * as warehousesApi from "../api/warehouses.api.js";
 import * as productsApi from "../api/products.api.js";
@@ -10,11 +11,13 @@ import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-const STATUS_LABELS = {
-  in_progress: "Jarayonda",
-  review: "Ko'rib chiqilmoqda",
-  approved: "Tasdiqlangan",
-};
+const { t } = useI18n();
+
+const STATUS_LABELS = computed(() => ({
+  in_progress: t("inventoryCountDetail.status.in_progress"),
+  review: t("inventoryCountDetail.status.review"),
+  approved: t("inventoryCountDetail.status.approved"),
+}));
 
 const route = useRoute();
 const queryClient = useQueryClient();
@@ -91,7 +94,8 @@ async function onSaveCount(item) {
     await inventoryCountsApi.submitCount(countId.value, item.id, { countedQty: Number(value) });
     refetchCount();
   } catch (err) {
-    itemErrors[item.id] = err instanceof ApiError ? err.message : "Xato yuz berdi";
+    itemErrors[item.id] =
+      err instanceof ApiError ? err.message : t("inventoryCountDetail.saveError");
   } finally {
     savingItemId.value = null;
   }
@@ -116,11 +120,7 @@ const isApproving = ref(false);
 
 /** @returns {Promise<void>} */
 async function onApprove() {
-  if (
-    !confirm(
-      "Inventarizatsiyani tasdiqlaysizmi? Farqlar bo'yicha tuzatish hujjatlari darhol yaratiladi.",
-    )
-  ) {
+  if (!confirm(t("inventoryCountDetail.approveConfirm"))) {
     return;
   }
   approveError.value = "";
@@ -130,7 +130,8 @@ async function onApprove() {
     queryClient.invalidateQueries({ queryKey: ["inventory-counts"] });
     refetchCount();
   } catch (err) {
-    approveError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    approveError.value =
+      err instanceof ApiError ? err.message : t("inventoryCountDetail.unexpectedError");
   } finally {
     isApproving.value = false;
   }
@@ -139,8 +140,12 @@ async function onApprove() {
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <p v-if="isLoading" class="text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="text-sm text-red-600">Inventarizatsiyani yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="text-sm text-brand-brown/60">
+      {{ t("inventoryCountDetail.loading") }}
+    </p>
+    <p v-else-if="isError" class="text-sm text-red-600">
+      {{ t("inventoryCountDetail.loadError") }}
+    </p>
 
     <template v-else-if="count">
       <div class="flex items-center justify-between">
@@ -151,24 +156,28 @@ async function onApprove() {
           <p class="text-sm text-brand-brown/60">{{ STATUS_LABELS[count.status] }}</p>
         </div>
         <Button v-if="isDraftStatus" :disabled="!allCounted || isApproving" @click="onApprove">
-          {{ isApproving ? "Tasdiqlanmoqda…" : "Tasdiqlash" }}
+          {{
+            isApproving ? t("inventoryCountDetail.approving") : t("inventoryCountDetail.approve")
+          }}
         </Button>
       </div>
       <p v-if="isDraftStatus && !allCounted" class="mt-2 text-xs text-brand-brown/50">
-        Tasdiqlashdan oldin barcha qatorlarga sanoq natijasi kiritilishi kerak.
+        {{ t("inventoryCountDetail.approveHint") }}
       </p>
       <p v-if="approveError" class="mt-2 text-sm text-red-600">{{ approveError }}</p>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Qatorlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("inventoryCountDetail.rowsCardTitle") }}</CardTitle></CardHeader
+        >
         <CardContent>
           <table class="w-full text-left text-sm">
             <thead class="border-b border-brand-brown/10 text-brand-brown/60">
               <tr>
-                <th class="py-2 font-medium">Mahsulot</th>
-                <th class="py-2 font-medium">Tizim qoldig'i</th>
-                <th class="py-2 font-medium">Sanalgan</th>
-                <th class="py-2 font-medium">Farq</th>
+                <th class="py-2 font-medium">{{ t("inventoryCountDetail.table.product") }}</th>
+                <th class="py-2 font-medium">{{ t("inventoryCountDetail.table.systemQty") }}</th>
+                <th class="py-2 font-medium">{{ t("inventoryCountDetail.table.countedQty") }}</th>
+                <th class="py-2 font-medium">{{ t("inventoryCountDetail.table.diff") }}</th>
               </tr>
             </thead>
             <tbody>
@@ -188,7 +197,7 @@ async function onApprove() {
                     @change="onSaveCount(item)"
                   />
                   <span v-if="savingItemId === item.id" class="ml-1 text-xs text-brand-brown/50">
-                    saqlanmoqda…
+                    {{ t("inventoryCountDetail.saving") }}
                   </span>
                   <p v-if="itemErrors[item.id]" class="text-xs text-red-600">
                     {{ itemErrors[item.id] }}
@@ -206,7 +215,9 @@ async function onApprove() {
                 </td>
               </tr>
               <tr v-if="count.items.length === 0">
-                <td colspan="4" class="py-3 text-brand-brown/60">Qator yo'q</td>
+                <td colspan="4" class="py-3 text-brand-brown/60">
+                  {{ t("inventoryCountDetail.noRows") }}
+                </td>
               </tr>
             </tbody>
           </table>

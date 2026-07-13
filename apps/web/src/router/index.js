@@ -10,6 +10,12 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: "/register",
+    name: "register",
+    component: () => import("../pages/RegisterPage.vue"),
+    meta: { public: true },
+  },
+  {
     path: "/select-company",
     name: "select-company",
     component: () => import("../pages/SelectCompanyPage.vue"),
@@ -102,6 +108,11 @@ const routes = [
         path: "inventory-counts/:id",
         name: "inventory-count-detail",
         component: () => import("../pages/InventoryCountDetailPage.vue"),
+      },
+      {
+        path: "warehouses",
+        name: "warehouses",
+        component: () => import("../pages/WarehouseListPage.vue"),
       },
       {
         path: "sale-points",

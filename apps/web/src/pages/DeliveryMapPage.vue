@@ -3,8 +3,11 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as companyMembersApi from "../api/company-members.api.js";
 import { getSocket } from "../lib/socket.js";
+
+const { t } = useI18n();
 
 const TASHKENT_CENTER = [41.311, 69.279];
 const STALE_MS = 2 * 60 * 1000;
@@ -20,7 +23,10 @@ const members = computed(() => membersData.value?.members ?? []);
  * @returns {string}
  */
 function courierName(courierMemberId) {
-  return members.value.find((m) => m.id === courierMemberId)?.user.fullName ?? "Kuryer";
+  return (
+    members.value.find((m) => m.id === courierMemberId)?.user.fullName ??
+    t("deliveryMap.unknownCourier")
+  );
 }
 
 const mapEl = ref(null);
@@ -90,7 +96,7 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <h1 class="text-2xl font-semibold text-brand-brown">Kuryerlar xaritasi</h1>
+    <h1 class="text-2xl font-semibold text-brand-brown">{{ t("deliveryMap.title") }}</h1>
     <div ref="mapEl" class="mt-4 h-[70vh] w-full rounded-xl border border-brand-brown/10"></div>
   </div>
 </template>

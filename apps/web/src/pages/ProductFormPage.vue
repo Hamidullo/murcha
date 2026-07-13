@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { createProductSchema, updateProductSchema } from "@murcha/shared";
 import * as productsApi from "../api/products.api.js";
@@ -17,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 const route = useRoute();
 const router = useRouter();
 const queryClient = useQueryClient();
+const { t } = useI18n();
 
 const productId = computed(() => route.params.id ?? null);
 const isEdit = computed(() => Boolean(productId.value));
@@ -99,7 +101,7 @@ async function onSubmit() {
     }
     queryClient.invalidateQueries({ queryKey: ["products"] });
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("productForm.unexpectedError");
   } finally {
     isSubmitting.value = false;
   }
@@ -107,7 +109,7 @@ async function onSubmit() {
 
 /** @returns {Promise<void>} */
 async function onArchive() {
-  if (!confirm("Mahsulotni arxivlashni tasdiqlaysizmi?")) return;
+  if (!confirm(t("productForm.archiveConfirm"))) return;
   await productsApi.archiveProduct(productId.value);
   queryClient.invalidateQueries({ queryKey: ["products"] });
   router.push({ name: "products" });
@@ -145,7 +147,7 @@ async function onAddPrice() {
     newPrice.price = "";
     refetchPrices();
   } catch (err) {
-    priceError.value = err instanceof ApiError ? err.message : "Xato yuz berdi";
+    priceError.value = err instanceof ApiError ? err.message : t("productForm.genericError");
   }
 }
 
@@ -216,7 +218,7 @@ async function onFileSelected(event) {
     await productsApi.uploadImage(productId.value, file);
     refetchImages();
   } catch (err) {
-    imageError.value = err instanceof ApiError ? err.message : "Xato yuz berdi";
+    imageError.value = err instanceof ApiError ? err.message : t("productForm.genericError");
   }
 }
 
@@ -251,7 +253,7 @@ async function onAddBarcode() {
     newBarcode.value = "";
     refetchBarcodes();
   } catch (err) {
-    barcodeError.value = err instanceof ApiError ? err.message : "Xato yuz berdi";
+    barcodeError.value = err instanceof ApiError ? err.message : t("productForm.genericError");
   }
 }
 
@@ -277,23 +279,27 @@ function onPrintBarcode(barcodeValue) {
   <div class="mx-auto max-w-2xl">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold text-brand-brown">
-        {{ isEdit ? "Mahsulotni tahrirlash" : "Yangi mahsulot" }}
+        {{ isEdit ? t("productForm.editTitle") : t("productForm.newTitle") }}
       </h1>
-      <Button v-if="isEdit" variant="outline" size="sm" @click="onArchive">Arxivlash</Button>
+      <Button v-if="isEdit" variant="outline" size="sm" @click="onArchive">
+        {{ t("productForm.archive") }}
+      </Button>
     </div>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Asosiy ma'lumot</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("productForm.mainInfo") }}</CardTitle></CardHeader
+      >
       <CardContent>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <Label for="sku">SKU</Label>
+              <Label for="sku">{{ t("productForm.fields.sku") }}</Label>
               <Input id="sku" v-model="form.sku" />
               <p v-if="fieldErrors.sku" class="text-xs text-red-600">{{ fieldErrors.sku }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
-              <Label for="nameUz">Nomi</Label>
+              <Label for="nameUz">{{ t("productForm.fields.name") }}</Label>
               <Input id="nameUz" v-model="form.nameUz" />
               <p v-if="fieldErrors.nameUz" class="text-xs text-red-600">
                 {{ fieldErrors.nameUz }}
@@ -303,26 +309,26 @@ function onPrintBarcode(barcodeValue) {
 
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <Label for="categoryId">Kategoriya</Label>
+              <Label for="categoryId">{{ t("productForm.fields.category") }}</Label>
               <select
                 id="categoryId"
                 v-model="form.categoryId"
                 class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
               >
-                <option value="">Tanlanmagan</option>
+                <option value="">{{ t("productForm.fields.notSelected") }}</option>
                 <option v-for="category in categories" :key="category.id" :value="category.id">
                   {{ category.nameUz }}
                 </option>
               </select>
             </div>
             <div class="flex flex-col gap-1.5">
-              <Label for="baseUnitId">Asosiy birlik</Label>
+              <Label for="baseUnitId">{{ t("productForm.fields.baseUnit") }}</Label>
               <select
                 id="baseUnitId"
                 v-model="form.baseUnitId"
                 class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
               >
-                <option value="">Tanlang</option>
+                <option value="">{{ t("productForm.fields.selectPlaceholder") }}</option>
                 <option v-for="unit in units" :key="unit.id" :value="unit.id">
                   {{ unit.name }}
                 </option>
@@ -335,23 +341,23 @@ function onPrintBarcode(barcodeValue) {
 
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <Label for="brand">Brend</Label>
+              <Label for="brand">{{ t("productForm.fields.brand") }}</Label>
               <Input id="brand" v-model="form.brand" />
             </div>
             <div class="flex flex-col gap-1.5">
-              <Label for="country">Ishlab chiqarilgan mamlakat</Label>
+              <Label for="country">{{ t("productForm.fields.country") }}</Label>
               <Input id="country" v-model="form.country" />
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="description">Tavsif</Label>
+            <Label for="description">{{ t("productForm.fields.description") }}</Label>
             <Input id="description" v-model="form.description" />
           </div>
 
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Saqlanmoqda…" : "Saqlash" }}
+            {{ isSubmitting ? t("productForm.saving") : t("productForm.save") }}
           </Button>
         </form>
       </CardContent>
@@ -359,23 +365,32 @@ function onPrintBarcode(barcodeValue) {
 
     <template v-if="isEdit">
       <Card class="mt-4">
-        <CardHeader><CardTitle>Narxlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("productForm.prices.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="flex flex-col gap-3">
           <ul class="flex flex-col gap-1 text-sm text-brand-brown">
             <li v-for="price in prices" :key="price.id">
               {{ priceTypeName(price.priceTypeId) }}: {{ price.price }} {{ price.currency }}
             </li>
-            <li v-if="prices.length === 0" class="text-brand-brown/60">Narx kiritilmagan</li>
+            <li v-if="prices.length === 0" class="text-brand-brown/60">
+              {{ t("productForm.prices.empty") }}
+            </li>
           </ul>
           <div class="flex flex-wrap items-end gap-2">
             <select
               v-model="newPrice.priceTypeId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="">Narx turi</option>
+              <option value="">{{ t("productForm.prices.typePlaceholder") }}</option>
               <option v-for="pt in priceTypes" :key="pt.id" :value="pt.id">{{ pt.name }}</option>
             </select>
-            <Input v-model="newPrice.price" type="number" placeholder="Narx" class="w-28" />
+            <Input
+              v-model="newPrice.price"
+              type="number"
+              :placeholder="t('productForm.prices.pricePlaceholder')"
+              class="w-28"
+            />
             <select
               v-model="newPrice.currency"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
@@ -383,14 +398,18 @@ function onPrintBarcode(barcodeValue) {
               <option value="UZS">UZS</option>
               <option value="USD">USD</option>
             </select>
-            <Button type="button" size="sm" @click="onAddPrice">Qo'shish</Button>
+            <Button type="button" size="sm" @click="onAddPrice">
+              {{ t("productForm.prices.add") }}
+            </Button>
           </div>
           <p v-if="priceError" class="text-xs text-red-600">{{ priceError }}</p>
         </CardContent>
       </Card>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Variantlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("productForm.variants.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="flex flex-col gap-3">
           <ul class="flex flex-col gap-1 text-sm text-brand-brown">
             <li
@@ -404,20 +423,29 @@ function onPrintBarcode(barcodeValue) {
                 class="text-xs text-red-600"
                 @click="onArchiveVariant(variant.id)"
               >
-                O'chirish
+                {{ t("productForm.variants.remove") }}
               </button>
             </li>
-            <li v-if="variants.length === 0" class="text-brand-brown/60">Variant yo'q</li>
+            <li v-if="variants.length === 0" class="text-brand-brown/60">
+              {{ t("productForm.variants.empty") }}
+            </li>
           </ul>
           <div class="flex gap-2">
-            <Input v-model="newVariantName" placeholder="Variant nomi (masalan: Qizil)" />
-            <Button type="button" size="sm" @click="onAddVariant">Qo'shish</Button>
+            <Input
+              v-model="newVariantName"
+              :placeholder="t('productForm.variants.namePlaceholder')"
+            />
+            <Button type="button" size="sm" @click="onAddVariant">
+              {{ t("productForm.variants.add") }}
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Rasmlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("productForm.images.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="flex flex-col gap-3">
           <div class="flex flex-wrap gap-3">
             <div v-for="image in images" :key="image.id" class="flex flex-col items-center gap-1">
@@ -439,10 +467,12 @@ function onPrintBarcode(barcodeValue) {
                   :class="image.isMain ? 'text-brand-amber' : 'text-brand-brown/50'"
                   @click="onSetMainImage(image.id)"
                 >
-                  {{ image.isMain ? "Asosiy" : "Asosiy qilish" }}
+                  {{
+                    image.isMain ? t("productForm.images.main") : t("productForm.images.makeMain")
+                  }}
                 </button>
                 <button type="button" class="text-red-600" @click="onDeleteImage(image.id)">
-                  O'chirish
+                  {{ t("productForm.images.remove") }}
                 </button>
               </div>
             </div>
@@ -453,7 +483,9 @@ function onPrintBarcode(barcodeValue) {
       </Card>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Shtrix-kodlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("productForm.barcodes.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="flex flex-col gap-3">
           <ul class="flex flex-col gap-1 text-sm text-brand-brown">
             <li
@@ -468,18 +500,22 @@ function onPrintBarcode(barcodeValue) {
                   class="text-brand-amber"
                   @click="onPrintBarcode(barcode.barcode)"
                 >
-                  Yorliq chop etish
+                  {{ t("productForm.barcodes.print") }}
                 </button>
                 <button type="button" class="text-red-600" @click="onRemoveBarcode(barcode.id)">
-                  O'chirish
+                  {{ t("productForm.barcodes.remove") }}
                 </button>
               </span>
             </li>
-            <li v-if="barcodes.length === 0" class="text-brand-brown/60">Shtrix-kod yo'q</li>
+            <li v-if="barcodes.length === 0" class="text-brand-brown/60">
+              {{ t("productForm.barcodes.empty") }}
+            </li>
           </ul>
           <div class="flex gap-2">
-            <Input v-model="newBarcode" placeholder="Shtrix-kod raqami" />
-            <Button type="button" size="sm" @click="onAddBarcode">Qo'shish</Button>
+            <Input v-model="newBarcode" :placeholder="t('productForm.barcodes.placeholder')" />
+            <Button type="button" size="sm" @click="onAddBarcode">
+              {{ t("productForm.barcodes.add") }}
+            </Button>
           </div>
           <p v-if="barcodeError" class="text-xs text-red-600">{{ barcodeError }}</p>
         </CardContent>

@@ -1,0 +1,122 @@
+{
+  "common": {
+    "logout": "Chiqish",
+    "queuedOrders": "{count} ta zakaz navbatda"
+  },
+  "nav": {
+    "catalog": "Katalog",
+    "cart": "Savat",
+    "orders": "Zakazlarim",
+    "debt": "Qarzim"
+  },
+  "catalog": {
+    "searchPlaceholder": "Mahsulot qidirish…",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Katalogni yuklab bo'lmadi",
+    "notFound": "Mahsulot topilmadi",
+    "availableQty": "(qoldiq: {qty})",
+    "add": "Qo'shish"
+  },
+  "cart": {
+    "orderAccepted": "Zakaz qabul qilindi!",
+    "orderQueued": "Zakaz navbatga qo'yildi",
+    "orderQueuedHint": "Internet aloqasi yo'q — aloqa tiklanganda avtomatik yuboriladi",
+    "viewOrder": "Zakazni ko'rish",
+    "backToCatalog": "Katalogga qaytish",
+    "empty": "Savat bo'sh",
+    "total": "Jami",
+    "submitting": "Yuborilmoqda…",
+    "submit": "Buyurtma berish",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "login": {
+    "title": "Kirish",
+    "subtitle": "Do'kon uchun zakaz ilovasi",
+    "phoneLabel": "Telefon",
+    "passwordLabel": "Parol",
+    "submit": "Kirish",
+    "submitting": "Kirilmoqda…",
+    "forgotPasswordLink": "Parolni unutdingizmi?",
+    "unexpectedError": "Kutilmagan xato yuz berdi"
+  },
+  "forgotPassword": {
+    "title": "Parolni tiklash",
+    "subtitlePhone": "Telefon raqamingizni kiriting, SMS orqali kod yuboramiz",
+    "subtitleReset": "SMS'dagi kodni va yangi parolni kiriting",
+    "phoneLabel": "Telefon",
+    "submitCode": "Kod yuborish",
+    "submittingCode": "Yuborilmoqda…",
+    "backToLogin": "Kirish sahifasiga qaytish",
+    "codeLabel": "SMS kod",
+    "newPasswordLabel": "Yangi parol",
+    "submitReset": "Parolni o'rnatish",
+    "submittingReset": "Saqlanmoqda…",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "setPassword": {
+    "title": "Parol o'rnatish",
+    "subtitle": "Ilovaga kirish uchun yangi parol o'rnating",
+    "invalidLink": "Havola yaroqsiz — token yo'q",
+    "done": "Parol o'rnatildi, kirish sahifasiga o'tilmoqda…",
+    "newPasswordLabel": "Yangi parol",
+    "submit": "O'rnatish",
+    "submitting": "Saqlanmoqda…",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "selectCompany": {
+    "title": "Kompaniyani tanlang",
+    "subtitle": "Siz bir nechta kompaniyaga a'zosiz",
+    "errors": {
+      "unexpected": "Kutilmagan xato yuz berdi"
+    }
+  },
+  "myDebt": {
+    "title": "Qarzim",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Balansni yuklab bo'lmadi",
+    "currentBalance": "Joriy qarz",
+    "from": "Dan",
+    "to": "Gacha",
+    "history": "Tarix",
+    "noMovements": "Harakatlar yo'q"
+  },
+  "orders": {
+    "title": "Zakazlarim",
+    "loading": "Yuklanmoqda…",
+    "loadError": "Zakazlarni yuklab bo'lmadi",
+    "empty": "Hali zakaz berilmagan",
+    "status": {
+      "new": "Yangi",
+      "confirmed": "Tasdiqlangan",
+      "picking": "Yig'ilmoqda",
+      "shipped": "Yo'lda",
+      "delivered": "Yetkazildi",
+      "accepted": "Qabul qilindi",
+      "cancelled": "Bekor qilindi"
+    }
+  },
+  "orderDetail": {
+    "loading": "Yuklanmoqda…",
+    "loadError": "Zakazni yuklab bo'lmadi",
+    "courierOnTheWay": "Kuryer yo'lda",
+    "total": "Jami",
+    "courierCodeLabel": "Kuryer aytgan kod",
+    "accept": "Qabul qilish",
+    "return": "Qaytarish",
+    "returnQtyRequired": "Qaytarish uchun miqdor kiriting",
+    "unexpectedError": "Kutilmagan xato yuz berdi",
+    "status": {
+      "new": "Yangi",
+      "confirmed": "Tasdiqlangan",
+      "picking": "Yig'ilmoqda",
+      "shipped": "Yo'lda",
+      "delivered": "Yetkazildi",
+      "accepted": "Qabul qilindi",
+      "cancelled": "Bekor qilindi"
+    }
+  }
+}

@@ -155,15 +155,17 @@
 
 ## Faza 12 — Sayqal va ishga tushirish (1–2 hafta)
 
-- [ ] Demo-rejim + onboarding checklist (interaktiv)
-- [ ] uz/ru lokalizatsiya to'liq (vue-i18n)
-- [ ] PWA offline + Background Sync (ikkala ilova)
-- [ ] Prod: nginx + SSL (Let's Encrypt), CD zero-downtime
-- [ ] Backup + restore sinovi, Uptime Kuma
-- [ ] Xavfsizlik auditi (OWASP, penetration test)
-- [ ] Oferta + maxfiylik siyosati joylandi
-- [ ] Pilot: 2–3 real biznes, 2 hafta
-- [ ] ✅ **Natija: haqiqiy distribyutor real zakazlarini Murcha orqali o'tkazyapti**
+Foydalanuvchi bilan kelishilgan holda ikki band shu sessiyadan tashqarida qoldi (real server/domen/haqiqiy mijoz talab qiladi): "Prod... CD zero-downtime"/"Backup+restore sinovi" — real serverga qarshi ishga tushirilmagan/sinovdan o'tkazilmagan, faqat kod/konfig yozildi; "Pilot: 2-3 real biznes" — umuman boshlanmagan.
+
+- [x] Demo-rejim + onboarding checklist (interaktiv) — `RegisterPage.vue` (`demo` checkbox), `registerCompany()` mavjud repositorylar orqali 1 sklad+5 mahsulot+1 sotuv nuqtasi urug'laydi, `OnboardingChecklist.vue` (hisoblanadigan, Dashboard'da). Yo'lda topilgan bo'shliq: `apps/web`da sklad qo'shish sahifasi umuman yo'q edi — `WarehouseListPage.vue` shu vazifa doirasida qo'shildi
+- [x] uz/ru lokalizatsiya to'liq (vue-i18n) — `apps/web` (36 fayl) + `apps/shop` (9 fayl) to'liq, `apps/landing` Faza 11'dan tayyor edi. 7 parallel agent + qo'lda birlashtirish
+- [x] PWA offline + Background Sync (ikkala ilova) — SW Background Sync API emas, ilova darajasidagi IndexedDB outbox (Safari/iOS SyncManager'ni qo'llab-quvvatlamaydi). `apps/shop`: zakaz yaratish (mavjud `idempotencyKey` bilan xavfsiz qayta urinish). `apps/web`: sklad hujjatini tasdiqlash/bekor qilish (holat-himoyasi tufayli xavfsiz). Ikkalasida ham asl xato topildi va tuzatildi: proxy/nginx 5xx noto'g'ri "doimiy rad" deb talqin qilinib navbatdan o'chirib yuborilar edi
+- [x] Prod: nginx + SSL (Let's Encrypt), CD zero-downtime — **kod/konfig sifatida yozildi, real serverga qarshi ishga tushirilmagan**: `docker-compose.prod.yml`, `nginx/nginx.prod.conf` (4 subdomen+certbot), `apps/shop/Dockerfile`+`apps/web/Dockerfile.prod`, `.github/workflows/deploy.yml` (GHCR build+push real ishlaydi, SSH deploy sekret sozlanishini kutadi)
+- [x] Backup + restore sinovi, Uptime Kuma — **backup skripti yozildi, sinovdan o'tkazilmagan** (`scripts/backup.sh`, real server/kredensial yo'q); Uptime Kuma `docker-compose.prod.yml`ga xizmat sifatida qo'shildi
+- [x] Xavfsizlik auditi (OWASP, penetration test) — **kod darajasidagi audit bajarildi, haqiqiy pentest emas**: CORS oq ro'yxat, `/auth/register` rate-limit, `uuid` CVE tuzatildi; cookie/brute-force/SQL-in'ektsiya/XSS/mass-assignment/multi-tenant/CSRF ko'rib chiqildi va hujjatlashtirildi (`SECURITY.md`)
+- [ ] Oferta + maxfiylik siyosati joylandi — huquqiy matn talab qiladi, bu sessiya qamroviga kirmadi, `BACKLOG.md`
+- [ ] Pilot: 2–3 real biznes, 2 hafta — **boshlanmagan**, foydalanuvchi bilan aniq kelishilgan chegara (real mijoz kerak)
+- [ ] ✅ **Natija: haqiqiy distribyutor real zakazlarini Murcha orqali o'tkazyapti** — kod qismi to'liq tayyor va test qilingan (988/988 backend, frontend build+Claude Browser'da barcha yangi oqim tekshirildi), lekin pilot bajarilmagani uchun yakuniy natija mezoni hali tasdiqlanmagan
 
 ---
 

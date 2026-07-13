@@ -1,0 +1,122 @@
+{
+  "common": {
+    "logout": "Выход",
+    "queuedOrders": "{count} заказ(ов) в очереди"
+  },
+  "nav": {
+    "catalog": "Каталог",
+    "cart": "Корзина",
+    "orders": "Мои заказы",
+    "debt": "Мой долг"
+  },
+  "catalog": {
+    "searchPlaceholder": "Поиск товара…",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить каталог",
+    "notFound": "Товары не найдены",
+    "availableQty": "(остаток: {qty})",
+    "add": "Добавить"
+  },
+  "cart": {
+    "orderAccepted": "Заказ принят!",
+    "orderQueued": "Заказ поставлен в очередь",
+    "orderQueuedHint": "Нет подключения к интернету — будет отправлен автоматически при восстановлении связи",
+    "viewOrder": "Посмотреть заказ",
+    "backToCatalog": "Вернуться в каталог",
+    "empty": "Корзина пуста",
+    "total": "Итого",
+    "submitting": "Отправка…",
+    "submit": "Оформить заказ",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "login": {
+    "title": "Вход",
+    "subtitle": "Приложение для заказов магазина",
+    "phoneLabel": "Телефон",
+    "passwordLabel": "Пароль",
+    "submit": "Войти",
+    "submitting": "Выполняется вход…",
+    "forgotPasswordLink": "Забыли пароль?",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "forgotPassword": {
+    "title": "Восстановление пароля",
+    "subtitlePhone": "Введите номер телефона, мы отправим код по SMS",
+    "subtitleReset": "Введите код из SMS и новый пароль",
+    "phoneLabel": "Телефон",
+    "submitCode": "Отправить код",
+    "submittingCode": "Отправка…",
+    "backToLogin": "Вернуться на страницу входа",
+    "codeLabel": "SMS-код",
+    "newPasswordLabel": "Новый пароль",
+    "submitReset": "Установить пароль",
+    "submittingReset": "Сохранение…",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "setPassword": {
+    "title": "Установка пароля",
+    "subtitle": "Установите новый пароль для входа в приложение",
+    "invalidLink": "Ссылка недействительна — токен отсутствует",
+    "done": "Пароль установлен, переход на страницу входа…",
+    "newPasswordLabel": "Новый пароль",
+    "submit": "Установить",
+    "submitting": "Сохранение…",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "selectCompany": {
+    "title": "Выберите компанию",
+    "subtitle": "Вы состоите в нескольких компаниях",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "myDebt": {
+    "title": "Мой долг",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить баланс",
+    "currentBalance": "Текущий долг",
+    "from": "С",
+    "to": "По",
+    "history": "История",
+    "noMovements": "Нет операций"
+  },
+  "orders": {
+    "title": "Мои заказы",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить заказы",
+    "empty": "Заказов пока нет",
+    "status": {
+      "new": "Новый",
+      "confirmed": "Подтверждён",
+      "picking": "Сборка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "accepted": "Принят",
+      "cancelled": "Отменён"
+    }
+  },
+  "orderDetail": {
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить заказ",
+    "courierOnTheWay": "Курьер в пути",
+    "total": "Итого",
+    "courierCodeLabel": "Код от курьера",
+    "accept": "Принять",
+    "return": "Вернуть",
+    "returnQtyRequired": "Укажите количество для возврата",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "status": {
+      "new": "Новый",
+      "confirmed": "Подтверждён",
+      "picking": "Сборка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "accepted": "Принят",
+      "cancelled": "Отменён"
+    }
+  }
+}

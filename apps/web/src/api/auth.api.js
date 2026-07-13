@@ -1,6 +1,14 @@
 import { apiFetch } from "./client.js";
 
 /**
+ * @param {import("@murcha/shared").registerSchema._type & { demo?: boolean }} dto
+ * @returns {Promise<object>}
+ */
+export function register(dto) {
+  return apiFetch("/auth/register", { method: "POST", body: JSON.stringify(dto) });
+}
+
+/**
  * @param {import("@murcha/shared").loginSchema._type} dto
  * @returns {Promise<object>}
  */

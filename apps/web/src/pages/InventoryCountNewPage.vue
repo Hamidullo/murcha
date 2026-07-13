@@ -2,6 +2,7 @@
 import { reactive, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import { createInventoryCountSchema } from "@murcha/shared";
 import * as inventoryCountsApi from "../api/inventory-counts.api.js";
 import * as warehousesApi from "../api/warehouses.api.js";
@@ -10,6 +11,7 @@ import Button from "@/components/ui/button/Button.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const router = useRouter();
 
 const { data: warehousesData } = useQuery({
@@ -41,7 +43,8 @@ async function onSubmit() {
     const count = await inventoryCountsApi.createInventoryCount(parsed.data);
     router.replace({ name: "inventory-count-detail", params: { id: count.id } });
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value =
+      err instanceof ApiError ? err.message : t("inventoryCountNew.unexpectedError");
   } finally {
     isSubmitting.value = false;
   }
@@ -50,21 +53,21 @@ async function onSubmit() {
 
 <template>
   <div class="mx-auto max-w-md">
-    <h1 class="text-2xl font-semibold text-brand-brown">Yangi inventarizatsiya</h1>
+    <h1 class="text-2xl font-semibold text-brand-brown">{{ t("inventoryCountNew.title") }}</h1>
     <Card class="mt-4">
       <CardHeader>
-        <CardTitle>Sklad tanlang</CardTitle>
+        <CardTitle>{{ t("inventoryCountNew.cardTitle") }}</CardTitle>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="flex flex-col gap-1.5">
-            <Label for="warehouseId">Sklad</Label>
+            <Label for="warehouseId">{{ t("inventoryCountNew.warehouseLabel") }}</Label>
             <select
               id="warehouseId"
               v-model="form.warehouseId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm text-brand-brown"
             >
-              <option value="">Tanlang</option>
+              <option value="">{{ t("inventoryCountNew.selectPlaceholder") }}</option>
               <option v-for="warehouse in warehouses" :key="warehouse.id" :value="warehouse.id">
                 {{ warehouse.name }}
               </option>
@@ -76,7 +79,7 @@ async function onSubmit() {
 
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Boshlanmoqda…" : "Sanoqni boshlash" }}
+            {{ isSubmitting ? t("inventoryCountNew.submitting") : t("inventoryCountNew.submit") }}
           </Button>
         </form>
       </CardContent>

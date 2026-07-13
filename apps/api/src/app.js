@@ -47,9 +47,26 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
-  // TODO(Faza 1+): frontend domenlari tayyor bo'lgach cors({ origin: [...], credentials: true })
-  // oq ro'yxatiga o'tiladi (PLAN.md: "CORS oq ro'yxat app./shop. uchun").
-  app.use(cors());
+  // Frontend domenlar bilan chegaralangan CORS (PLAN.md: "CORS oq ro'yxat
+  // app./shop. uchun") — `credentials: true` bilan `origin: "*"` ishlamaydi
+  // (brauzer taqiqlaydi), shu sababli aniq ro'yxat kerak. Landing/vitrina
+  // (`publicBaseUrl`) ham kiritilgan — showcase lead formasi u yerdan
+  // so'rov yuboradi.
+  const allowedOrigins = [env.appWebUrl, env.appShopUrl, env.publicBaseUrl];
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // `origin` bo'lmasa — server-to-server yoki bir xil-origin so'rov
+        // (brauzer CORS header yubormaydi), bloklashning ma'nosi yo'q.
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("CORS: ruxsat etilmagan origin"));
+        }
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json());
   app.use(cookieParser());
   app.use(pinoHttp({ logger }));

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "../stores/auth.store.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
@@ -8,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const error = ref("");
 const selectingId = ref(null);
@@ -23,7 +25,7 @@ async function onSelect(companyId) {
     await authStore.selectCompany(companyId);
     router.push({ name: "home" });
   } catch (err) {
-    error.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    error.value = err instanceof ApiError ? err.message : t("selectCompany.errors.unexpected");
   } finally {
     selectingId.value = null;
   }
@@ -34,8 +36,8 @@ async function onSelect(companyId) {
   <main class="flex min-h-screen items-center justify-center px-4">
     <Card class="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Kompaniyani tanlang</CardTitle>
-        <CardDescription>Siz bir nechta kompaniyaga a'zosiz</CardDescription>
+        <CardTitle>{{ t("selectCompany.title") }}</CardTitle>
+        <CardDescription>{{ t("selectCompany.subtitle") }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-2">
         <p v-if="error" class="text-sm text-red-600">{{ error }}</p>

@@ -1,8 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import * as pushApi from "../api/push-subscriptions.api.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
+
+const { t } = useI18n();
 
 const isSupported = "serviceWorker" in navigator && "PushManager" in window;
 const isSubscribed = ref(false);
@@ -32,14 +35,14 @@ async function onSubscribe() {
   error.value = "";
   const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   if (!vapidPublicKey) {
-    error.value = "Web Push sozlanmagan";
+    error.value = t("pushSubscribe.notConfigured");
     return;
   }
   isBusy.value = true;
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
-      error.value = "Ruxsat berilmadi";
+      error.value = t("pushSubscribe.permissionDenied");
       return;
     }
     const registration = await navigator.serviceWorker.ready;
@@ -50,7 +53,7 @@ async function onSubscribe() {
     await pushApi.subscribePush(subscription);
     isSubscribed.value = true;
   } catch (err) {
-    error.value = err instanceof ApiError ? err.message : "Obuna bo'lishda xato";
+    error.value = err instanceof ApiError ? err.message : t("pushSubscribe.subscribeError");
   } finally {
     isBusy.value = false;
   }
@@ -60,9 +63,9 @@ async function onSubscribe() {
 <template>
   <div v-if="isSupported" class="flex items-center gap-1">
     <Button v-if="!isSubscribed" variant="ghost" size="sm" :disabled="isBusy" @click="onSubscribe">
-      {{ isBusy ? "…" : "🔔 Bildirishnomalar" }}
+      {{ isBusy ? "…" : `🔔 ${t("pushSubscribe.label")}` }}
     </Button>
-    <span v-else class="text-xs text-brand-brown/50" title="Bildirishnomalarga obuna bo'lgansiz">
+    <span v-else class="text-xs text-brand-brown/50" :title="t('pushSubscribe.subscribedTitle')">
       🔔
     </span>
     <p v-if="error" class="text-xs text-red-600">{{ error }}</p>

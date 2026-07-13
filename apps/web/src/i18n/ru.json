@@ -1,0 +1,914 @@
+{
+  "common": {
+    "logout": "Выход",
+    "queuedActions": "{count} действ. в очереди"
+  },
+  "nav": {
+    "dashboard": "Дашборд",
+    "products": "Каталог",
+    "warehouses": "Склады",
+    "warehouseDocs": "Складские документы",
+    "barcodeScan": "Штрих-код",
+    "inventoryCounts": "Инвентаризация",
+    "salePoints": "Точки продаж",
+    "orders": "Заказы",
+    "employees": "Сотрудники",
+    "deliveries": "Доставки",
+    "deliveryMap": "Карта",
+    "courierDeliveries": "Доставка",
+    "debtsAging": "Долги",
+    "cashRegisters": "Касса",
+    "reportsSales": "Отчёты",
+    "auditLogs": "Журнал аудита",
+    "companySettings": "Настройки"
+  },
+  "warehouses": {
+    "title": "Склады",
+    "newTitle": "Новый склад",
+    "nameLabel": "Название",
+    "addressLabel": "Адрес",
+    "creating": "Создание…",
+    "createButton": "Добавить",
+    "listTitle": "Список",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить склады",
+    "empty": "Складов нет",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "onboarding": {
+    "title": "Шаги для начала работы",
+    "steps": {
+      "warehouse": "Добавить склад",
+      "products": "Добавить товар",
+      "salePoint": "Добавить точку продаж",
+      "firstOrder": "Создать первый заказ"
+    }
+  },
+  "pushSubscribe": {
+    "label": "Уведомления",
+    "subscribedTitle": "Вы подписаны на уведомления",
+    "notConfigured": "Web Push не настроен",
+    "permissionDenied": "Доступ не предоставлен",
+    "subscribeError": "Ошибка при подписке"
+  },
+  "login": {
+    "title": "Вход",
+    "subtitle": "Успевайте продавать!",
+    "phoneLabel": "Телефон",
+    "phonePlaceholder": "+998901234567",
+    "passwordLabel": "Пароль",
+    "submit": "Войти",
+    "submitting": "Выполняется вход…",
+    "forgotPasswordLink": "Забыли пароль?",
+    "registerLink": "Зарегистрировать компанию",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "register": {
+    "title": "Регистрация",
+    "subtitle": "Подключите свою компанию к Murcha",
+    "fullNameLabel": "Ваше имя",
+    "companyNameLabel": "Название компании",
+    "phoneLabel": "Телефон",
+    "passwordLabel": "Пароль",
+    "demoLabel": "Начать с демо-данными (демо-режим)",
+    "demoHint": "Если отмечено, после регистрации автоматически создаются 1 склад, 5 товаров и 1 точка продаж — чтобы сразу попробовать.",
+    "submit": "Зарегистрироваться",
+    "submitting": "Создание…",
+    "loginLink": "Уже есть аккаунт? Войти",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "forgotPassword": {
+    "title": "Восстановление пароля",
+    "subtitlePhone": "Введите номер телефона, мы отправим код по SMS",
+    "subtitleReset": "Введите код из SMS и новый пароль",
+    "phoneLabel": "Телефон",
+    "phonePlaceholder": "+998901234567",
+    "submitCode": "Отправить код",
+    "submittingCode": "Отправка…",
+    "backToLogin": "Вернуться на страницу входа",
+    "codeLabel": "SMS-код",
+    "codePlaceholder": "000000",
+    "newPasswordLabel": "Новый пароль",
+    "submitReset": "Установить пароль",
+    "submittingReset": "Сохранение…",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "setPassword": {
+    "title": "Установка пароля",
+    "subtitle": "Установите новый пароль для входа в приложение",
+    "invalidLink": "Ссылка недействительна — токен отсутствует",
+    "done": "Пароль установлен, переход на страницу входа…",
+    "newPasswordLabel": "Новый пароль",
+    "submit": "Установить",
+    "submitting": "Сохранение…",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "selectCompany": {
+    "title": "Выберите компанию",
+    "subtitle": "Вы состоите в нескольких компаниях",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "products": {
+    "title": "Каталог",
+    "export": "Экспорт в Excel",
+    "exporting": "Загрузка…",
+    "import": "Импорт из Excel",
+    "new": "Новый товар",
+    "importUploading": "Файл загружается…",
+    "importProcessing": "Обработка…",
+    "importDone": "Импорт завершён: {succeeded}/{total} успешно",
+    "importFailedCount": "({count} с ошибкой)",
+    "downloadFailed": "Не удалось загрузить",
+    "importFailed": "Импорт не удался",
+    "searchPlaceholder": "Поиск по названию товара…",
+    "allCategories": "Все категории",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить товары",
+    "notFound": "Товары не найдены",
+    "columns": {
+      "name": "Название",
+      "sku": "Артикул",
+      "category": "Категория",
+      "unit": "Единица",
+      "status": "Статус"
+    }
+  },
+  "productForm": {
+    "editTitle": "Редактирование товара",
+    "newTitle": "Новый товар",
+    "archive": "В архив",
+    "archiveConfirm": "Отправить товар в архив?",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "genericError": "Произошла ошибка",
+    "mainInfo": "Основная информация",
+    "fields": {
+      "sku": "Артикул",
+      "name": "Название",
+      "category": "Категория",
+      "notSelected": "Не выбрано",
+      "baseUnit": "Основная единица",
+      "selectPlaceholder": "Выберите",
+      "brand": "Бренд",
+      "country": "Страна происхождения",
+      "description": "Описание"
+    },
+    "saving": "Сохранение…",
+    "save": "Сохранить",
+    "prices": {
+      "title": "Цены",
+      "empty": "Цена не указана",
+      "typePlaceholder": "Тип цены",
+      "pricePlaceholder": "Цена",
+      "add": "Добавить"
+    },
+    "variants": {
+      "title": "Варианты",
+      "remove": "Удалить",
+      "empty": "Нет вариантов",
+      "namePlaceholder": "Название варианта (например: Красный)",
+      "add": "Добавить"
+    },
+    "images": {
+      "title": "Изображения",
+      "main": "Основное",
+      "makeMain": "Сделать основным",
+      "remove": "Удалить"
+    },
+    "barcodes": {
+      "title": "Штрих-коды",
+      "print": "Печать этикетки",
+      "remove": "Удалить",
+      "empty": "Нет штрих-кодов",
+      "placeholder": "Номер штрих-кода",
+      "add": "Добавить"
+    }
+  },
+  "barcodeScan": {
+    "title": "Сканер штрих-кода",
+    "subtitle": "Считайте USB-сканером или введите вручную и нажмите Enter.",
+    "placeholder": "Штрих-код",
+    "search": "Найти",
+    "startCamera": "Сканировать камерой",
+    "stopCamera": "Остановить",
+    "noCameraSupport": "Этот браузер не поддерживает сканирование через камеру — используйте USB-сканер или введите вручную.",
+    "loading": "Поиск…",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "cameraPermissionDenied": "Доступ к камере не предоставлен",
+    "skuLabel": "Артикул: {sku}"
+  },
+  "warehouseDocs": {
+    "title": "Складские документы",
+    "new": "Новый документ",
+    "allTypes": "Все типы",
+    "allStatuses": "Все статусы",
+    "allWarehouses": "Все склады",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить документы",
+    "notFound": "Документы не найдены",
+    "columns": {
+      "number": "Номер",
+      "type": "Тип",
+      "warehouse": "Склад",
+      "status": "Статус",
+      "total": "Итого"
+    },
+    "type": {
+      "receipt": "Приход",
+      "issue": "Расход",
+      "writeoff": "Списание",
+      "transfer": "Перемещение"
+    },
+    "status": {
+      "draft": "Черновик",
+      "confirmed": "Подтверждён",
+      "cancelled": "Отменён"
+    }
+  },
+  "warehouseDocForm": {
+    "newTitle": "Новый складской документ",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "genericError": "Произошла ошибка",
+    "actionQueued": "Нет подключения к интернету — действие поставлено в очередь, будет отправлено автоматически при восстановлении связи",
+    "invalidRow": "Некорректная строка",
+    "confirmDoc": "Подтвердить документ? Остаток на складе будет обновлён немедленно.",
+    "cancelDoc": "Отменить документ (сторно)? Будет создана обратная проводка.",
+    "fields": {
+      "type": "Тип",
+      "warehouseFrom": "Склад отправления",
+      "warehouse": "Склад",
+      "selectPlaceholder": "Выберите",
+      "toWarehouse": "Склад получения"
+    },
+    "creating": "Создание…",
+    "createDraft": "Создать черновик",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить документ",
+    "confirm": "Подтвердить",
+    "cancel": "Отменить",
+    "print": "Печать",
+    "rows": {
+      "title": "Строки",
+      "product": "Товар",
+      "qty": "Количество",
+      "price": "Цена",
+      "total": "Итого",
+      "remove": "Удалить",
+      "empty": "Нет строк",
+      "unitPlaceholder": "Единица",
+      "add": "Добавить"
+    },
+    "totalLabel": "Итого: {total}",
+    "type": {
+      "receipt": "Приход",
+      "issue": "Расход",
+      "writeoff": "Списание",
+      "transfer": "Перемещение"
+    },
+    "status": {
+      "draft": "Черновик",
+      "confirmed": "Подтверждён",
+      "cancelled": "Отменён"
+    }
+  },
+  "inventoryCounts": {
+    "title": "Инвентаризация",
+    "newButton": "Новая инвентаризация",
+    "allWarehouses": "Все склады",
+    "allStatuses": "Все статусы",
+    "status": {
+      "in_progress": "В процессе",
+      "review": "На рассмотрении",
+      "approved": "Подтверждена"
+    },
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить инвентаризации",
+    "empty": "Инвентаризации не найдены",
+    "table": {
+      "warehouse": "Склад",
+      "status": "Статус",
+      "startedAt": "Начата"
+    }
+  },
+  "inventoryCountNew": {
+    "title": "Новая инвентаризация",
+    "cardTitle": "Выберите склад",
+    "warehouseLabel": "Склад",
+    "selectPlaceholder": "Выберите",
+    "submitting": "Начинается…",
+    "submit": "Начать подсчёт",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "inventoryCountDetail": {
+    "status": {
+      "in_progress": "В процессе",
+      "review": "На рассмотрении",
+      "approved": "Подтверждена"
+    },
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить инвентаризацию",
+    "approveConfirm": "Подтвердить инвентаризацию? По расхождениям сразу будут созданы корректировочные документы.",
+    "approving": "Подтверждается…",
+    "approve": "Подтвердить",
+    "approveHint": "Перед подтверждением во все строки нужно внести результаты подсчёта.",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "saveError": "Произошла ошибка",
+    "rowsCardTitle": "Строки",
+    "table": {
+      "product": "Товар",
+      "systemQty": "Остаток по системе",
+      "countedQty": "Подсчитано",
+      "diff": "Расхождение"
+    },
+    "saving": "сохраняется…",
+    "noRows": "Строк нет"
+  },
+  "salePoints": {
+    "title": "Точки продаж",
+    "newButton": "Новая точка",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить список",
+    "empty": "Нет точек продаж",
+    "table": {
+      "name": "Название",
+      "address": "Адрес",
+      "status": "Статус"
+    },
+    "statusActive": "Активна",
+    "statusInactive": "Неактивна"
+  },
+  "salePointForm": {
+    "titleEdit": "Редактирование точки продаж",
+    "titleNew": "Новая точка продаж",
+    "name": "Название",
+    "priceType": "Тип цены",
+    "selectPlaceholder": "Выберите",
+    "address": "Адрес",
+    "phone": "Телефон",
+    "phoneHint": "Оставьте пустым, если не меняете",
+    "creditLimit": "Кредитный лимит (сум)",
+    "paymentTermDays": "Срок оплаты (дней)",
+    "saving": "Сохраняется…",
+    "save": "Сохранить",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "operatorsCardTitle": "Операторы",
+    "remove": "Удалить",
+    "noOperators": "Оператор не назначен",
+    "phonePlaceholder": "+998901234567",
+    "assigning": "…",
+    "assign": "Назначить",
+    "debtCardTitle": "Статус долга",
+    "detailsPayment": "Подробнее / Оплата"
+  },
+  "orders": {
+    "title": "Заказы",
+    "filter": {
+      "allStatuses": "Все статусы"
+    },
+    "status": {
+      "new": "Новый",
+      "confirmed": "Подтверждён",
+      "picking": "Сборка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "accepted": "Принят",
+      "cancelled": "Отменён"
+    },
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить заказы",
+    "empty": "Заказов нет",
+    "table": {
+      "number": "Номер",
+      "salePoint": "Точка продаж",
+      "warehouse": "Склад",
+      "status": "Статус",
+      "total": "Итого"
+    }
+  },
+  "orderDetail": {
+    "status": {
+      "new": "Новый",
+      "confirmed": "Подтверждён",
+      "picking": "Сборка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "accepted": "Принят",
+      "cancelled": "Отменён"
+    },
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить заказ",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "cancelConfirm": "Отменить этот заказ?",
+    "actions": {
+      "confirm": "Подтвердить",
+      "startPicking": "Начать сборку",
+      "ship": "Отправить",
+      "cancel": "Отменить",
+      "printInvoice": "Печать"
+    },
+    "items": {
+      "title": "Позиции (лист сборки)",
+      "product": "Товар",
+      "ordered": "Заказано",
+      "price": "Цена",
+      "shipping": "Отправляется",
+      "shipped": "Отправлено"
+    },
+    "total": "Итого"
+  },
+  "employees": {
+    "title": "Сотрудники",
+    "rolesButton": "Роли",
+    "newButton": "Новый сотрудник",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить список",
+    "empty": "Сотрудников нет",
+    "table": {
+      "name": "Имя",
+      "phone": "Телефон",
+      "role": "Роль",
+      "status": "Статус"
+    },
+    "status": {
+      "active": "Активен",
+      "blocked": "Заблокирован"
+    }
+  },
+  "employeeForm": {
+    "titleEdit": "Редактирование сотрудника",
+    "titleNew": "Новый сотрудник",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "fields": {
+      "phone": "Телефон",
+      "fullName": "Ф.И.О",
+      "role": "Роль",
+      "status": "Статус"
+    },
+    "selectPlaceholder": "Выберите",
+    "status": {
+      "active": "Активен",
+      "blocked": "Заблокирован"
+    },
+    "assignments": {
+      "label": "Привязка (склад/точка)",
+      "warehouse": "Склад",
+      "salePoint": "Точка продаж",
+      "remove": "Удалить",
+      "add": "+ Добавить привязку"
+    },
+    "saving": "Сохранение…",
+    "save": "Сохранить",
+    "resetPassword": {
+      "title": "Сброс пароля",
+      "description": "Старый пароль будет немедленно аннулирован, сотруднику придёт новая ссылка по SMS.",
+      "button": "Сбросить пароль",
+      "done": "SMS отправлено"
+    }
+  },
+  "roles": {
+    "title": "Роли",
+    "employeesButton": "Сотрудники",
+    "newRolePlaceholder": "Название новой роли",
+    "add": "Добавить",
+    "invalidValue": "Неверное значение",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить список",
+    "table": {
+      "name": "Название",
+      "type": "Тип"
+    },
+    "type": {
+      "system": "Системная",
+      "custom": "Пользовательская"
+    }
+  },
+  "rolePermissions": {
+    "defaultRoleName": "Роль",
+    "title": "{name} — разрешения",
+    "systemNotice": "Системная роль — разрешения можно просматривать, но нельзя изменять",
+    "saving": "Сохранение…",
+    "save": "Сохранить",
+    "saved": "Сохранено",
+    "unexpectedError": "Произошла непредвиденная ошибка"
+  },
+  "deliveries": {
+    "title": "Доставки",
+    "newButton": "Новая доставка",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить список",
+    "empty": "Нет доставок",
+    "unknownCourier": "—",
+    "table": {
+      "date": "Дата",
+      "courier": "Курьер",
+      "status": "Статус",
+      "cashExpected": "Ожидаемая наличность",
+      "cashCollected": "Собранная наличность"
+    },
+    "status": {
+      "assigned": "В пути",
+      "done": "Завершена"
+    }
+  },
+  "deliveryForm": {
+    "title": "Новая доставка",
+    "courierLabel": "Курьер",
+    "courierPlaceholder": "Выберите",
+    "ordersLabel": "Заказы в пути",
+    "loading": "Загрузка…",
+    "noOrders": "Нет заказов в пути для привязки",
+    "unknownSalePoint": "—",
+    "cashExpectedLabel": "Ожидаемая наличность",
+    "submitButton": "Привязать",
+    "errors": {
+      "selectRequired": "Выберите курьера и хотя бы один заказ",
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "deliveryDetail": {
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить доставку",
+    "title": "Доставка — {courier}",
+    "unknownCourier": "—",
+    "status": {
+      "assigned": "В пути",
+      "done": "Завершена"
+    },
+    "cashExpectedLabel": "Ожидаемая наличность",
+    "cashCollectedLabel": "Собранная наличность",
+    "cashTransactionComment": "Инкассация: доставка (курьер {courier})",
+    "settleCard": {
+      "title": "Сдача в кассу",
+      "settledMessage": "Сдано в кассу ({amount} UZS).",
+      "registerPlaceholder": "Выберите кассу",
+      "submitButton": "Сдать в кассу",
+      "submitting": "Сдаётся…"
+    },
+    "errors": {
+      "registerRequired": "Выберите кассу",
+      "unexpected": "Произошла непредвиденная ошибка"
+    },
+    "stopsCard": {
+      "title": "Остановки"
+    },
+    "stopStatus": {
+      "delivered": "Доставлено (код: {code})",
+      "inTransit": "В пути"
+    }
+  },
+  "deliveryMap": {
+    "title": "Карта курьеров",
+    "unknownCourier": "Курьер"
+  },
+  "courierDeliveries": {
+    "title": "Сегодняшний маршрут",
+    "loading": "Загрузка…",
+    "loadError": "Не удалось загрузить",
+    "empty": "На сегодня у вас нет назначенных доставок",
+    "stopStatus": {
+      "delivered": "Доставлено (код: {code})",
+      "inTransit": "В пути"
+    },
+    "deliverButton": "Доставлено"
+  },
+  "courierDeliveryDetail": {
+    "deliveredMessage": "Доставлено. Назовите магазину этот код:",
+    "backButton": "Вернуться к маршруту",
+    "cashLabel": "Полученная сумма наличными",
+    "deliverButton": "Доставлено",
+    "errors": {
+      "unexpected": "Произошла непредвиденная ошибка"
+    }
+  },
+  "counterpartyStatement": {
+    "titleFallback": "Статус задолженности",
+    "filters": {
+      "from": "С",
+      "to": "По",
+      "downloadPdf": "Акт сверки (PDF)"
+    },
+    "closingBalance": "Итоговый остаток",
+    "movements": {
+      "title": "Движения",
+      "columns": {
+        "date": "Дата",
+        "type": "Тип",
+        "document": "Документ",
+        "amount": "Сумма",
+        "balance": "Остаток"
+      },
+      "empty": "Движений нет"
+    },
+    "payment": {
+      "title": "Оформить платёж",
+      "amount": "Сумма",
+      "method": "Способ",
+      "methods": {
+        "cash": "Наличные",
+        "bank": "Банк",
+        "card": "Карта"
+      },
+      "allocationFifo": "Автоматически (с самого старого долга)",
+      "allocationManual": "Распределить вручную",
+      "noOpenOrders": "Нет заказов с открытым долгом",
+      "orderLine": "№ {number} — открыто: {balance}",
+      "placeholderAmount": "0",
+      "submit": "Сохранить платёж",
+      "submitting": "Сохранение…",
+      "errors": {
+        "amountRequired": "Введите сумму платежа",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "defaultCounterpartyName": "контрагент"
+  },
+  "debtsAging": {
+    "title": "Отчёт по возрасту задолженности",
+    "loading": "Загрузка…",
+    "empty": "Нет открытой задолженности",
+    "columns": {
+      "counterparty": "Контрагент",
+      "total": "Итого"
+    },
+    "buckets": {
+      "notDue": "Срок не наступил",
+      "d0_15": "0–15 дней",
+      "d16_30": "16–30 дней",
+      "d31_60": "31–60 дней",
+      "d60plus": "60+ дней"
+    }
+  },
+  "cashRegisters": {
+    "title": "Касса",
+    "registers": {
+      "cardTitle": "Кассы/счета",
+      "inactive": "неактивна",
+      "empty": "Касс пока нет",
+      "nameLabel": "Название новой кассы",
+      "namePlaceholder": "Главная касса",
+      "typeLabel": "Тип",
+      "currencyLabel": "Валюта",
+      "add": "Добавить",
+      "adding": "Сохранение…",
+      "errors": {
+        "nameRequired": "Введите название",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "categories": {
+      "cardTitle": "Категории расходов",
+      "empty": "Категорий пока нет",
+      "nameLabel": "Новая категория",
+      "namePlaceholder": "Транспорт",
+      "add": "Добавить",
+      "adding": "Сохранение…",
+      "errors": {
+        "nameRequired": "Введите название",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "types": {
+      "cash": "Наличные",
+      "bank": "Банк",
+      "card": "Карта"
+    }
+  },
+  "cashRegisterLedger": {
+    "titleFallback": "Касса",
+    "shift": {
+      "cardTitle": "Смена",
+      "openInfo": "Смена открыта — начальный остаток: {balance} {currency}",
+      "countedLabel": "Результат пересчёта (наличные)",
+      "close": "Закрыть смену",
+      "closing": "Закрытие…",
+      "openingLabel": "Начальный остаток",
+      "open": "Открыть смену",
+      "opening": "Открытие…",
+      "columns": {
+        "closedAt": "Закрыта",
+        "expected": "Ожидаемый",
+        "counted": "Пересчёт",
+        "diff": "Разница"
+      },
+      "errors": {
+        "countedRequired": "Введите результат пересчёта",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "transaction": {
+      "cardTitle": "Добавить транзакцию",
+      "typeLabel": "Тип",
+      "amountLabel": "Сумма",
+      "categoryLabel": "Категория",
+      "categoryNone": "—",
+      "commentPlaceholder": "Комментарий (необязательно)",
+      "save": "Сохранить",
+      "saving": "Сохранение…",
+      "errors": {
+        "amountRequired": "Введите сумму",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "transfer": {
+      "cardTitle": "Перевод между кассами",
+      "toLabel": "Касса-получатель",
+      "selectPlaceholder": "Выберите",
+      "amountLabel": "Сумма",
+      "submit": "Перевести",
+      "submitting": "Перевод…",
+      "errors": {
+        "required": "Укажите кассу-получателя и сумму",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "list": {
+      "cardTitle": "Транзакции",
+      "columns": {
+        "date": "Дата",
+        "type": "Тип",
+        "category": "Категория",
+        "comment": "Комментарий",
+        "amount": "Сумма"
+      },
+      "empty": "Транзакций нет"
+    },
+    "types": {
+      "income": "Приход",
+      "expense": "Расход",
+      "transfer_in": "Перевод (приход)",
+      "transfer_out": "Перевод (расход)"
+    }
+  },
+  "companySettings": {
+    "title": "Настройки компании",
+    "branding": {
+      "cardTitle": "Брендинг",
+      "noLogo": "Логотипа нет",
+      "upload": "Загрузить",
+      "uploading": "Загрузка…",
+      "nameLabel": "Название компании",
+      "colorLabel": "Цвет бренда",
+      "errors": {
+        "fileRequired": "Выберите файл изображения",
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    },
+    "creditCurrency": {
+      "cardTitle": "Настройки долга и валюты",
+      "creditModeLabel": "При превышении кредитного лимита",
+      "creditModes": {
+        "block": "Блокировать",
+        "warn": "Только предупреждать"
+      },
+      "rateModeLabel": "Источник курса USD",
+      "rateModes": {
+        "cbu": "Официальный курс ЦБ (пока не задан курс компании)",
+        "manual": "Только курс компании"
+      },
+      "save": "Сохранить настройки",
+      "saving": "Сохранение…",
+      "currentRateLabel": "Текущий курс USD:",
+      "currentRateValue": "{rate} ({source})",
+      "sourceCbu": "ЦБ",
+      "sourceCompany": "компания",
+      "rateUnset": "не задан",
+      "manualRateLabel": "Курс компании (1 USD = ? UZS)",
+      "setRate": "Установить курс",
+      "savingRate": "Сохранение…",
+      "errors": {
+        "unexpected": "Произошла непредвиденная ошибка",
+        "rateRequired": "Введите курс"
+      }
+    },
+    "showcase": {
+      "cardTitle": "Витрина",
+      "enabledLabel": "Витрина включена (открытый каталог + заявка на заказ)",
+      "slugLabel": "Адрес витрины (slug)",
+      "slugPlaceholder": "например: murcha-savdo",
+      "slugPreview": "murcha.uz/{slug}",
+      "priceTypeLabel": "Тип цены",
+      "priceTypeDefault": "Стандартный тип цены",
+      "categoryLabel": "Категория",
+      "categoryAll": "Все товары",
+      "save": "Сохранить витрину",
+      "saving": "Сохранение…",
+      "errors": {
+        "unexpected": "Произошла непредвиденная ошибка"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Дашборд",
+    "loading": "Загрузка…",
+    "chartTitle": "Динамика продаж (30 дней)",
+    "cards": {
+      "todaySales": "Продажи за сегодня",
+      "pendingOrders": "Заказы в ожидании",
+      "cashBalance": "Остаток кассы",
+      "totalDebt": "Общая задолженность",
+      "overdueDebt": "Просроченный долг",
+      "lowStock": "Заканчивающиеся товары"
+    }
+  },
+  "salesReport": {
+    "title": "Отчёты — динамика продаж",
+    "chartTitle": "Динамика по дням",
+    "total": "Итого",
+    "empty": "Нет данных",
+    "nav": {
+      "products": "Топ товаров",
+      "stockTurnover": "Оборачиваемость склада",
+      "debtsAging": "Реестр задолженности"
+    },
+    "filters": {
+      "from": "От",
+      "to": "До"
+    },
+    "table": {
+      "date": "Дата",
+      "ordersCount": "Кол-во заказов",
+      "total": "Сумма"
+    }
+  },
+  "productsReport": {
+    "title": "Топ товаров и маржа",
+    "tableTitle": "Товары (по выручке)",
+    "empty": "Нет данных",
+    "nav": {
+      "sales": "Динамика продаж",
+      "stockTurnover": "Оборачиваемость склада"
+    },
+    "filters": {
+      "from": "От",
+      "to": "До"
+    },
+    "table": {
+      "product": "Товар",
+      "qty": "Количество",
+      "revenue": "Выручка",
+      "cost": "Себестоимость",
+      "margin": "Маржа",
+      "marginPct": "Маржа %"
+    }
+  },
+  "stockTurnover": {
+    "title": "Оборачиваемость склада",
+    "tableTitle": "Оборачиваемость по товарам",
+    "hint": "Средний остаток приблизительно рассчитывается как текущий остаток × текущая средняя себестоимость.",
+    "empty": "Нет данных",
+    "nav": {
+      "sales": "Динамика продаж",
+      "products": "Топ товаров"
+    },
+    "filters": {
+      "from": "От",
+      "to": "До"
+    },
+    "table": {
+      "product": "Товар",
+      "outboundQty": "Кол-во расхода",
+      "outboundValue": "Сумма расхода",
+      "avgStock": "Средний остаток",
+      "turnover": "Оборачиваемость"
+    }
+  },
+  "auditLogs": {
+    "title": "Журнал аудита",
+    "tableTitle": "Записи",
+    "loading": "Загрузка…",
+    "empty": "Нет записей",
+    "details": "Подробнее",
+    "close": "Свернуть",
+    "before": "До",
+    "after": "После",
+    "filters": {
+      "entityType": "Тип объекта",
+      "all": "Все",
+      "from": "От",
+      "to": "До"
+    },
+    "table": {
+      "date": "Дата",
+      "user": "Пользователь",
+      "action": "Действие",
+      "entity": "Объект"
+    },
+    "entityTypes": {
+      "order": "Заказ",
+      "warehouse_doc": "Складской документ",
+      "payment": "Платёж",
+      "debt_movement": "Корректировка долга",
+      "transaction": "Кассовая транзакция",
+      "cash_shift": "Кассовая смена",
+      "company_member": "Сотрудник"
+    }
+  }
+}

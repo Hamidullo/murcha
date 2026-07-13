@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import * as productsApi from "../api/products.api.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 
 const router = useRouter();
+const { t } = useI18n();
 
 const barcodeInput = ref("");
 const inputRef = ref(null);
@@ -32,7 +34,7 @@ async function lookup(barcode) {
   try {
     foundProduct.value = await productsApi.getProductByBarcode(barcode.trim());
   } catch (err) {
-    error.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    error.value = err instanceof ApiError ? err.message : t("barcodeScan.unexpectedError");
   } finally {
     isLoading.value = false;
   }
@@ -65,7 +67,7 @@ async function startCamera() {
     isScanning.value = true;
     scanFrame();
   } catch {
-    error.value = "Kameraga ruxsat berilmadi";
+    error.value = t("barcodeScan.cameraPermissionDenied");
   }
 }
 
@@ -101,9 +103,9 @@ onBeforeUnmount(() => stopCamera());
 
 <template>
   <div class="mx-auto max-w-md">
-    <h1 class="text-2xl font-semibold text-brand-brown">Shtrix-kod skaner</h1>
+    <h1 class="text-2xl font-semibold text-brand-brown">{{ t("barcodeScan.title") }}</h1>
     <p class="mt-1 text-sm text-brand-brown/60">
-      USB skaner bilan o'qiting yoki qo'lda kiriting va Enter bosing.
+      {{ t("barcodeScan.subtitle") }}
     </p>
 
     <form class="mt-4 flex gap-2" @submit.prevent="onManualSubmit">
@@ -111,17 +113,19 @@ onBeforeUnmount(() => stopCamera());
         ref="inputRef"
         v-model="barcodeInput"
         autofocus
-        placeholder="Shtrix-kod"
+        :placeholder="t('barcodeScan.placeholder')"
         class="flex-1"
       />
-      <Button type="submit">Qidirish</Button>
+      <Button type="submit">{{ t("barcodeScan.search") }}</Button>
     </form>
 
     <div v-if="hasCameraSupport" class="mt-4">
       <Button v-if="!isScanning" variant="outline" size="sm" @click="startCamera">
-        Kamera bilan skanerlash
+        {{ t("barcodeScan.startCamera") }}
       </Button>
-      <Button v-else variant="outline" size="sm" @click="stopCamera">To'xtatish</Button>
+      <Button v-else variant="outline" size="sm" @click="stopCamera">
+        {{ t("barcodeScan.stopCamera") }}
+      </Button>
       <video
         v-show="isScanning"
         ref="videoRef"
@@ -131,11 +135,10 @@ onBeforeUnmount(() => stopCamera());
       ></video>
     </div>
     <p v-else class="mt-4 text-xs text-brand-brown/50">
-      Bu brauzer kamera orqali skanerlashni qo'llab-quvvatlamaydi — USB skaner yoki qo'lda kiritish
-      ishlatilsin.
+      {{ t("barcodeScan.noCameraSupport") }}
     </p>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Qidirilmoqda…</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">{{ t("barcodeScan.loading") }}</p>
     <p v-else-if="error" class="mt-6 text-sm text-red-600">{{ error }}</p>
     <div
       v-else-if="foundProduct"
@@ -143,7 +146,9 @@ onBeforeUnmount(() => stopCamera());
       @click="goToProduct"
     >
       <p class="font-medium text-brand-brown">{{ foundProduct.nameUz }}</p>
-      <p class="text-sm text-brand-brown/60">SKU: {{ foundProduct.sku }}</p>
+      <p class="text-sm text-brand-brown/60">
+        {{ t("barcodeScan.skuLabel", { sku: foundProduct.sku }) }}
+      </p>
     </div>
   </div>
 </template>

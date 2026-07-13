@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed } from "vue";
 import * as companiesApi from "../api/companies.api.js";
@@ -12,6 +13,7 @@ import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const queryClient = useQueryClient();
 
 const { data: company } = useQuery({
@@ -81,7 +83,8 @@ async function onSaveSettings() {
     });
     queryClient.invalidateQueries({ queryKey: ["company-me"] });
   } catch (err) {
-    settingsError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    settingsError.value =
+      err instanceof ApiError ? err.message : t("companySettings.creditCurrency.errors.unexpected");
   } finally {
     isSavingSettings.value = false;
   }
@@ -105,7 +108,8 @@ async function onSaveShowcase() {
     });
     queryClient.invalidateQueries({ queryKey: ["company-me"] });
   } catch (err) {
-    showcaseError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    showcaseError.value =
+      err instanceof ApiError ? err.message : t("companySettings.showcase.errors.unexpected");
   } finally {
     isSavingShowcase.value = false;
   }
@@ -124,7 +128,7 @@ function onLogoFileChange(event) {
 async function onUploadLogo() {
   logoError.value = "";
   if (!logoFile.value) {
-    logoError.value = "Rasm faylini tanlang";
+    logoError.value = t("companySettings.branding.errors.fileRequired");
     return;
   }
   isUploadingLogo.value = true;
@@ -134,7 +138,8 @@ async function onUploadLogo() {
     queryClient.invalidateQueries({ queryKey: ["company-logo-url"] });
     queryClient.invalidateQueries({ queryKey: ["company-me"] });
   } catch (err) {
-    logoError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    logoError.value =
+      err instanceof ApiError ? err.message : t("companySettings.branding.errors.unexpected");
   } finally {
     isUploadingLogo.value = false;
   }
@@ -149,7 +154,7 @@ async function onSaveRate() {
   rateError.value = "";
   const rate = Number(manualRate.value);
   if (!rate || rate <= 0) {
-    rateError.value = "Kursni kiriting";
+    rateError.value = t("companySettings.creditCurrency.errors.rateRequired");
     return;
   }
   isSavingRate.value = true;
@@ -158,7 +163,8 @@ async function onSaveRate() {
     manualRate.value = "";
     queryClient.invalidateQueries({ queryKey: ["exchange-rate-current"] });
   } catch (err) {
-    rateError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    rateError.value =
+      err instanceof ApiError ? err.message : t("companySettings.creditCurrency.errors.unexpected");
   } finally {
     isSavingRate.value = false;
   }
@@ -167,10 +173,12 @@ async function onSaveRate() {
 
 <template>
   <div class="mx-auto max-w-2xl">
-    <h1 class="text-2xl font-semibold text-brand-brown">Kompaniya sozlamalari</h1>
+    <h1 class="text-2xl font-semibold text-brand-brown">{{ t("companySettings.title") }}</h1>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Brending</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("companySettings.branding.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-4">
         <div class="flex items-center gap-4">
           <img
@@ -183,7 +191,7 @@ async function onSaveRate() {
             v-else
             class="flex h-16 w-16 items-center justify-center rounded-md border border-dashed border-brand-brown/20 text-xs text-brand-brown/40"
           >
-            Logo yo'q
+            {{ t("companySettings.branding.noLogo") }}
           </div>
           <div class="flex flex-1 items-end gap-3">
             <input
@@ -192,71 +200,97 @@ async function onSaveRate() {
               @change="onLogoFileChange"
             />
             <Button :disabled="isUploadingLogo" variant="outline" @click="onUploadLogo">
-              {{ isUploadingLogo ? "Yuklanmoqda…" : "Yuklash" }}
+              {{
+                isUploadingLogo
+                  ? t("companySettings.branding.uploading")
+                  : t("companySettings.branding.upload")
+              }}
             </Button>
           </div>
         </div>
         <p v-if="logoError" class="text-sm text-red-600">{{ logoError }}</p>
 
         <div class="flex flex-col gap-1.5">
-          <Label for="company-name">Kompaniya nomi</Label>
+          <Label for="company-name">{{ t("companySettings.branding.nameLabel") }}</Label>
           <Input id="company-name" v-model="name" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label for="brand-color">Brend rangi</Label>
+          <Label for="brand-color">{{ t("companySettings.branding.colorLabel") }}</Label>
           <input id="brand-color" v-model="brandColor" type="color" class="h-10 w-20" />
         </div>
       </CardContent>
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Qarz va valyuta sozlamalari</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>{{ t("companySettings.creditCurrency.cardTitle") }}</CardTitle>
+      </CardHeader>
       <CardContent class="flex flex-col gap-4">
         <div class="flex flex-col gap-1.5">
-          <Label for="credit-mode">Kredit limiti oshganda</Label>
+          <Label for="credit-mode">{{ t("companySettings.creditCurrency.creditModeLabel") }}</Label>
           <select
             id="credit-mode"
             v-model="creditLimitMode"
             class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
           >
-            <option value="block">Bloklansin</option>
-            <option value="warn">Faqat ogohlantirilsin</option>
+            <option value="block">
+              {{ t("companySettings.creditCurrency.creditModes.block") }}
+            </option>
+            <option value="warn">{{ t("companySettings.creditCurrency.creditModes.warn") }}</option>
           </select>
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label for="rate-mode">USD kursi manbasi</Label>
+          <Label for="rate-mode">{{ t("companySettings.creditCurrency.rateModeLabel") }}</Label>
           <select
             id="rate-mode"
             v-model="exchangeRateMode"
             class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
           >
-            <option value="cbu">CBU rasmiy kursi (kompaniya kursi qo'yilmaguncha)</option>
-            <option value="manual">Faqat kompaniya kursi</option>
+            <option value="cbu">{{ t("companySettings.creditCurrency.rateModes.cbu") }}</option>
+            <option value="manual">
+              {{ t("companySettings.creditCurrency.rateModes.manual") }}
+            </option>
           </select>
         </div>
         <p v-if="settingsError" class="text-sm text-red-600">{{ settingsError }}</p>
         <Button :disabled="isSavingSettings" class="self-start" @click="onSaveSettings">
-          {{ isSavingSettings ? "Saqlanmoqda…" : "Sozlamalarni saqlash" }}
+          {{
+            isSavingSettings
+              ? t("companySettings.creditCurrency.saving")
+              : t("companySettings.creditCurrency.save")
+          }}
         </Button>
 
         <div class="border-t border-brand-brown/10 pt-4">
           <p class="text-sm text-brand-brown/70">
-            Joriy USD kursi:
+            {{ t("companySettings.creditCurrency.currentRateLabel") }}
             <span class="font-semibold text-brand-brown">
               {{
                 currentRate
-                  ? `${currentRate.rate} (${currentRate.source === "cbu" ? "CBU" : "kompaniya"})`
-                  : "belgilanmagan"
+                  ? t("companySettings.creditCurrency.currentRateValue", {
+                      rate: currentRate.rate,
+                      source:
+                        currentRate.source === "cbu"
+                          ? t("companySettings.creditCurrency.sourceCbu")
+                          : t("companySettings.creditCurrency.sourceCompany"),
+                    })
+                  : t("companySettings.creditCurrency.rateUnset")
               }}
             </span>
           </p>
           <div class="mt-2 flex items-end gap-3">
             <div class="flex flex-col gap-1.5">
-              <Label for="manual-rate">Kompaniya kursi (1 USD = ? UZS)</Label>
+              <Label for="manual-rate">
+                {{ t("companySettings.creditCurrency.manualRateLabel") }}
+              </Label>
               <Input id="manual-rate" v-model="manualRate" type="number" class="w-40" />
             </div>
             <Button :disabled="isSavingRate" variant="outline" @click="onSaveRate">
-              {{ isSavingRate ? "Saqlanmoqda…" : "Kursni qo'yish" }}
+              {{
+                isSavingRate
+                  ? t("companySettings.creditCurrency.savingRate")
+                  : t("companySettings.creditCurrency.setRate")
+              }}
             </Button>
           </div>
           <p v-if="rateError" class="mt-1 text-sm text-red-600">{{ rateError }}</p>
@@ -265,39 +299,49 @@ async function onSaveRate() {
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Vitrina</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("companySettings.showcase.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-4">
         <label class="flex items-center gap-2 text-sm text-brand-brown">
           <input id="showcase-enabled" v-model="showcaseEnabled" type="checkbox" />
-          Vitrina yoqilgan (ochiq katalog + zakaz so'rovi)
+          {{ t("companySettings.showcase.enabledLabel") }}
         </label>
 
         <div class="flex flex-col gap-1.5">
-          <Label for="showcase-slug">Vitrina manzili (slug)</Label>
-          <Input id="showcase-slug" v-model="slug" placeholder="masalan: murcha-savdo" />
-          <p v-if="slug" class="text-xs text-brand-brown/60">murcha.uz/{{ slug }}</p>
+          <Label for="showcase-slug">{{ t("companySettings.showcase.slugLabel") }}</Label>
+          <Input
+            id="showcase-slug"
+            v-model="slug"
+            :placeholder="t('companySettings.showcase.slugPlaceholder')"
+          />
+          <p v-if="slug" class="text-xs text-brand-brown/60">
+            {{ t("companySettings.showcase.slugPreview", { slug }) }}
+          </p>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <Label for="showcase-price-type">Narx turi</Label>
+          <Label for="showcase-price-type">{{
+            t("companySettings.showcase.priceTypeLabel")
+          }}</Label>
           <select
             id="showcase-price-type"
             v-model="showcasePriceTypeId"
             class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
           >
-            <option value="">Standart narx turi</option>
+            <option value="">{{ t("companySettings.showcase.priceTypeDefault") }}</option>
             <option v-for="pt in priceTypes" :key="pt.id" :value="pt.id">{{ pt.name }}</option>
           </select>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <Label for="showcase-category">Kategoriya</Label>
+          <Label for="showcase-category">{{ t("companySettings.showcase.categoryLabel") }}</Label>
           <select
             id="showcase-category"
             v-model="showcaseCategoryId"
             class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
           >
-            <option value="">Barcha mahsulotlar</option>
+            <option value="">{{ t("companySettings.showcase.categoryAll") }}</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">
               {{ cat.nameUz }}
             </option>
@@ -306,7 +350,11 @@ async function onSaveRate() {
 
         <p v-if="showcaseError" class="text-sm text-red-600">{{ showcaseError }}</p>
         <Button :disabled="isSavingShowcase" class="self-start" @click="onSaveShowcase">
-          {{ isSavingShowcase ? "Saqlanmoqda…" : "Vitrinani saqlash" }}
+          {{
+            isSavingShowcase
+              ? t("companySettings.showcase.saving")
+              : t("companySettings.showcase.save")
+          }}
         </Button>
       </CardContent>
     </Card>

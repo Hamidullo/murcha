@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import * as ordersApi from "../api/orders.api.js";
 import * as productsApi from "../api/products.api.js";
@@ -9,15 +10,17 @@ import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-const STATUS_LABELS = {
-  new: "Yangi",
-  confirmed: "Tasdiqlangan",
-  picking: "Yig'ilmoqda",
-  shipped: "Yo'lda",
-  delivered: "Yetkazildi",
-  accepted: "Qabul qilindi",
-  cancelled: "Bekor qilindi",
-};
+const { t } = useI18n();
+
+const STATUS_LABELS = computed(() => ({
+  new: t("orderDetail.status.new"),
+  confirmed: t("orderDetail.status.confirmed"),
+  picking: t("orderDetail.status.picking"),
+  shipped: t("orderDetail.status.shipped"),
+  delivered: t("orderDetail.status.delivered"),
+  accepted: t("orderDetail.status.accepted"),
+  cancelled: t("orderDetail.status.cancelled"),
+}));
 
 const route = useRoute();
 const queryClient = useQueryClient();
@@ -62,7 +65,7 @@ async function runAction(action) {
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     await refetchOrder();
   } catch (err) {
-    actionError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    actionError.value = err instanceof ApiError ? err.message : t("orderDetail.unexpectedError");
   } finally {
     isActing.value = false;
   }
@@ -80,7 +83,7 @@ function onPick() {
 
 /** @returns {Promise<void>} */
 function onCancel() {
-  if (!confirm("Zakazni bekor qilishni tasdiqlaysizmi?")) return;
+  if (!confirm(t("orderDetail.cancelConfirm"))) return;
   return runAction(() => ordersApi.cancelOrder(orderId.value));
 }
 
@@ -119,8 +122,8 @@ function onPrintInvoice() {
 
 <template>
   <div class="mx-auto max-w-2xl">
-    <p v-if="isLoading" class="text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="text-sm text-red-600">Zakazni yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="text-sm text-brand-brown/60">{{ t("orderDetail.loading") }}</p>
+    <p v-else-if="isError" class="text-sm text-red-600">{{ t("orderDetail.loadError") }}</p>
 
     <template v-else-if="order">
       <div class="flex items-center justify-between">
@@ -130,13 +133,13 @@ function onPrintInvoice() {
         </div>
         <div class="flex gap-2">
           <Button v-if="order.status === 'new'" :disabled="isActing" @click="onConfirm">
-            Tasdiqlash
+            {{ t("orderDetail.actions.confirm") }}
           </Button>
           <Button v-if="order.status === 'confirmed'" :disabled="isActing" @click="onPick">
-            Yig'ishni boshlash
+            {{ t("orderDetail.actions.startPicking") }}
           </Button>
           <Button v-if="order.status === 'picking'" :disabled="isActing" @click="onShip">
-            Jo'natish
+            {{ t("orderDetail.actions.ship") }}
           </Button>
           <Button
             v-if="['new', 'confirmed', 'picking'].includes(order.status)"
@@ -144,30 +147,34 @@ function onPrintInvoice() {
             :disabled="isActing"
             @click="onCancel"
           >
-            Bekor qilish
+            {{ t("orderDetail.actions.cancel") }}
           </Button>
           <Button
             v-if="order.status !== 'new' && order.status !== 'cancelled'"
             variant="outline"
             @click="onPrintInvoice"
           >
-            Chop etish
+            {{ t("orderDetail.actions.printInvoice") }}
           </Button>
         </div>
       </div>
       <p v-if="actionError" class="mt-2 text-sm text-red-600">{{ actionError }}</p>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Qatorlar (pick list)</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("orderDetail.items.title") }}</CardTitle></CardHeader
+        >
         <CardContent>
           <table class="w-full text-left text-sm">
             <thead class="border-b border-brand-brown/10 text-brand-brown/60">
               <tr>
-                <th class="py-2 font-medium">Mahsulot</th>
-                <th class="py-2 font-medium">Buyurtma</th>
-                <th class="py-2 font-medium">Narx</th>
-                <th v-if="order.status === 'picking'" class="py-2 font-medium">Jo'natiladi</th>
-                <th v-else class="py-2 font-medium">Jo'natilgan</th>
+                <th class="py-2 font-medium">{{ t("orderDetail.items.product") }}</th>
+                <th class="py-2 font-medium">{{ t("orderDetail.items.ordered") }}</th>
+                <th class="py-2 font-medium">{{ t("orderDetail.items.price") }}</th>
+                <th v-if="order.status === 'picking'" class="py-2 font-medium">
+                  {{ t("orderDetail.items.shipping") }}
+                </th>
+                <th v-else class="py-2 font-medium">{{ t("orderDetail.items.shipped") }}</th>
               </tr>
             </thead>
             <tbody>
@@ -190,7 +197,7 @@ function onPrintInvoice() {
       </Card>
 
       <div class="mt-4 flex items-center justify-between text-brand-brown">
-        <span class="font-medium">Jami</span>
+        <span class="font-medium">{{ t("orderDetail.total") }}</span>
         <span class="font-semibold"> {{ Number(order.total) }} {{ order.currency }} </span>
       </div>
     </template>

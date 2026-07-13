@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import * as cashApi from "../api/cash.api.js";
 import { ApiError } from "../api/client.js";
@@ -9,6 +10,7 @@ import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const route = useRoute();
 const queryClient = useQueryClient();
 const registerId = computed(() => route.params.id);
@@ -58,7 +60,7 @@ async function onCreateTransaction() {
   txError.value = "";
   const amount = Number(txAmount.value);
   if (!amount || amount <= 0) {
-    txError.value = "Summani kiriting";
+    txError.value = t("cashRegisterLedger.transaction.errors.amountRequired");
     return;
   }
   isSubmittingTx.value = true;
@@ -75,7 +77,8 @@ async function onCreateTransaction() {
     txComment.value = "";
     invalidateAll();
   } catch (err) {
-    txError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    txError.value =
+      err instanceof ApiError ? err.message : t("cashRegisterLedger.transaction.errors.unexpected");
   } finally {
     isSubmittingTx.value = false;
   }
@@ -92,7 +95,7 @@ async function onTransfer() {
   transferError.value = "";
   const amount = Number(transferAmount.value);
   if (!transferToId.value || !amount || amount <= 0) {
-    transferError.value = "Qabul qiluvchi kassa va summani kiriting";
+    transferError.value = t("cashRegisterLedger.transfer.errors.required");
     return;
   }
   isSubmittingTransfer.value = true;
@@ -106,7 +109,8 @@ async function onTransfer() {
     transferAmount.value = "";
     invalidateAll();
   } catch (err) {
-    transferError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    transferError.value =
+      err instanceof ApiError ? err.message : t("cashRegisterLedger.transfer.errors.unexpected");
   } finally {
     isSubmittingTransfer.value = false;
   }
@@ -128,7 +132,8 @@ async function onOpenShift() {
     });
     invalidateAll();
   } catch (err) {
-    shiftError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    shiftError.value =
+      err instanceof ApiError ? err.message : t("cashRegisterLedger.shift.errors.unexpected");
   } finally {
     isSubmittingShift.value = false;
   }
@@ -138,7 +143,7 @@ async function onOpenShift() {
 async function onCloseShift() {
   shiftError.value = "";
   if (countedBalance.value === "") {
-    shiftError.value = "Sanoq natijasini kiriting";
+    shiftError.value = t("cashRegisterLedger.shift.errors.countedRequired");
     return;
   }
   isSubmittingShift.value = true;
@@ -149,51 +154,66 @@ async function onCloseShift() {
     countedBalance.value = "";
     invalidateAll();
   } catch (err) {
-    shiftError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    shiftError.value =
+      err instanceof ApiError ? err.message : t("cashRegisterLedger.shift.errors.unexpected");
   } finally {
     isSubmittingShift.value = false;
   }
 }
 
-const TYPE_LABELS = {
-  income: "Kirim",
-  expense: "Chiqim",
-  transfer_in: "Ko'chirish (kirim)",
-  transfer_out: "Ko'chirish (chiqim)",
-};
+const TYPE_LABELS = computed(() => ({
+  income: t("cashRegisterLedger.types.income"),
+  expense: t("cashRegisterLedger.types.expense"),
+  transfer_in: t("cashRegisterLedger.types.transfer_in"),
+  transfer_out: t("cashRegisterLedger.types.transfer_out"),
+}));
 </script>
 
 <template>
   <div class="mx-auto max-w-3xl">
     <h1 class="text-2xl font-semibold text-brand-brown">
-      {{ register?.name ?? "Kassa" }}
+      {{ register?.name ?? t("cashRegisterLedger.titleFallback") }}
     </h1>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Smena</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("cashRegisterLedger.shift.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-3">
         <div v-if="openShiftRecord" class="flex flex-col gap-3">
           <p class="text-sm text-brand-brown/70">
-            Ochiq smena — boshlang'ich qoldiq: {{ openShiftRecord.openingBalance }}
-            {{ register?.currency }}
+            {{
+              t("cashRegisterLedger.shift.openInfo", {
+                balance: openShiftRecord.openingBalance,
+                currency: register?.currency,
+              })
+            }}
           </p>
           <div class="flex items-end gap-3">
             <div class="flex flex-1 flex-col gap-1.5">
-              <Label for="counted">Sanoq natijasi (naqd)</Label>
+              <Label for="counted">{{ t("cashRegisterLedger.shift.countedLabel") }}</Label>
               <Input id="counted" v-model="countedBalance" type="number" />
             </div>
             <Button :disabled="isSubmittingShift" @click="onCloseShift">
-              {{ isSubmittingShift ? "Yopilmoqda…" : "Smena yopish" }}
+              {{
+                isSubmittingShift
+                  ? t("cashRegisterLedger.shift.closing")
+                  : t("cashRegisterLedger.shift.close")
+              }}
             </Button>
           </div>
         </div>
         <div v-else class="flex items-end gap-3">
           <div class="flex flex-1 flex-col gap-1.5">
-            <Label for="opening">Boshlang'ich qoldiq</Label>
+            <Label for="opening">{{ t("cashRegisterLedger.shift.openingLabel") }}</Label>
             <Input id="opening" v-model="openingBalance" type="number" />
           </div>
           <Button :disabled="isSubmittingShift" variant="outline" @click="onOpenShift">
-            {{ isSubmittingShift ? "Ochilmoqda…" : "Smena ochish" }}
+            {{
+              isSubmittingShift
+                ? t("cashRegisterLedger.shift.opening")
+                : t("cashRegisterLedger.shift.open")
+            }}
           </Button>
         </div>
         <p v-if="shiftError" class="text-sm text-red-600">{{ shiftError }}</p>
@@ -204,10 +224,10 @@ const TYPE_LABELS = {
         >
           <thead>
             <tr class="border-b border-brand-brown/10 text-left text-brand-brown/60">
-              <th class="py-2">Yopilgan</th>
-              <th class="text-right">Kutilgan</th>
-              <th class="text-right">Sanoq</th>
-              <th class="text-right">Farq</th>
+              <th class="py-2">{{ t("cashRegisterLedger.shift.columns.closedAt") }}</th>
+              <th class="text-right">{{ t("cashRegisterLedger.shift.columns.expected") }}</th>
+              <th class="text-right">{{ t("cashRegisterLedger.shift.columns.counted") }}</th>
+              <th class="text-right">{{ t("cashRegisterLedger.shift.columns.diff") }}</th>
             </tr>
           </thead>
           <tbody>
@@ -232,32 +252,34 @@ const TYPE_LABELS = {
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Tranzaksiya qo'shish</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("cashRegisterLedger.transaction.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-3">
         <div class="flex flex-wrap items-end gap-3">
           <div class="flex flex-col gap-1.5">
-            <Label for="tx-type">Turi</Label>
+            <Label for="tx-type">{{ t("cashRegisterLedger.transaction.typeLabel") }}</Label>
             <select
               id="tx-type"
               v-model="txType"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="income">Kirim</option>
-              <option value="expense">Chiqim</option>
+              <option value="income">{{ t("cashRegisterLedger.types.income") }}</option>
+              <option value="expense">{{ t("cashRegisterLedger.types.expense") }}</option>
             </select>
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
-            <Label for="tx-amount">Summa</Label>
+            <Label for="tx-amount">{{ t("cashRegisterLedger.transaction.amountLabel") }}</Label>
             <Input id="tx-amount" v-model="txAmount" type="number" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="tx-category">Kategoriya</Label>
+            <Label for="tx-category">{{ t("cashRegisterLedger.transaction.categoryLabel") }}</Label>
             <select
               id="tx-category"
               v-model="txCategoryId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="">—</option>
+              <option value="">{{ t("cashRegisterLedger.transaction.categoryNone") }}</option>
               <option
                 v-for="category in categoriesData?.categories ?? []"
                 :key="category.id"
@@ -268,71 +290,88 @@ const TYPE_LABELS = {
             </select>
           </div>
         </div>
-        <Input v-model="txComment" placeholder="Izoh (ixtiyoriy)" />
+        <Input
+          v-model="txComment"
+          :placeholder="t('cashRegisterLedger.transaction.commentPlaceholder')"
+        />
         <p v-if="txError" class="text-sm text-red-600">{{ txError }}</p>
         <Button :disabled="isSubmittingTx" class="self-start" @click="onCreateTransaction">
-          {{ isSubmittingTx ? "Saqlanmoqda…" : "Saqlash" }}
+          {{
+            isSubmittingTx
+              ? t("cashRegisterLedger.transaction.saving")
+              : t("cashRegisterLedger.transaction.save")
+          }}
         </Button>
       </CardContent>
     </Card>
 
     <Card v-if="otherRegisters.length > 0" class="mt-4">
-      <CardHeader><CardTitle>Kassalar orasida ko'chirish</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("cashRegisterLedger.transfer.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-wrap items-end gap-3">
         <div class="flex flex-col gap-1.5">
-          <Label for="transfer-to">Qabul qiluvchi kassa</Label>
+          <Label for="transfer-to">{{ t("cashRegisterLedger.transfer.toLabel") }}</Label>
           <select
             id="transfer-to"
             v-model="transferToId"
             class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
           >
-            <option value="">Tanlang</option>
+            <option value="">{{ t("cashRegisterLedger.transfer.selectPlaceholder") }}</option>
             <option v-for="r in otherRegisters" :key="r.id" :value="r.id">{{ r.name }}</option>
           </select>
         </div>
         <div class="flex flex-1 flex-col gap-1.5">
-          <Label for="transfer-amount">Summa</Label>
+          <Label for="transfer-amount">{{ t("cashRegisterLedger.transfer.amountLabel") }}</Label>
           <Input id="transfer-amount" v-model="transferAmount" type="number" />
         </div>
         <Button :disabled="isSubmittingTransfer" variant="outline" @click="onTransfer">
-          {{ isSubmittingTransfer ? "Ko'chirilmoqda…" : "Ko'chirish" }}
+          {{
+            isSubmittingTransfer
+              ? t("cashRegisterLedger.transfer.submitting")
+              : t("cashRegisterLedger.transfer.submit")
+          }}
         </Button>
         <p v-if="transferError" class="w-full text-sm text-red-600">{{ transferError }}</p>
       </CardContent>
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Tranzaksiyalar</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("cashRegisterLedger.list.cardTitle") }}</CardTitle></CardHeader
+      >
       <CardContent>
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-brand-brown/10 text-left text-brand-brown/60">
-              <th class="py-2">Sana</th>
-              <th>Turi</th>
-              <th>Kategoriya</th>
-              <th>Izoh</th>
-              <th class="text-right">Summa</th>
+              <th class="py-2">{{ t("cashRegisterLedger.list.columns.date") }}</th>
+              <th>{{ t("cashRegisterLedger.list.columns.type") }}</th>
+              <th>{{ t("cashRegisterLedger.list.columns.category") }}</th>
+              <th>{{ t("cashRegisterLedger.list.columns.comment") }}</th>
+              <th class="text-right">{{ t("cashRegisterLedger.list.columns.amount") }}</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="t in transactionsData?.transactions ?? []"
-              :key="t.id"
+              v-for="tx in transactionsData?.transactions ?? []"
+              :key="tx.id"
               class="border-b border-brand-brown/5"
             >
-              <td class="py-2">{{ new Date(t.occurredAt).toLocaleDateString("uz") }}</td>
-              <td>{{ TYPE_LABELS[t.type] ?? t.type }}</td>
-              <td>{{ t.category?.name ?? "—" }}</td>
-              <td>{{ t.comment ?? "—" }}</td>
+              <td class="py-2">{{ new Date(tx.occurredAt).toLocaleDateString("uz") }}</td>
+              <td>{{ TYPE_LABELS[tx.type] ?? tx.type }}</td>
+              <td>{{ tx.category?.name ?? "—" }}</td>
+              <td>{{ tx.comment ?? "—" }}</td>
               <td
                 class="text-right"
-                :class="t.type === 'income' || t.type === 'transfer_in' ? 'text-green-700' : ''"
+                :class="tx.type === 'income' || tx.type === 'transfer_in' ? 'text-green-700' : ''"
               >
-                {{ t.amount }} {{ t.currency }}
+                {{ tx.amount }} {{ tx.currency }}
               </td>
             </tr>
             <tr v-if="(transactionsData?.transactions ?? []).length === 0">
-              <td colspan="5" class="py-4 text-center text-brand-brown/50">Tranzaksiya yo'q</td>
+              <td colspan="5" class="py-4 text-center text-brand-brown/50">
+                {{ t("cashRegisterLedger.list.empty") }}
+              </td>
             </tr>
           </tbody>
         </table>

@@ -1,19 +1,23 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useCartStore } from "../stores/cart.store.js";
 import * as ordersApi from "../api/orders.api.js";
 import { ApiError } from "../api/client.js";
+import { enqueueOrder } from "../lib/offline-outbox.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import { Card, CardContent } from "@/components/ui/card";
 
 const router = useRouter();
 const cartStore = useCartStore();
+const { t } = useI18n();
 
 const isSubmitting = ref(false);
 const submitError = ref("");
 const confirmedOrder = ref(null);
+const isQueued = ref(false);
 
 /**
  * @param {string} productId
@@ -33,20 +37,35 @@ function onQtyChange(productId, qty) {
 async function onCheckout() {
   submitError.value = "";
   isSubmitting.value = true;
+  const dto = {
+    warehouseId: cartStore.warehouseId,
+    idempotencyKey: crypto.randomUUID(),
+    items: cartStore.items.map((item) => ({
+      productId: item.productId,
+      unitId: item.unitId,
+      qty: item.qty,
+    })),
+  };
   try {
-    const order = await ordersApi.createOrder({
-      warehouseId: cartStore.warehouseId,
-      idempotencyKey: crypto.randomUUID(),
-      items: cartStore.items.map((item) => ({
-        productId: item.productId,
-        unitId: item.unitId,
-        qty: item.qty,
-      })),
-    });
+    if (!navigator.onLine) throw new TypeError("offline");
+    const order = await ordersApi.createOrder(dto);
     confirmedOrder.value = order;
     cartStore.clear();
   } catch (err) {
-    submitError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    if (err instanceof ApiError) {
+      submitError.value = err.message;
+    } else {
+      // Tarmoq xatosi (yoki offline) — IndexedDB navbatiga qo'yiladi,
+      // ShopLayout aloqa tiklanganda avtomatik yuboradi (idempotencyKey
+      // bilan xavfsiz qayta urinish).
+      try {
+        await enqueueOrder(dto);
+        isQueued.value = true;
+        cartStore.clear();
+      } catch {
+        submitError.value = t("cart.unexpectedError");
+      }
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -55,6 +74,7 @@ async function onCheckout() {
 /** @returns {void} */
 function onContinueShopping() {
   confirmedOrder.value = null;
+  isQueued.value = false;
   router.push({ name: "home" });
 }
 </script>
@@ -64,21 +84,31 @@ function onContinueShopping() {
     <template v-if="confirmedOrder">
       <Card>
         <CardContent class="flex flex-col items-center gap-3 p-6 text-center">
-          <p class="text-lg font-semibold text-brand-brown">Zakaz qabul qilindi!</p>
+          <p class="text-lg font-semibold text-brand-brown">{{ t("cart.orderAccepted") }}</p>
           <p class="text-sm text-brand-brown/60">№ {{ confirmedOrder.number }}</p>
           <router-link
             :to="{ name: 'order-detail', params: { id: confirmedOrder.id } }"
             class="w-full"
           >
-            <Button variant="outline" class="w-full">Zakazni ko'rish</Button>
+            <Button variant="outline" class="w-full">{{ t("cart.viewOrder") }}</Button>
           </router-link>
-          <Button class="w-full" @click="onContinueShopping">Katalogga qaytish</Button>
+          <Button class="w-full" @click="onContinueShopping">{{ t("cart.backToCatalog") }}</Button>
+        </CardContent>
+      </Card>
+    </template>
+
+    <template v-else-if="isQueued">
+      <Card>
+        <CardContent class="flex flex-col items-center gap-3 p-6 text-center">
+          <p class="text-lg font-semibold text-brand-brown">{{ t("cart.orderQueued") }}</p>
+          <p class="text-sm text-brand-brown/60">{{ t("cart.orderQueuedHint") }}</p>
+          <Button class="w-full" @click="onContinueShopping">{{ t("cart.backToCatalog") }}</Button>
         </CardContent>
       </Card>
     </template>
 
     <template v-else-if="cartStore.items.length === 0">
-      <p class="text-sm text-brand-brown/60">Savat bo'sh</p>
+      <p class="text-sm text-brand-brown/60">{{ t("cart.empty") }}</p>
     </template>
 
     <template v-else>
@@ -102,14 +132,14 @@ function onContinueShopping() {
       </div>
 
       <div class="mt-4 flex items-center justify-between text-brand-brown">
-        <span class="font-medium">Jami</span>
+        <span class="font-medium">{{ t("cart.total") }}</span>
         <span class="font-semibold">{{ cartStore.subtotal.toLocaleString("uz-UZ") }} UZS</span>
       </div>
 
       <p v-if="submitError" class="mt-2 text-sm text-red-600">{{ submitError }}</p>
 
       <Button class="mt-4 w-full" :disabled="isSubmitting" @click="onCheckout">
-        {{ isSubmitting ? "Yuborilmoqda…" : "Buyurtma berish" }}
+        {{ isSubmitting ? t("cart.submitting") : t("cart.submit") }}
       </Button>
     </template>
   </div>

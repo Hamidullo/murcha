@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as reportsApi from "../api/reports.api.js";
 import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+const { t } = useI18n();
 
 const from = ref("");
 const to = ref("");
@@ -29,13 +32,13 @@ function formatOrDash(value) {
 <template>
   <div class="mx-auto max-w-4xl">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold text-brand-brown">Top mahsulotlar va marja</h1>
+      <h1 class="text-2xl font-semibold text-brand-brown">{{ t("productsReport.title") }}</h1>
       <nav class="flex gap-3 text-sm">
         <router-link :to="{ name: 'reports-sales' }" class="text-brand-brown underline">
-          Sotuv dinamikasi
+          {{ t("productsReport.nav.sales") }}
         </router-link>
         <router-link :to="{ name: 'reports-stock-turnover' }" class="text-brand-brown underline">
-          Sklad aylanmasi
+          {{ t("productsReport.nav.stockTurnover") }}
         </router-link>
       </nav>
     </div>
@@ -43,28 +46,30 @@ function formatOrDash(value) {
     <Card class="mt-4">
       <CardContent class="flex flex-wrap items-end gap-3 pt-6">
         <div class="flex flex-col gap-1.5">
-          <Label for="from">Dan</Label>
+          <Label for="from">{{ t("productsReport.filters.from") }}</Label>
           <Input id="from" v-model="from" type="date" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label for="to">Gacha</Label>
+          <Label for="to">{{ t("productsReport.filters.to") }}</Label>
           <Input id="to" v-model="to" type="date" />
         </div>
       </CardContent>
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>Mahsulotlar (daromad bo'yicha)</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("productsReport.tableTitle") }}</CardTitle></CardHeader
+      >
       <CardContent>
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-brand-brown/10 text-left text-brand-brown/60">
-              <th class="py-2">Mahsulot</th>
-              <th class="text-right">Miqdor</th>
-              <th class="text-right">Daromad</th>
-              <th class="text-right">Tannarx</th>
-              <th class="text-right">Marja</th>
-              <th class="text-right">Marja %</th>
+              <th class="py-2">{{ t("productsReport.table.product") }}</th>
+              <th class="text-right">{{ t("productsReport.table.qty") }}</th>
+              <th class="text-right">{{ t("productsReport.table.revenue") }}</th>
+              <th class="text-right">{{ t("productsReport.table.cost") }}</th>
+              <th class="text-right">{{ t("productsReport.table.margin") }}</th>
+              <th class="text-right">{{ t("productsReport.table.marginPct") }}</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +91,9 @@ function formatOrDash(value) {
               </td>
             </tr>
             <tr v-if="products.length === 0">
-              <td colspan="6" class="py-4 text-center text-brand-brown/50">Ma'lumot yo'q</td>
+              <td colspan="6" class="py-4 text-center text-brand-brown/50">
+                {{ t("productsReport.empty") }}
+              </td>
             </tr>
           </tbody>
         </table>

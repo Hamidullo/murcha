@@ -1,13 +1,21 @@
 <script setup>
 import { reactive, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "../stores/auth.store.js";
 import { connectSocket, disconnectSocket, playDing } from "../lib/socket.js";
+import { queuedCount, flushOutbox } from "../lib/offline-outbox.js";
+import * as warehouseDocsApi from "../api/warehouse-docs.api.js";
 import Button from "@/components/ui/button/Button.vue";
 import PushSubscribeButton from "@/components/PushSubscribeButton.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t, locale } = useI18n();
+
+function toggleLocale() {
+  locale.value = locale.value === "uz" ? "ru" : "uz";
+}
 
 /** @type {import("vue").Reactive<Array<{ id: number, title: string, body: string }>>} */
 const toasts = reactive([]);
@@ -42,6 +50,25 @@ onMounted(connect);
 onUnmounted(disconnect);
 
 /** @returns {Promise<void>} */
+function flushQueuedActions() {
+  return flushOutbox({
+    confirm: (docId) => warehouseDocsApi.confirmWarehouseDoc(docId),
+    cancel: (docId) => warehouseDocsApi.cancelWarehouseDoc(docId),
+  });
+}
+
+let flushInterval;
+onMounted(() => {
+  flushQueuedActions();
+  window.addEventListener("online", flushQueuedActions);
+  flushInterval = setInterval(flushQueuedActions, 60000);
+});
+onUnmounted(() => {
+  window.removeEventListener("online", flushQueuedActions);
+  clearInterval(flushInterval);
+});
+
+/** @returns {Promise<void>} */
 async function onLogout() {
   disconnect();
   await authStore.logout();
@@ -58,52 +85,55 @@ async function onLogout() {
         <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto" />
         <nav class="flex items-center gap-4 text-sm text-brand-brown/70">
           <router-link :to="{ name: 'dashboard' }" class="hover:text-brand-brown">
-            Dashboard
+            {{ t("nav.dashboard") }}
           </router-link>
           <router-link :to="{ name: 'products' }" class="hover:text-brand-brown">
-            Katalog
+            {{ t("nav.products") }}
+          </router-link>
+          <router-link :to="{ name: 'warehouses' }" class="hover:text-brand-brown">
+            {{ t("nav.warehouses") }}
           </router-link>
           <router-link :to="{ name: 'warehouse-docs' }" class="hover:text-brand-brown">
-            Sklad hujjatlari
+            {{ t("nav.warehouseDocs") }}
           </router-link>
           <router-link :to="{ name: 'barcode-scan' }" class="hover:text-brand-brown">
-            Shtrix-kod
+            {{ t("nav.barcodeScan") }}
           </router-link>
           <router-link :to="{ name: 'inventory-counts' }" class="hover:text-brand-brown">
-            Inventarizatsiya
+            {{ t("nav.inventoryCounts") }}
           </router-link>
           <router-link :to="{ name: 'sale-points' }" class="hover:text-brand-brown">
-            Sotuv nuqtalari
+            {{ t("nav.salePoints") }}
           </router-link>
           <router-link :to="{ name: 'orders' }" class="hover:text-brand-brown">
-            Zakazlar
+            {{ t("nav.orders") }}
           </router-link>
           <router-link :to="{ name: 'employees' }" class="hover:text-brand-brown">
-            Hodimlar
+            {{ t("nav.employees") }}
           </router-link>
           <router-link :to="{ name: 'deliveries' }" class="hover:text-brand-brown">
-            Dostavkalar
+            {{ t("nav.deliveries") }}
           </router-link>
           <router-link :to="{ name: 'delivery-map' }" class="hover:text-brand-brown">
-            Xarita
+            {{ t("nav.deliveryMap") }}
           </router-link>
           <router-link :to="{ name: 'courier-deliveries' }" class="hover:text-brand-brown">
-            Yetkazish
+            {{ t("nav.courierDeliveries") }}
           </router-link>
           <router-link :to="{ name: 'debts-aging' }" class="hover:text-brand-brown">
-            Qarzlar
+            {{ t("nav.debtsAging") }}
           </router-link>
           <router-link :to="{ name: 'cash-registers' }" class="hover:text-brand-brown">
-            Kassa
+            {{ t("nav.cashRegisters") }}
           </router-link>
           <router-link :to="{ name: 'reports-sales' }" class="hover:text-brand-brown">
-            Hisobotlar
+            {{ t("nav.reportsSales") }}
           </router-link>
           <router-link :to="{ name: 'audit-logs' }" class="hover:text-brand-brown">
-            Audit log
+            {{ t("nav.auditLogs") }}
           </router-link>
           <router-link :to="{ name: 'company-settings' }" class="hover:text-brand-brown">
-            Sozlamalar
+            {{ t("nav.companySettings") }}
           </router-link>
         </nav>
       </div>
@@ -112,7 +142,16 @@ async function onLogout() {
         <span v-if="authStore.company" class="text-sm text-brand-brown/60">
           {{ authStore.company.name }}
         </span>
-        <Button variant="ghost" size="sm" @click="onLogout">Chiqish</Button>
+        <span
+          v-if="queuedCount > 0"
+          class="rounded-full bg-brand-amber/20 px-2 py-0.5 text-xs text-brand-amber"
+        >
+          {{ t("common.queuedActions", { count: queuedCount }) }}
+        </span>
+        <button class="text-sm text-brand-brown/70 hover:text-brand-brown" @click="toggleLocale">
+          {{ locale === "uz" ? "RU" : "UZ" }}
+        </button>
+        <Button variant="ghost" size="sm" @click="onLogout">{{ t("common.logout") }}</Button>
       </div>
     </header>
     <main class="p-6">
@@ -121,12 +160,12 @@ async function onLogout() {
 
     <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       <div
-        v-for="t in toasts"
-        :key="t.id"
+        v-for="toast in toasts"
+        :key="toast.id"
         class="w-72 rounded-lg border border-brand-brown/10 bg-white p-3 shadow-lg"
       >
-        <p class="text-sm font-medium text-brand-brown">{{ t.title }}</p>
-        <p v-if="t.body" class="text-xs text-brand-brown/60">{{ t.body }}</p>
+        <p class="text-sm font-medium text-brand-brown">{{ toast.title }}</p>
+        <p v-if="toast.body" class="text-xs text-brand-brown/60">{{ toast.body }}</p>
       </div>
     </div>
   </div>

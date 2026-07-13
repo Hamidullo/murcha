@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { createEmployeeSchema, updateEmployeeSchema } from "@murcha/shared";
 import * as companyMembersApi from "../api/company-members.api.js";
@@ -13,6 +14,7 @@ import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const queryClient = useQueryClient();
@@ -95,7 +97,7 @@ async function onSubmit() {
       queryClient.invalidateQueries({ queryKey: ["company-member", memberId.value] });
       queryClient.invalidateQueries({ queryKey: ["company-members"] });
     } catch (err) {
-      formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+      formError.value = err instanceof ApiError ? err.message : t("employeeForm.unexpectedError");
     } finally {
       isSubmitting.value = false;
     }
@@ -135,7 +137,7 @@ async function onResetPassword() {
     await companyMembersApi.resetEmployeePassword(memberId.value);
     resetDone.value = true;
   } catch (err) {
-    resetError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    resetError.value = err instanceof ApiError ? err.message : t("employeeForm.unexpectedError");
   } finally {
     isResetting.value = false;
   }
@@ -145,50 +147,50 @@ async function onResetPassword() {
 <template>
   <div class="mx-auto max-w-lg">
     <h1 class="text-2xl font-semibold text-brand-brown">
-      {{ isEdit ? "Hodimni tahrirlash" : "Yangi hodim" }}
+      {{ isEdit ? t("employeeForm.titleEdit") : t("employeeForm.titleNew") }}
     </h1>
 
     <Card class="mt-4">
       <CardContent class="pt-6">
         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
           <div class="flex flex-col gap-1.5">
-            <Label for="phone">Telefon</Label>
+            <Label for="phone">{{ t("employeeForm.fields.phone") }}</Label>
             <Input id="phone" v-model="form.phone" :disabled="isEdit" placeholder="+998901234567" />
             <p v-if="fieldErrors.phone" class="text-xs text-red-600">{{ fieldErrors.phone }}</p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="fullName">F.I.O</Label>
+            <Label for="fullName">{{ t("employeeForm.fields.fullName") }}</Label>
             <Input id="fullName" v-model="form.fullName" :disabled="isEdit" />
             <p v-if="fieldErrors.fullName" class="text-xs text-red-600">
               {{ fieldErrors.fullName }}
             </p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="roleId">Rol</Label>
+            <Label for="roleId">{{ t("employeeForm.fields.role") }}</Label>
             <select
               id="roleId"
               v-model="form.roleId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="" disabled>Tanlang</option>
+              <option value="" disabled>{{ t("employeeForm.selectPlaceholder") }}</option>
               <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
             </select>
             <p v-if="fieldErrors.roleId" class="text-xs text-red-600">{{ fieldErrors.roleId }}</p>
           </div>
           <div v-if="isEdit" class="flex flex-col gap-1.5">
-            <Label for="status">Holat</Label>
+            <Label for="status">{{ t("employeeForm.fields.status") }}</Label>
             <select
               id="status"
               v-model="form.status"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="active">Faol</option>
-              <option value="blocked">Bloklangan</option>
+              <option value="active">{{ t("employeeForm.status.active") }}</option>
+              <option value="blocked">{{ t("employeeForm.status.blocked") }}</option>
             </select>
           </div>
 
           <div v-if="!isEdit" class="flex flex-col gap-2">
-            <Label>Biriktirish (sklad/nuqta)</Label>
+            <Label>{{ t("employeeForm.assignments.label") }}</Label>
             <div
               v-for="(a, i) in assignments"
               :key="i"
@@ -198,14 +200,14 @@ async function onResetPassword() {
                 v-model="a.targetType"
                 class="h-9 rounded-md border border-brand-brown/20 bg-white px-2 text-sm"
               >
-                <option value="warehouse">Sklad</option>
-                <option value="sale_point">Sotuv nuqtasi</option>
+                <option value="warehouse">{{ t("employeeForm.assignments.warehouse") }}</option>
+                <option value="sale_point">{{ t("employeeForm.assignments.salePoint") }}</option>
               </select>
               <select
                 v-model="a.targetId"
                 class="h-9 flex-1 rounded-md border border-brand-brown/20 bg-white px-2 text-sm"
               >
-                <option value="" disabled>Tanlang</option>
+                <option value="" disabled>{{ t("employeeForm.selectPlaceholder") }}</option>
                 <option
                   v-for="opt in a.targetType === 'warehouse' ? warehouses : salePoints"
                   :key="opt.id"
@@ -215,32 +217,36 @@ async function onResetPassword() {
                 </option>
               </select>
               <Button type="button" variant="ghost" size="sm" @click="removeAssignment(i)">
-                O'chirish
+                {{ t("employeeForm.assignments.remove") }}
               </Button>
             </div>
             <Button type="button" variant="outline" size="sm" @click="addAssignment">
-              + Biriktirish qo'shish
+              {{ t("employeeForm.assignments.add") }}
             </Button>
           </div>
 
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Saqlanmoqda…" : "Saqlash" }}
+            {{ isSubmitting ? t("employeeForm.saving") : t("employeeForm.save") }}
           </Button>
         </form>
       </CardContent>
     </Card>
 
     <Card v-if="isEdit" class="mt-4">
-      <CardHeader><CardTitle>Parolni tiklash</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("employeeForm.resetPassword.title") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-2">
         <p class="text-sm text-brand-brown/60">
-          Eski parol darhol bekor qilinadi, hodimga SMS orqali yangi havola yuboriladi.
+          {{ t("employeeForm.resetPassword.description") }}
         </p>
         <Button variant="outline" :disabled="isResetting" class="w-fit" @click="onResetPassword">
-          {{ isResetting ? "…" : "Parolni tiklash" }}
+          {{ isResetting ? "…" : t("employeeForm.resetPassword.button") }}
         </Button>
-        <p v-if="resetDone" class="text-xs text-green-700">SMS yuborildi</p>
+        <p v-if="resetDone" class="text-xs text-green-700">
+          {{ t("employeeForm.resetPassword.done") }}
+        </p>
         <p v-if="resetError" class="text-xs text-red-600">{{ resetError }}</p>
       </CardContent>
     </Card>

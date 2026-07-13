@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, reactive } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import * as debtsApi from "../api/debts.api.js";
 import * as paymentsApi from "../api/payments.api.js";
@@ -10,6 +11,7 @@ import Input from "@/components/ui/input/Input.vue";
 import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const route = useRoute();
 const queryClient = useQueryClient();
 const counterpartyId = computed(() => route.params.id);
@@ -65,7 +67,7 @@ async function onSubmitPayment() {
   paymentError.value = "";
   const amount = Number(paymentAmount.value);
   if (!amount || amount <= 0) {
-    paymentError.value = "To'lov summasini kiriting";
+    paymentError.value = t("counterpartyStatement.payment.errors.amountRequired");
     return;
   }
   const dto = {
@@ -89,7 +91,8 @@ async function onSubmitPayment() {
     queryClient.invalidateQueries({ queryKey: ["debt-statement-full"] });
     queryClient.invalidateQueries({ queryKey: ["debt-balance"] });
   } catch (err) {
-    paymentError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    paymentError.value =
+      err instanceof ApiError ? err.message : t("counterpartyStatement.payment.errors.unexpected");
   } finally {
     isSubmittingPayment.value = false;
   }
@@ -99,7 +102,7 @@ async function onSubmitPayment() {
 async function onDownloadPdf() {
   await debtsApi.downloadStatementPdf(
     counterpartyId.value,
-    statement.value?.counterpartyName ?? "kontragent",
+    statement.value?.counterpartyName ?? t("counterpartyStatement.defaultCounterpartyName"),
     { from: from.value || undefined, to: to.value || undefined },
   );
 }
@@ -108,26 +111,30 @@ async function onDownloadPdf() {
 <template>
   <div class="mx-auto max-w-3xl">
     <h1 class="text-2xl font-semibold text-brand-brown">
-      {{ statement?.counterpartyName ?? "Qarz holati" }}
+      {{ statement?.counterpartyName ?? t("counterpartyStatement.titleFallback") }}
     </h1>
 
     <Card class="mt-4">
       <CardContent class="flex flex-wrap items-end gap-3 pt-6">
         <div class="flex flex-col gap-1.5">
-          <Label for="from">Dan</Label>
+          <Label for="from">{{ t("counterpartyStatement.filters.from") }}</Label>
           <Input id="from" v-model="from" type="date" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label for="to">Gacha</Label>
+          <Label for="to">{{ t("counterpartyStatement.filters.to") }}</Label>
           <Input id="to" v-model="to" type="date" />
         </div>
-        <Button variant="outline" @click="onDownloadPdf">Akt sverki (PDF)</Button>
+        <Button variant="outline" @click="onDownloadPdf">
+          {{ t("counterpartyStatement.filters.downloadPdf") }}
+        </Button>
       </CardContent>
     </Card>
 
     <Card v-if="statement" class="mt-4">
       <CardContent class="flex items-center justify-between pt-6">
-        <span class="text-sm text-brand-brown/70">Yakuniy qoldiq</span>
+        <span class="text-sm text-brand-brown/70">{{
+          t("counterpartyStatement.closingBalance")
+        }}</span>
         <span class="text-xl font-semibold text-brand-brown">
           {{ statement.closingBalance }} {{ statement.currency }}
         </span>
@@ -135,16 +142,18 @@ async function onDownloadPdf() {
     </Card>
 
     <Card v-if="statement" class="mt-4">
-      <CardHeader><CardTitle>Harakatlar</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("counterpartyStatement.movements.title") }}</CardTitle></CardHeader
+      >
       <CardContent>
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-brand-brown/10 text-left text-brand-brown/60">
-              <th class="py-2">Sana</th>
-              <th>Turi</th>
-              <th>Hujjat</th>
-              <th class="text-right">Summa</th>
-              <th class="text-right">Qoldiq</th>
+              <th class="py-2">{{ t("counterpartyStatement.movements.columns.date") }}</th>
+              <th>{{ t("counterpartyStatement.movements.columns.type") }}</th>
+              <th>{{ t("counterpartyStatement.movements.columns.document") }}</th>
+              <th class="text-right">{{ t("counterpartyStatement.movements.columns.amount") }}</th>
+              <th class="text-right">{{ t("counterpartyStatement.movements.columns.balance") }}</th>
             </tr>
           </thead>
           <tbody>
@@ -158,7 +167,9 @@ async function onDownloadPdf() {
               <td class="text-right font-medium">{{ m.balance }}</td>
             </tr>
             <tr v-if="statement.movements.length === 0">
-              <td colspan="5" class="py-4 text-center text-brand-brown/50">Harakatlar yo'q</td>
+              <td colspan="5" class="py-4 text-center text-brand-brown/50">
+                {{ t("counterpartyStatement.movements.empty") }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -166,23 +177,25 @@ async function onDownloadPdf() {
     </Card>
 
     <Card class="mt-4">
-      <CardHeader><CardTitle>To'lov yozish</CardTitle></CardHeader>
+      <CardHeader
+        ><CardTitle>{{ t("counterpartyStatement.payment.title") }}</CardTitle></CardHeader
+      >
       <CardContent class="flex flex-col gap-4">
         <div class="flex gap-3">
           <div class="flex flex-1 flex-col gap-1.5">
-            <Label for="amount">Summa</Label>
+            <Label for="amount">{{ t("counterpartyStatement.payment.amount") }}</Label>
             <Input id="amount" v-model="paymentAmount" type="number" />
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
-            <Label for="method">Usul</Label>
+            <Label for="method">{{ t("counterpartyStatement.payment.method") }}</Label>
             <select
               id="method"
               v-model="paymentMethod"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="cash">Naqd</option>
-              <option value="bank">Bank</option>
-              <option value="card">Karta</option>
+              <option value="cash">{{ t("counterpartyStatement.payment.methods.cash") }}</option>
+              <option value="bank">{{ t("counterpartyStatement.payment.methods.bank") }}</option>
+              <option value="card">{{ t("counterpartyStatement.payment.methods.card") }}</option>
             </select>
           </div>
         </div>
@@ -190,17 +203,17 @@ async function onDownloadPdf() {
         <div class="flex gap-4 text-sm">
           <label class="flex items-center gap-1.5">
             <input v-model="allocationMode" type="radio" value="fifo" />
-            Avtomatik (eng eski qarzdan)
+            {{ t("counterpartyStatement.payment.allocationFifo") }}
           </label>
           <label class="flex items-center gap-1.5">
             <input v-model="allocationMode" type="radio" value="manual" />
-            Qo'lda taqsimlash
+            {{ t("counterpartyStatement.payment.allocationManual") }}
           </label>
         </div>
 
         <div v-if="allocationMode === 'manual'" class="flex flex-col gap-2">
           <p v-if="openOrders.length === 0" class="text-sm text-brand-brown/60">
-            Ochiq qarzli zakaz yo'q
+            {{ t("counterpartyStatement.payment.noOpenOrders") }}
           </p>
           <div
             v-for="o in openOrders"
@@ -208,20 +221,29 @@ async function onDownloadPdf() {
             class="flex items-center justify-between gap-3 rounded-md border border-brand-brown/10 px-3 py-2"
           >
             <span class="text-sm text-brand-brown">
-              № {{ o.orderNumber }} — ochiq: {{ o.balance }}
+              {{
+                t("counterpartyStatement.payment.orderLine", {
+                  number: o.orderNumber,
+                  balance: o.balance,
+                })
+              }}
             </span>
             <Input
               v-model="manualAllocations[o.orderId]"
               type="number"
               class="w-32"
-              placeholder="0"
+              :placeholder="t('counterpartyStatement.payment.placeholderAmount')"
             />
           </div>
         </div>
 
         <p v-if="paymentError" class="text-sm text-red-600">{{ paymentError }}</p>
         <Button :disabled="isSubmittingPayment" @click="onSubmitPayment">
-          {{ isSubmittingPayment ? "Saqlanmoqda…" : "To'lovni saqlash" }}
+          {{
+            isSubmittingPayment
+              ? t("counterpartyStatement.payment.submitting")
+              : t("counterpartyStatement.payment.submit")
+          }}
         </Button>
       </CardContent>
     </Card>

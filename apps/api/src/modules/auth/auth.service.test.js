@@ -70,6 +70,24 @@ function makeDeps() {
       incrementAttempts: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     },
+    warehousesRepository: {
+      create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+    },
+    unitsRepository: {
+      list: vi.fn().mockResolvedValue([{ id: "unit-dona", short: "dona" }]),
+    },
+    productsRepository: {
+      create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+    },
+    counterpartiesRepository: {
+      create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+    },
+    priceTypesRepository: {
+      create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+    },
+    salePointsRepository: {
+      create: vi.fn().mockImplementation((_tx, data) => Promise.resolve(data)),
+    },
   };
 }
 
@@ -121,6 +139,29 @@ describe("AuthService.registerCompany", () => {
     const service = new AuthService(deps);
 
     await expect(service.registerCompany(registerDto)).rejects.toThrow(/owner/);
+  });
+
+  it("demo:true bo'lsa sklad/mahsulot/sotuv nuqtasi urug'lanadi", async () => {
+    const deps = makeDeps();
+    const service = new AuthService(deps);
+
+    await service.registerCompany({ ...registerDto, demo: true });
+
+    expect(deps.warehousesRepository.create).toHaveBeenCalledTimes(1);
+    expect(deps.productsRepository.create).toHaveBeenCalledTimes(5);
+    expect(deps.counterpartiesRepository.create).toHaveBeenCalledTimes(1);
+    expect(deps.priceTypesRepository.create).toHaveBeenCalledTimes(1);
+    expect(deps.salePointsRepository.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("demo:false/berilmagan bo'lsa namunaviy ma'lumot yaratilmaydi", async () => {
+    const deps = makeDeps();
+    const service = new AuthService(deps);
+
+    await service.registerCompany(registerDto);
+
+    expect(deps.warehousesRepository.create).not.toHaveBeenCalled();
+    expect(deps.productsRepository.create).not.toHaveBeenCalled();
   });
 });
 

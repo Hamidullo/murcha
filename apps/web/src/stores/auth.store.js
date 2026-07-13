@@ -19,6 +19,17 @@ export const useAuthStore = defineStore("auth", () => {
   const isAuthenticated = computed(() => Boolean(accessToken.value));
 
   /**
+   * @param {import("@murcha/shared").registerSchema._type & { demo?: boolean }} dto
+   * @returns {Promise<void>}
+   */
+  async function register(dto) {
+    const result = await authApi.register(dto);
+    accessToken.value = result.accessToken;
+    user.value = result.user;
+    company.value = result.company;
+  }
+
+  /**
    * @param {{ phone: string, password: string }} dto
    * @returns {Promise<{ status: "authenticated" | "select_company" }>}
    */
@@ -102,6 +113,7 @@ export const useAuthStore = defineStore("auth", () => {
     pendingToken,
     pendingCompanies,
     isAuthenticated,
+    register,
     login,
     selectCompany,
     refresh,

@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as deliveriesApi from "../api/deliveries.api.js";
 import * as companyMembersApi from "../api/company-members.api.js";
 import * as cashApi from "../api/cash.api.js";
@@ -9,7 +10,12 @@ import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-const STATUS_LABELS = { assigned: "Yo'lda", done: "Yakunlangan" };
+const { t } = useI18n();
+
+const STATUS_LABELS = computed(() => ({
+  assigned: t("deliveryDetail.status.assigned"),
+  done: t("deliveryDetail.status.done"),
+}));
 
 const route = useRoute();
 const deliveryId = computed(() => route.params.id);
@@ -34,7 +40,10 @@ const members = computed(() => membersData.value?.members ?? []);
  * @returns {string}
  */
 function courierName(courierMemberId) {
-  return members.value.find((m) => m.id === courierMemberId)?.user.fullName ?? "—";
+  return (
+    members.value.find((m) => m.id === courierMemberId)?.user.fullName ??
+    t("deliveryDetail.unknownCourier")
+  );
 }
 
 // --- Kassaga topshirish (inkassatsiya) ---
@@ -51,7 +60,7 @@ const isSettled = ref(false);
 async function onSettleCash() {
   settleError.value = "";
   if (!cashRegisterId.value) {
-    settleError.value = "Kassani tanlang";
+    settleError.value = t("deliveryDetail.errors.registerRequired");
     return;
   }
   isSettling.value = true;
@@ -61,11 +70,14 @@ async function onSettleCash() {
       type: "income",
       amount: Number(delivery.value.cashCollected),
       currency: "UZS",
-      comment: `Inkassatsiya: dostavka (kuryer ${courierName(delivery.value.courierMemberId)})`,
+      comment: t("deliveryDetail.cashTransactionComment", {
+        courier: courierName(delivery.value.courierMemberId),
+      }),
     });
     isSettled.value = true;
   } catch (err) {
-    settleError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    settleError.value =
+      err instanceof ApiError ? err.message : t("deliveryDetail.errors.unexpected");
   } finally {
     isSettling.value = false;
   }
@@ -74,13 +86,13 @@ async function onSettleCash() {
 
 <template>
   <div class="mx-auto max-w-2xl">
-    <p v-if="isLoading" class="text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="text-sm text-red-600">Dostavkani yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="text-sm text-brand-brown/60">{{ t("deliveryDetail.loading") }}</p>
+    <p v-else-if="isError" class="text-sm text-red-600">{{ t("deliveryDetail.loadError") }}</p>
 
     <template v-else-if="delivery">
       <div>
         <h1 class="text-2xl font-semibold text-brand-brown">
-          Dostavka — {{ courierName(delivery.courierMemberId) }}
+          {{ t("deliveryDetail.title", { courier: courierName(delivery.courierMemberId) }) }}
         </h1>
         <p class="text-sm text-brand-brown/60">
           {{ STATUS_LABELS[delivery.status] ?? delivery.status }}
@@ -88,40 +100,52 @@ async function onSettleCash() {
       </div>
 
       <div class="mt-4 flex items-center justify-between text-brand-brown">
-        <span class="text-sm">Kutilgan naqd</span>
+        <span class="text-sm">{{ t("deliveryDetail.cashExpectedLabel") }}</span>
         <span class="font-semibold">{{ Number(delivery.cashExpected) }}</span>
       </div>
       <div class="mt-1 flex items-center justify-between text-brand-brown">
-        <span class="text-sm">Yig'ilgan naqd</span>
+        <span class="text-sm">{{ t("deliveryDetail.cashCollectedLabel") }}</span>
         <span class="font-semibold">{{ Number(delivery.cashCollected) }}</span>
       </div>
 
       <Card v-if="Number(delivery.cashCollected) > 0" class="mt-4">
-        <CardHeader><CardTitle>Kassaga topshirish</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("deliveryDetail.settleCard.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="flex flex-col gap-3">
           <p v-if="isSettled" class="text-sm text-green-700">
-            Kassaga topshirildi ({{ Number(delivery.cashCollected) }} UZS).
+            {{
+              t("deliveryDetail.settleCard.settledMessage", {
+                amount: Number(delivery.cashCollected),
+              })
+            }}
           </p>
           <template v-else>
             <select
               v-model="cashRegisterId"
               class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
             >
-              <option value="">Kassani tanlang</option>
+              <option value="">{{ t("deliveryDetail.settleCard.registerPlaceholder") }}</option>
               <option v-for="r in registersData?.registers ?? []" :key="r.id" :value="r.id">
                 {{ r.name }}
               </option>
             </select>
             <p v-if="settleError" class="text-sm text-red-600">{{ settleError }}</p>
             <Button :disabled="isSettling" class="self-start" @click="onSettleCash">
-              {{ isSettling ? "Topshirilmoqda…" : "Kassaga topshirish" }}
+              {{
+                isSettling
+                  ? t("deliveryDetail.settleCard.submitting")
+                  : t("deliveryDetail.settleCard.submitButton")
+              }}
             </Button>
           </template>
         </CardContent>
       </Card>
 
       <Card class="mt-4">
-        <CardHeader><CardTitle>Bekatlar</CardTitle></CardHeader>
+        <CardHeader
+          ><CardTitle>{{ t("deliveryDetail.stopsCard.title") }}</CardTitle></CardHeader
+        >
         <CardContent class="space-y-2">
           <div
             v-for="stop in delivery.orders"
@@ -130,7 +154,11 @@ async function onSettleCash() {
           >
             <span class="text-brand-brown">№ {{ stop.order.number }}</span>
             <span class="text-brand-brown/70">
-              {{ stop.deliveredAt ? `Yetkazildi (kod: ${stop.acceptCode})` : "Yo'lda" }}
+              {{
+                stop.deliveredAt
+                  ? t("deliveryDetail.stopStatus.delivered", { code: stop.acceptCode })
+                  : t("deliveryDetail.stopStatus.inTransit")
+              }}
             </span>
           </div>
         </CardContent>

@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import * as ordersApi from "../api/orders.api.js";
@@ -12,15 +13,17 @@ import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import { Card, CardContent } from "@/components/ui/card";
 
-const STATUS_LABELS = {
-  new: "Yangi",
-  confirmed: "Tasdiqlangan",
-  picking: "Yig'ilmoqda",
-  shipped: "Yo'lda",
-  delivered: "Yetkazildi",
-  accepted: "Qabul qilindi",
-  cancelled: "Bekor qilindi",
-};
+const { t } = useI18n();
+
+const STATUS_LABELS = computed(() => ({
+  new: t("orderDetail.status.new"),
+  confirmed: t("orderDetail.status.confirmed"),
+  picking: t("orderDetail.status.picking"),
+  shipped: t("orderDetail.status.shipped"),
+  delivered: t("orderDetail.status.delivered"),
+  accepted: t("orderDetail.status.accepted"),
+  cancelled: t("orderDetail.status.cancelled"),
+}));
 
 const route = useRoute();
 const queryClient = useQueryClient();
@@ -75,7 +78,7 @@ async function runAction(action) {
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     await refetchOrder();
   } catch (err) {
-    actionError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    actionError.value = err instanceof ApiError ? err.message : t("orderDetail.unexpectedError");
   } finally {
     isActing.value = false;
   }
@@ -174,7 +177,7 @@ function onReturn() {
     .filter((item) => Number(returnQty[item.id]) > 0)
     .map((item) => ({ orderItemId: item.id, qty: Number(returnQty[item.id]) }));
   if (items.length === 0) {
-    actionError.value = "Qaytarish uchun miqdor kiriting";
+    actionError.value = t("orderDetail.returnQtyRequired");
     return Promise.resolve();
   }
   return runAction(() => ordersApi.returnOrder(orderId.value, { items }));
@@ -183,8 +186,8 @@ function onReturn() {
 
 <template>
   <div class="mx-auto max-w-md">
-    <p v-if="isLoading" class="text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="text-sm text-red-600">Zakazni yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="text-sm text-brand-brown/60">{{ t("orderDetail.loading") }}</p>
+    <p v-else-if="isError" class="text-sm text-red-600">{{ t("orderDetail.loadError") }}</p>
 
     <template v-else-if="order">
       <h1 class="text-lg font-semibold text-brand-brown">№ {{ order.number }}</h1>
@@ -193,7 +196,7 @@ function onReturn() {
       </p>
 
       <div v-if="order.status === 'shipped' && courierMemberId" class="mt-3">
-        <p class="mb-2 text-sm text-brand-brown/70">Kuryer yo'lda</p>
+        <p class="mb-2 text-sm text-brand-brown/70">{{ t("orderDetail.courierOnTheWay") }}</p>
         <div ref="mapEl" class="h-48 w-full rounded-lg border border-brand-brown/10"></div>
       </div>
 
@@ -220,7 +223,7 @@ function onReturn() {
       </div>
 
       <div class="mt-4 flex items-center justify-between text-brand-brown">
-        <span class="font-medium">Jami</span>
+        <span class="font-medium">{{ t("orderDetail.total") }}</span>
         <span class="font-semibold">
           {{ Number(order.total).toLocaleString("uz-UZ") }} {{ order.currency }}
         </span>
@@ -230,15 +233,19 @@ function onReturn() {
 
       <div v-if="order.status === 'delivered'" class="mt-4 space-y-3">
         <div>
-          <label class="text-sm font-medium text-brand-brown">Kuryer aytgan kod</label>
+          <label class="text-sm font-medium text-brand-brown">{{
+            t("orderDetail.courierCodeLabel")
+          }}</label>
           <Input v-model="acceptCode" class="mt-1" maxlength="4" />
         </div>
-        <Button class="w-full" :disabled="isActing" @click="onAccept">Qabul qilish</Button>
+        <Button class="w-full" :disabled="isActing" @click="onAccept">
+          {{ t("orderDetail.accept") }}
+        </Button>
       </div>
 
       <div v-else-if="order.status === 'accepted'" class="mt-4">
         <Button class="w-full" variant="outline" :disabled="isActing" @click="onReturn">
-          Qaytarish
+          {{ t("orderDetail.return") }}
         </Button>
       </div>
     </template>

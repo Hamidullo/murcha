@@ -10,6 +10,8 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Parol kamida 8 belgidan iborat bo'lishi kerak"),
   fullName: z.string().min(2).max(200),
   companyName: z.string().min(2).max(200),
+  /** `true` bo'lsa ro'yxatdan o'tgach namunaviy ma'lumot (demo-rejim) urug'lanadi. */
+  demo: z.boolean().optional(),
 });
 
 export const loginSchema = z.object({

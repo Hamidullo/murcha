@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onBeforeUnmount, watch } from "vue";
 import { useQuery } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as shopCatalogApi from "../api/shop-catalog.api.js";
 import * as warehousesApi from "../api/warehouses.api.js";
 import { useCartStore } from "../stores/cart.store.js";
@@ -9,6 +10,7 @@ import Button from "@/components/ui/button/Button.vue";
 import { Card, CardContent } from "@/components/ui/card";
 
 const cartStore = useCartStore();
+const { t } = useI18n();
 
 const search = ref("");
 const debouncedSearch = ref("");
@@ -81,7 +83,11 @@ function onAddToCart(product) {
 <template>
   <div class="mx-auto max-w-md">
     <div class="flex flex-col gap-3">
-      <Input v-model="search" placeholder="Mahsulot qidirish…" @input="onSearchInput" />
+      <Input
+        v-model="search"
+        :placeholder="t('catalog.searchPlaceholder')"
+        @input="onSearchInput"
+      />
       <select
         v-model="selectedWarehouseId"
         class="h-10 rounded-md border border-brand-brown/20 bg-white px-3 text-sm"
@@ -90,10 +96,10 @@ function onAddToCart(product) {
       </select>
     </div>
 
-    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">Yuklanmoqda…</p>
-    <p v-else-if="isError" class="mt-6 text-sm text-red-600">Katalogni yuklab bo'lmadi</p>
+    <p v-if="isLoading" class="mt-6 text-sm text-brand-brown/60">{{ t("catalog.loading") }}</p>
+    <p v-else-if="isError" class="mt-6 text-sm text-red-600">{{ t("catalog.loadError") }}</p>
     <p v-else-if="items.length === 0" class="mt-6 text-sm text-brand-brown/60">
-      Mahsulot topilmadi
+      {{ t("catalog.notFound") }}
     </p>
 
     <div class="mt-4 flex flex-col gap-3">
@@ -104,7 +110,7 @@ function onAddToCart(product) {
             <p class="text-sm text-brand-brown/60">
               {{ product.price.toLocaleString("uz-UZ") }} {{ product.currency }}
               <span v-if="product.availableQty !== null" class="ml-2 text-xs">
-                (qoldiq: {{ product.availableQty }})
+                {{ t("catalog.availableQty", { qty: product.availableQty }) }}
               </span>
             </p>
           </div>
@@ -114,7 +120,7 @@ function onAddToCart(product) {
             class="w-16 text-center"
             placeholder="1"
           />
-          <Button size="sm" @click="onAddToCart(product)">Qo'shish</Button>
+          <Button size="sm" @click="onAddToCart(product)">{{ t("catalog.add") }}</Button>
         </CardContent>
       </Card>
     </div>

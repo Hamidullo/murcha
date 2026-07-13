@@ -1,6 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+overrides:
+  # `exceljs` (apps/api) eski `uuid` (<11.1.1) sudrab keladi — bufer
+  # chegara tekshiruvi yo'q zaiflik (GHSA-w5hq-g745-h8pq, moderate).
+  # Faza 12 xavfsizlik auditi topdi.
+  "uuid@<11.1.1": ">=11.1.1"
 allowBuilds:
   "@prisma/client": true
   "@prisma/engines": true

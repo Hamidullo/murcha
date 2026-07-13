@@ -16,6 +16,18 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const MAX_OTP_ATTEMPTS = 3;
 
 /**
+ * Demo-rejim uchun namunaviy mahsulotlar — SKU faqat yangi kompaniya ichida
+ * (`@@unique([companyId, sku])`) noyob bo'lishi kifoya.
+ */
+const DEMO_PRODUCTS = [
+  { sku: "DEMO-001", nameUz: "Osh guruchi 1kg" },
+  { sku: "DEMO-002", nameUz: "Kungaboqar yog'i 1l" },
+  { sku: "DEMO-003", nameUz: "Un oliy nav 1kg" },
+  { sku: "DEMO-004", nameUz: "Shakar-qand 1kg" },
+  { sku: "DEMO-005", nameUz: "Choy (qora) 100g" },
+];
+
+/**
  * @param {import("@prisma/client").User} user
  * @returns {{ id: string, phone: string, fullName: string }}
  */
@@ -38,6 +50,12 @@ export class AuthService {
    *   loginAttemptsRepository: import("./login-attempts.repository.js").LoginAttemptsRepository,
    *   passwordResetRepository: import("./password-reset.repository.js").PasswordResetRepository,
    *   otpRepository: import("./otp.repository.js").OtpRepository,
+   *   warehousesRepository: import("../warehouses/warehouses.repository.js").WarehousesRepository,
+   *   unitsRepository: import("../units/units.repository.js").UnitsRepository,
+   *   productsRepository: import("../products/products.repository.js").ProductsRepository,
+   *   counterpartiesRepository: import("../counterparties/counterparties.repository.js").CounterpartiesRepository,
+   *   priceTypesRepository: import("../price-types/price-types.repository.js").PriceTypesRepository,
+   *   salePointsRepository: import("../sale-points/sale-points.repository.js").SalePointsRepository,
    * }} deps
    */
   constructor({
@@ -49,6 +67,12 @@ export class AuthService {
     loginAttemptsRepository,
     passwordResetRepository,
     otpRepository,
+    warehousesRepository,
+    unitsRepository,
+    productsRepository,
+    counterpartiesRepository,
+    priceTypesRepository,
+    salePointsRepository,
   }) {
     this.usersRepository = usersRepository;
     this.companiesRepository = companiesRepository;
@@ -58,6 +82,12 @@ export class AuthService {
     this.loginAttemptsRepository = loginAttemptsRepository;
     this.passwordResetRepository = passwordResetRepository;
     this.otpRepository = otpRepository;
+    this.warehousesRepository = warehousesRepository;
+    this.unitsRepository = unitsRepository;
+    this.productsRepository = productsRepository;
+    this.counterpartiesRepository = counterpartiesRepository;
+    this.priceTypesRepository = priceTypesRepository;
+    this.salePointsRepository = salePointsRepository;
   }
 
   /**
@@ -125,6 +155,10 @@ export class AuthService {
       });
       await tx.subscription.create({ data: { id: uuidv7(), companyId: newCompanyId } });
 
+      if (dto.demo) {
+        await this.#seedDemoData(tx, newCompanyId);
+      }
+
       return { user: createdUser, company: createdCompany, member: createdMember };
     });
 
@@ -143,6 +177,58 @@ export class AuthService {
       user: toSafeUser(user),
       company: { id: company.id, name: company.name },
     };
+  }
+
+  /**
+   * Demo-rejim: 1 sklad, 5 namunaviy mahsulot, 1 mijoz+narx turi+sotuv
+   * nuqtasi — mavjud repository'lar orqali (xom SQL emas). Ochilish
+   * qoldig'i qasddan urug'lanmaydi — `WarehouseDocsService.confirm()`
+   * o'z ichida yangi `withTenant` ochadi, bu allaqachon ochiq
+   * tranzaksiya ichida ishlamaydi, demo uchun bu murakkablikka arzimaydi
+   * (0 qoldiqli namunaviy mahsulotlar demo maqsadida yetarli).
+   * @param {import("@prisma/client").Prisma.TransactionClient} tx
+   * @param {string} companyId
+   * @returns {Promise<void>}
+   */
+  async #seedDemoData(tx, companyId) {
+    await this.warehousesRepository.create(tx, {
+      id: uuidv7(),
+      companyId,
+      name: "Asosiy sklad",
+    });
+
+    const units = await this.unitsRepository.list(tx);
+    const donaUnit = units.find((u) => u.short === "dona");
+    if (donaUnit) {
+      for (const product of DEMO_PRODUCTS) {
+        await this.productsRepository.create(tx, {
+          id: uuidv7(),
+          companyId,
+          sku: product.sku,
+          nameUz: product.nameUz,
+          baseUnitId: donaUnit.id,
+        });
+      }
+    }
+
+    const counterparty = await this.counterpartiesRepository.create(tx, {
+      id: uuidv7(),
+      companyId,
+      type: "customer",
+      name: "Namunaviy mijoz",
+    });
+    const priceType = await this.priceTypesRepository.create(tx, {
+      id: uuidv7(),
+      companyId,
+      name: "Chakana",
+    });
+    await this.salePointsRepository.create(tx, {
+      id: uuidv7(),
+      companyId,
+      counterpartyId: counterparty.id,
+      priceTypeId: priceType.id,
+      name: "Namunaviy do'kon",
+    });
   }
 
   /**

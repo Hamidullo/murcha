@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { forgotPasswordSchema, resetPasswordSchema } from "@murcha/shared";
 import * as authApi from "../api/auth.api.js";
 import { ApiError } from "../api/client.js";
@@ -10,6 +11,7 @@ import Label from "@/components/ui/label/Label.vue";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 const router = useRouter();
+const { t } = useI18n();
 
 /** @type {import("vue").Ref<"phone" | "reset">} */
 const step = ref("phone");
@@ -34,7 +36,7 @@ async function onRequestCode() {
     await authApi.forgotPassword(parsed.data);
     step.value = "reset";
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("forgotPassword.errors.unexpected");
   } finally {
     isSubmitting.value = false;
   }
@@ -58,7 +60,7 @@ async function onReset() {
     await authApi.resetPassword(parsed.data);
     router.push({ name: "login" });
   } catch (err) {
-    formError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    formError.value = err instanceof ApiError ? err.message : t("forgotPassword.errors.unexpected");
   } finally {
     isSubmitting.value = false;
   }
@@ -70,45 +72,48 @@ async function onReset() {
     <Card class="w-full max-w-sm">
       <CardHeader>
         <img src="/murcha-logo.svg" alt="Murcha" class="h-10 w-auto" />
-        <CardTitle>Parolni tiklash</CardTitle>
+        <CardTitle>{{ t("forgotPassword.title") }}</CardTitle>
         <CardDescription>
           {{
-            step === "phone"
-              ? "Telefon raqamingizni kiriting, SMS orqali kod yuboramiz"
-              : "SMS'dagi kodni va yangi parolni kiriting"
+            step === "phone" ? t("forgotPassword.subtitlePhone") : t("forgotPassword.subtitleReset")
           }}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form v-if="step === 'phone'" class="flex flex-col gap-4" @submit.prevent="onRequestCode">
           <div class="flex flex-col gap-1.5">
-            <Label for="phone">Telefon</Label>
-            <Input id="phone" v-model="phone" type="tel" placeholder="+998901234567" />
+            <Label for="phone">{{ t("forgotPassword.phoneLabel") }}</Label>
+            <Input
+              id="phone"
+              v-model="phone"
+              type="tel"
+              :placeholder="t('forgotPassword.phonePlaceholder')"
+            />
             <p v-if="fieldErrors.phone" class="text-xs text-red-600">{{ fieldErrors.phone }}</p>
           </div>
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Yuborilmoqda…" : "Kod yuborish" }}
+            {{ isSubmitting ? t("forgotPassword.submittingCode") : t("forgotPassword.submitCode") }}
           </Button>
           <router-link :to="{ name: 'login' }" class="text-center text-sm text-brand-brown/60">
-            Kirish sahifasiga qaytish
+            {{ t("forgotPassword.backToLogin") }}
           </router-link>
         </form>
 
         <form v-else class="flex flex-col gap-4" @submit.prevent="onReset">
           <div class="flex flex-col gap-1.5">
-            <Label for="code">SMS kod</Label>
+            <Label for="code">{{ t("forgotPassword.codeLabel") }}</Label>
             <Input
               id="code"
               v-model="code"
               inputmode="numeric"
               maxlength="6"
-              placeholder="000000"
+              :placeholder="t('forgotPassword.codePlaceholder')"
             />
             <p v-if="fieldErrors.code" class="text-xs text-red-600">{{ fieldErrors.code }}</p>
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label for="password">Yangi parol</Label>
+            <Label for="password">{{ t("forgotPassword.newPasswordLabel") }}</Label>
             <Input id="password" v-model="password" type="password" />
             <p v-if="fieldErrors.password" class="text-xs text-red-600">
               {{ fieldErrors.password }}
@@ -116,7 +121,9 @@ async function onReset() {
           </div>
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
           <Button type="submit" :disabled="isSubmitting" class="w-full">
-            {{ isSubmitting ? "Saqlanmoqda…" : "Parolni o'rnatish" }}
+            {{
+              isSubmitting ? t("forgotPassword.submittingReset") : t("forgotPassword.submitReset")
+            }}
           </Button>
         </form>
       </CardContent>

@@ -2,12 +2,14 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
 import * as deliveriesApi from "../api/deliveries.api.js";
 import { ApiError } from "../api/client.js";
 import Button from "@/components/ui/button/Button.vue";
 import Input from "@/components/ui/input/Input.vue";
 import { Card, CardContent } from "@/components/ui/card";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const queryClient = useQueryClient();
@@ -38,7 +40,8 @@ async function onDeliver() {
     queryClient.invalidateQueries({ queryKey: ["delivery", deliveryId.value] });
     queryClient.invalidateQueries({ queryKey: ["deliveries"] });
   } catch (err) {
-    submitError.value = err instanceof ApiError ? err.message : "Kutilmagan xato yuz berdi";
+    submitError.value =
+      err instanceof ApiError ? err.message : t("courierDeliveryDetail.errors.unexpected");
   } finally {
     isSubmitting.value = false;
   }
@@ -52,7 +55,9 @@ async function onDeliver() {
     <template v-if="acceptCode">
       <Card class="mt-4">
         <CardContent class="p-4 text-center">
-          <p class="text-sm text-brand-brown/60">Yetkazildi. Do'konga shu kodni ayting:</p>
+          <p class="text-sm text-brand-brown/60">
+            {{ t("courierDeliveryDetail.deliveredMessage") }}
+          </p>
           <p class="mt-2 text-3xl font-semibold tracking-widest text-brand-brown">
             {{ acceptCode }}
           </p>
@@ -63,7 +68,7 @@ async function onDeliver() {
         variant="outline"
         @click="router.push({ name: 'courier-deliveries' })"
       >
-        Marshrutga qaytish
+        {{ t("courierDeliveryDetail.backButton") }}
       </Button>
     </template>
 
@@ -71,11 +76,15 @@ async function onDeliver() {
       <Card class="mt-4">
         <CardContent class="space-y-4 p-4">
           <div>
-            <label class="text-sm font-medium text-brand-brown">Qabul qilingan naqd summa</label>
+            <label class="text-sm font-medium text-brand-brown">
+              {{ t("courierDeliveryDetail.cashLabel") }}
+            </label>
             <Input v-model="cashCollected" type="number" class="mt-1" />
           </div>
           <p v-if="submitError" class="text-sm text-red-600">{{ submitError }}</p>
-          <Button class="w-full" :disabled="isSubmitting" @click="onDeliver">Yetkazildi</Button>
+          <Button class="w-full" :disabled="isSubmitting" @click="onDeliver">
+            {{ t("courierDeliveryDetail.deliverButton") }}
+          </Button>
         </CardContent>
       </Card>
     </template>
