@@ -1,7 +1,8 @@
 {
   "common": {
     "logout": "Выход",
-    "queuedActions": "{count} действ. в очереди"
+    "queuedActions": "{count} действ. в очереди",
+    "menu": "Меню"
   },
   "nav": {
     "dashboard": "Дашборд",

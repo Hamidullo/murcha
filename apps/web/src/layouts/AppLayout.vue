@@ -1,7 +1,8 @@
 <script setup>
-import { reactive, onMounted, onUnmounted, watch } from "vue";
+import { reactive, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { Menu, X } from "lucide-vue-next";
 import { useAuthStore } from "../stores/auth.store.js";
 import { connectSocket, disconnectSocket, playDing } from "../lib/socket.js";
 import { queuedCount, flushOutbox } from "../lib/offline-outbox.js";
@@ -12,6 +13,29 @@ import PushSubscribeButton from "@/components/PushSubscribeButton.vue";
 const router = useRouter();
 const authStore = useAuthStore();
 const { t, locale } = useI18n();
+
+/** Desktop'da gorizontal-skroll nav, mobil'da (sm dan kichik) ochiladigan panel — ikkalasi ham shu ro'yxatdan render bo'ladi (takrorlanmasin). */
+const NAV_ITEMS = [
+  { name: "dashboard", labelKey: "nav.dashboard" },
+  { name: "products", labelKey: "nav.products" },
+  { name: "warehouses", labelKey: "nav.warehouses" },
+  { name: "warehouse-docs", labelKey: "nav.warehouseDocs" },
+  { name: "barcode-scan", labelKey: "nav.barcodeScan" },
+  { name: "inventory-counts", labelKey: "nav.inventoryCounts" },
+  { name: "sale-points", labelKey: "nav.salePoints" },
+  { name: "orders", labelKey: "nav.orders" },
+  { name: "employees", labelKey: "nav.employees" },
+  { name: "deliveries", labelKey: "nav.deliveries" },
+  { name: "delivery-map", labelKey: "nav.deliveryMap" },
+  { name: "courier-deliveries", labelKey: "nav.courierDeliveries" },
+  { name: "debts-aging", labelKey: "nav.debtsAging" },
+  { name: "cash-registers", labelKey: "nav.cashRegisters" },
+  { name: "reports-sales", labelKey: "nav.reportsSales" },
+  { name: "audit-logs", labelKey: "nav.auditLogs" },
+  { name: "company-settings", labelKey: "nav.companySettings" },
+];
+
+const isMobileNavOpen = ref(false);
 
 function toggleLocale() {
   locale.value = locale.value === "uz" ? "ru" : "uz";
@@ -78,87 +102,84 @@ async function onLogout() {
 
 <template>
   <div class="min-h-screen">
-    <header
-      class="flex items-center justify-between gap-4 border-b border-brand-brown/10 bg-white px-6 py-3"
-    >
-      <div class="flex min-w-0 flex-1 items-center gap-6">
-        <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto shrink-0" />
-        <nav
-          class="flex min-w-0 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm text-brand-brown/70"
-        >
-          <router-link :to="{ name: 'dashboard' }" class="hover:text-brand-brown">
-            {{ t("nav.dashboard") }}
-          </router-link>
-          <router-link :to="{ name: 'products' }" class="hover:text-brand-brown">
-            {{ t("nav.products") }}
-          </router-link>
-          <router-link :to="{ name: 'warehouses' }" class="hover:text-brand-brown">
-            {{ t("nav.warehouses") }}
-          </router-link>
-          <router-link :to="{ name: 'warehouse-docs' }" class="hover:text-brand-brown">
-            {{ t("nav.warehouseDocs") }}
-          </router-link>
-          <router-link :to="{ name: 'barcode-scan' }" class="hover:text-brand-brown">
-            {{ t("nav.barcodeScan") }}
-          </router-link>
-          <router-link :to="{ name: 'inventory-counts' }" class="hover:text-brand-brown">
-            {{ t("nav.inventoryCounts") }}
-          </router-link>
-          <router-link :to="{ name: 'sale-points' }" class="hover:text-brand-brown">
-            {{ t("nav.salePoints") }}
-          </router-link>
-          <router-link :to="{ name: 'orders' }" class="hover:text-brand-brown">
-            {{ t("nav.orders") }}
-          </router-link>
-          <router-link :to="{ name: 'employees' }" class="hover:text-brand-brown">
-            {{ t("nav.employees") }}
-          </router-link>
-          <router-link :to="{ name: 'deliveries' }" class="hover:text-brand-brown">
-            {{ t("nav.deliveries") }}
-          </router-link>
-          <router-link :to="{ name: 'delivery-map' }" class="hover:text-brand-brown">
-            {{ t("nav.deliveryMap") }}
-          </router-link>
-          <router-link :to="{ name: 'courier-deliveries' }" class="hover:text-brand-brown">
-            {{ t("nav.courierDeliveries") }}
-          </router-link>
-          <router-link :to="{ name: 'debts-aging' }" class="hover:text-brand-brown">
-            {{ t("nav.debtsAging") }}
-          </router-link>
-          <router-link :to="{ name: 'cash-registers' }" class="hover:text-brand-brown">
-            {{ t("nav.cashRegisters") }}
-          </router-link>
-          <router-link :to="{ name: 'reports-sales' }" class="hover:text-brand-brown">
-            {{ t("nav.reportsSales") }}
-          </router-link>
-          <router-link :to="{ name: 'audit-logs' }" class="hover:text-brand-brown">
-            {{ t("nav.auditLogs") }}
-          </router-link>
-          <router-link :to="{ name: 'company-settings' }" class="hover:text-brand-brown">
-            {{ t("nav.companySettings") }}
+    <header class="border-b border-brand-brown/10 bg-white">
+      <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div class="flex min-w-0 flex-1 items-center gap-6">
+          <img src="/murcha-logo.svg" alt="Murcha" class="h-8 w-auto shrink-0" />
+          <nav
+            class="hidden min-w-0 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm text-brand-brown/70 sm:flex"
+          >
+            <router-link
+              v-for="item in NAV_ITEMS"
+              :key="item.name"
+              :to="{ name: item.name }"
+              class="hover:text-brand-brown"
+            >
+              {{ t(item.labelKey) }}
+            </router-link>
+          </nav>
+        </div>
+        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+          <PushSubscribeButton class="hidden sm:flex" />
+          <span
+            v-if="authStore.company"
+            class="hidden max-w-32 truncate text-sm text-brand-brown/60 sm:inline"
+          >
+            {{ authStore.company.name }}
+          </span>
+          <span
+            v-if="queuedCount > 0"
+            class="whitespace-nowrap rounded-full bg-brand-amber/20 px-2 py-0.5 text-xs text-brand-amber"
+          >
+            {{ t("common.queuedActions", { count: queuedCount }) }}
+          </span>
+          <button
+            class="hidden shrink-0 text-sm text-brand-brown/70 hover:text-brand-brown sm:inline"
+            @click="toggleLocale"
+          >
+            {{ locale === "uz" ? "RU" : "UZ" }}
+          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="hidden shrink-0 sm:inline-flex"
+            @click="onLogout"
+          >
+            {{ t("common.logout") }}
+          </Button>
+          <button
+            class="shrink-0 rounded-md p-1.5 text-brand-brown hover:bg-brand-brown/5 sm:hidden"
+            :aria-label="t('common.menu')"
+            @click="isMobileNavOpen = !isMobileNavOpen"
+          >
+            <X v-if="isMobileNavOpen" class="h-5 w-5" />
+            <Menu v-else class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <div v-if="isMobileNavOpen" class="border-t border-brand-brown/10 px-4 py-3 sm:hidden">
+        <nav class="flex flex-col gap-3 text-sm text-brand-brown/70">
+          <router-link
+            v-for="item in NAV_ITEMS"
+            :key="item.name"
+            :to="{ name: item.name }"
+            class="hover:text-brand-brown"
+            @click="isMobileNavOpen = false"
+          >
+            {{ t(item.labelKey) }}
           </router-link>
         </nav>
-      </div>
-      <div class="flex shrink-0 items-center gap-3">
-        <PushSubscribeButton />
-        <span v-if="authStore.company" class="max-w-32 truncate text-sm text-brand-brown/60">
-          {{ authStore.company.name }}
-        </span>
-        <span
-          v-if="queuedCount > 0"
-          class="whitespace-nowrap rounded-full bg-brand-amber/20 px-2 py-0.5 text-xs text-brand-amber"
-        >
-          {{ t("common.queuedActions", { count: queuedCount }) }}
-        </span>
-        <button
-          class="shrink-0 text-sm text-brand-brown/70 hover:text-brand-brown"
-          @click="toggleLocale"
-        >
-          {{ locale === "uz" ? "RU" : "UZ" }}
-        </button>
-        <Button variant="ghost" size="sm" class="shrink-0" @click="onLogout">
-          {{ t("common.logout") }}
-        </Button>
+        <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-brand-brown/10 pt-3">
+          <PushSubscribeButton />
+          <span v-if="authStore.company" class="text-sm text-brand-brown/60">
+            {{ authStore.company.name }}
+          </span>
+          <button class="text-sm text-brand-brown/70 hover:text-brand-brown" @click="toggleLocale">
+            {{ locale === "uz" ? "RU" : "UZ" }}
+          </button>
+          <Button variant="ghost" size="sm" @click="onLogout">{{ t("common.logout") }}</Button>
+        </div>
       </div>
     </header>
     <main class="p-6">

@@ -1,7 +1,8 @@
 {
   "common": {
     "logout": "Chiqish",
-    "queuedActions": "{count} ta amal navbatda"
+    "queuedActions": "{count} ta amal navbatda",
+    "menu": "Menyu"
   },
   "nav": {
     "dashboard": "Dashboard",
