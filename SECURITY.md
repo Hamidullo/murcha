@@ -21,6 +21,8 @@ Bu hujjat Faza 12'da o'tkazilgan kod darajasidagi xavfsizlik auditini qayd etadi
   > **Faza 13 tuzatishi.** Bundan oldin RLS qatlami aslida **ishlamasdi**: Postgres'da jadval egasi va superuser policy'larni chetlab o'tadi, API esa aynan owner/superuser (`POSTGRES_USER`) roli bilan ulanardi. Policy'lar mavjud edi, lekin hech qachon qo'llanmasdi — ya'ni himoya bitta qavatdan (ORM `companyId` filtri) iborat edi. DATABASE.md 9-bo'lim buni allaqachon talab qilgan (`NOBYPASSRLS`), amalga oshirilmagan edi.
   >
   > Endi: API `murcha_app` roli bilan ulanadi (LOGIN, `NOBYPASSRLS`, jadval egasi emas — `prisma/roles.sql`), har RLS jadvaliga `FORCE ROW LEVEL SECURITY` qo'yilgan. Owner roli (`DATABASE_ADMIN_URL`) faqat migratsiya va `withBypass()` uchun.
+  >
+  > Tasdiqlangan (Faza 13 Task 3): `pnpm db:verify-rls` haqiqiy Postgres 17'da 10/10 — rol superuser/BYPASSRLS emas va jadval egasi emas; kontekstsiz o'qish 0 qator; begona kontekstda begona qator ko'rinmaydi (ORM filtri unutilgan holatda ham); ikkala `WITH CHECK` eskalatsiyasi rad etiladi. API orqali ham tekshirildi: ikki kompaniya bir-birining skladini ko'rmaydi, begona ID'ga murojaat 404. **Bu tekshiruvni unit testlar qamrab olmaydi** — rol huquqi va policy xatti-harakati mock qilinmaydi; sxema yoki `rls.sql` o'zgarsa skript qayta ishga tushirilishi kerak.
 
   Kontekst funksiyalari (`lib/tenant-context.js`) uch xil:
   - `withTenant(companyId, userId)` — normal yo'l, RLS to'liq kuchda.

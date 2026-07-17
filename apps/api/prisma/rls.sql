@@ -12,6 +12,18 @@
 -- bilan boshlanadi (`lib/tenant-context.js`). RLS — ikkinchi himoya qavati:
 -- ORM'da xato bo'lsa ham baza boshqa kompaniya ma'lumotini qaytarmaydi.
 --
+-- NULLIF(...) NEGA KERAK (Faza 13 Task 3, haqiqiy DB sinovida topilgan):
+-- `set_config(..., true)` tranzaksiya-lokal, lekin GUC bir marta tegilgach
+-- sessiyada "mavjud" bo'lib qoladi va tranzaksiya tugagach qiymati NULL'ga
+-- EMAS, BO'SH SATRGA qaytadi. Ya'ni keyingi so'rovda
+-- `current_setting('app.company_id', true)` `''` beradi, `''::uuid` esa
+-- `22P02 invalid input syntax for type uuid` bilan yiqiladi.
+-- Prisma ulanishlarni pool qilgani uchun bu prod'da shunday urardi: tenant
+-- so'rovi ulanishni "iflos" qiladi → o'sha ulanishda keyingi login
+-- (`withUserContext`, faqat app.user_id) yiqiladi. NULLIF bo'sh satrni
+-- NULL'ga aylantiradi; `company_id = NULL` → NULL → qator ko'rinmaydi
+-- (kontekstsiz hech nima ko'rinmasligi — aynan kerakli xatti-harakat).
+--
 -- MUHIM (Faza 13): policy'lar faqat RLS'ni chetlab o'tolmaydigan rol uchun
 -- ma'noga ega. Jadval EGASI va superuser RLS'ni e'tiborsiz qoldiradi,
 -- shuning uchun ikki chora birga ishlatiladi:
@@ -53,7 +65,7 @@ BEGIN
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
     EXECUTE format(
-      'CREATE POLICY tenant_isolation ON %I USING (company_id = current_setting(''app.company_id'', true)::uuid)',
+      'CREATE POLICY tenant_isolation ON %I USING (company_id = NULLIF(current_setting(''app.company_id'', true), '''')::uuid)',
       t
     );
   END LOOP;
@@ -73,40 +85,83 @@ ALTER TABLE company_members FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS tenant_isolation ON company_members;
 CREATE POLICY tenant_isolation ON company_members
   USING (
-    company_id = current_setting('app.company_id', true)::uuid
-    OR user_id = current_setting('app.user_id', true)::uuid
+    company_id = NULLIF(current_setting('app.company_id', true), '')::uuid
+    OR user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   )
-  WITH CHECK (company_id = current_setting('app.company_id', true)::uuid);
+  WITH CHECK (company_id = NULLIF(current_setting('app.company_id', true), '')::uuid);
 
 -- --- company_id NULL bo'lishi mumkin bo'lgan jadvallar (tizim qatorlari + tenant) ---
 -- O'qish: tizim qatorlari (company_id IS NULL) + o'z qatorlari.
 -- Yozish: FAQAT o'z qatorlari — aks holda tenant `company_id = NULL` bilan
--- BARCHA kompaniyalarga ko'rinadigan "tizim" roli/birligi/kursi yarata olardi.
+-- BARCHA kompaniyalarga ko'rinadigan "tizim" birligi/kursi yarata olardi.
 -- Tizim qatorlari `prisma/seed.js` orqali owner roli bilan qo'yiladi (RLS'dan
 -- tashqarida), shuning uchun bu cheklov seed'ga xalaqit bermaydi. ---
 DO $$
 DECLARE
   t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['roles', 'units', 'exchange_rates']
+  FOREACH t IN ARRAY ARRAY['units', 'exchange_rates']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
     EXECUTE format(
       'CREATE POLICY tenant_isolation ON %I '
-      'USING (company_id IS NULL OR company_id = current_setting(''app.company_id'', true)::uuid) '
-      'WITH CHECK (company_id = current_setting(''app.company_id'', true)::uuid)',
+      'USING (company_id IS NULL OR company_id = NULLIF(current_setting(''app.company_id'', true), '''')::uuid) '
+      'WITH CHECK (company_id = NULLIF(current_setting(''app.company_id'', true), '''')::uuid)',
       t
     );
   END LOOP;
 END $$;
 
--- --- companies — faqat o'z qatori ko'rinadi. registerCompany() yangi
--- kompaniya ID'sini oldindan generatsiya qilib `withTenant(newCompanyId, ...)`
--- ochadi, shuning uchun INSERT ham shu policy'dan o'tadi. ---
+-- --- LOGIN OQIMI ISTISNOSI (Faza 13 Task 3, haqiqiy DB sinovida topilgan) ---
+--
+-- `company_members` uchun "o'z a'zoligini har doim ko'radi" istisnosi bor edi,
+-- lekin login so'rovi (`company-members.repository.js findByUserId()`) a'zolik
+-- qatorini YOLG'IZ o'qimaydi — `include: { company: true, role: true }` bilan
+-- o'qiydi. `app.company_id` esa login paytida hali yo'q, shuning uchun bog'liq
+-- `companies`/`roles` qatorlari policy'dan o'tmay `null` qaytardi va Prisma
+-- "Inconsistent query result: Field company is required to return data, got
+-- null" bilan yiqilardi — ya'ni RLS yoqilganda LOGIN UMUMAN ISHLAMASDI.
+--
+-- Yechim: ikkala jadvalga ham `company_members` bilan bir xil mantiqdagi
+-- a'zolik filiali. Kengaytma tor: foydalanuvchi faqat O'ZI FAOL A'ZO bo'lgan
+-- kompaniya/rol qatorini ko'radi. `WITH CHECK` esa filialsiz qoladi — yozish
+-- doim `withTenant(companyId, ...)` kontekstida bo'ladi.
+--
+-- Rekursiya yo'q: `company_members` policy'si `companies`/`roles`ga murojaat
+-- qilmaydi. Tezlik: `company_members(user_id)` indeksi mavjud (schema.prisma).
+
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE companies FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS tenant_isolation ON companies;
 CREATE POLICY tenant_isolation ON companies
-  USING (id = current_setting('app.company_id', true)::uuid);
+  USING (
+    id = NULLIF(current_setting('app.company_id', true), '')::uuid
+    OR EXISTS (
+      SELECT 1 FROM company_members m
+      WHERE m.company_id = companies.id
+        AND m.user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+        AND m.status = 'active'
+    )
+  )
+  WITH CHECK (id = NULLIF(current_setting('app.company_id', true), '')::uuid);
+
+-- `roles`: tizim rollari (company_id IS NULL) + joriy kompaniya rollari +
+-- a'zo bo'lgan kompaniya rollari (login `include: { role: true }` uchun —
+-- tizim roli bo'lmagan MAXSUS rolli foydalanuvchida aynan shu filial kerak).
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON roles;
+CREATE POLICY tenant_isolation ON roles
+  USING (
+    company_id IS NULL
+    OR company_id = NULLIF(current_setting('app.company_id', true), '')::uuid
+    OR EXISTS (
+      SELECT 1 FROM company_members m
+      WHERE m.company_id = roles.company_id
+        AND m.user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+        AND m.status = 'active'
+    )
+  )
+  WITH CHECK (company_id = NULLIF(current_setting('app.company_id', true), '')::uuid);
