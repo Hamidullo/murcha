@@ -167,6 +167,19 @@ Foydalanuvchi bilan kelishilgan holda ikki band shu sessiyadan tashqarida qoldi 
 - [ ] Pilot: 2–3 real biznes, 2 hafta — **boshlanmagan**, foydalanuvchi bilan aniq kelishilgan chegara (real mijoz kerak)
 - [ ] ✅ **Natija: haqiqiy distribyutor real zakazlarini Murcha orqali o'tkazyapti** — kod qismi to'liq tayyor va test qilingan (988/988 backend, frontend build+Claude Browser'da barcha yangi oqim tekshirildi), lekin pilot bajarilmagani uchun yakuniy natija mezoni hali tasdiqlanmagan
 
+## Faza 13 — Real deploy: migratsiya, DB rollari, RLS
+
+Faza 12 oxiridagi "deployga tayormi?" tekshiruvidan tug'ildi. Javob: yo'q edi — sxema hech qachon haqiqiy Postgres'ga qo'llanilmagan (988 test mock repository ustida ishlagan), API image'i ikki sababdan ishga tushmasdi, `deploy.yml` parse bo'lmasdi, RLS esa mavjud ko'rinib turib aslida qo'llanmasdi.
+
+- [x] **Birinchi migratsiya** — `migrations/20260717090000_init` (`migrate diff` bilan offline generatsiya + `stock.sql`/`checks.sql`/`immutable.sql` qo'lda birlashtirildi). Postgres 17.10'ga qo'llandi va tekshirildi: 49 jadval, 19 CHECK, 5 immutable trigger, `stock` indeksi `NULLS NOT DISTINCT = true`. Yo'lda topildi: `stock.sql` `DROP CONSTRAINT` ishlatardi, Prisma esa `@@unique`ni INDEX qiladi → `DROP INDEX`ga o'zgartirildi
+- [x] **RLS haqiqatan yoqildi** — `prisma/roles.sql` (`murcha_app`: LOGIN/NOBYPASSRLS/ega emas), har jadvalga `FORCE ROW LEVEL SECURITY`, `lib/prisma.js` ikki client (`prisma`/`prismaBypass`), `withBypass()` va uni ishlatadigan `platform`/`showcase`. **Bundan oldin RLS bitta ham qator filtrlamagan** — API owner/superuser roli bilan ulanardi, u policy'larni chetlab o'tadi (DATABASE.md 9-bo'lim buni allaqachon talab qilgan, amalga oshirilmagan edi)
+- [x] **Ikki huquq eskalatsiyasi yopildi** — `USING` yozilib `WITH CHECK` yozilmagani uchun Postgres o'qish ifodasini yozishga ham qo'llardi: foydalanuvchi o'zini istalgan kompaniyaga a'zo qila olardi; tenant `company_id = NULL` bilan hammaga ko'rinadigan soxta "tizim" roli/birligi yarata olardi
+- [x] **Haqiqiy Postgres sinovi 4 ta bugni ochdi** (hech biri kod o'qib topilmasdi): `''::uuid` 22P02 (pool'dagi iflos ulanishda login yiqilardi); RLS yoqilganda login umuman ishlamasdi (`include: { company, role }` policy'dan o'tmasdi); `.dockerignore` umuman yo'q edi (host `node_modules` image'ga tushib symlink'larni buzardi — barcha image'larga taalluqli); API image'ida workspace konfigi va `packages/shared/node_modules` yetishmasdi
+- [x] **Tekshiruv avtomatlashtirildi** — `pnpm db:verify-rls` (15 tasdiq): rol huquqlari, admin bypass qobiliyati, `company_id`li har jadvalda RLS+FORCE+policy, kontekst izolyatsiyasi, `WITH CHECK` eskalatsiyalari, login oqimi, `withBypass`. `rls.sql` oxirida qamrov tekshiruvi — yangi jadval ro'yxatga qo'shilmasa deploy to'xtaydi. **Unit testlar buni qamrab olmaydi** (rol/policy mock qilinmaydi)
+- [x] `/code-review` (high) — 10 topilma, hammasi tuzatildi. Eng muhimi: `withBypass` `DATABASE_ADMIN_URL` superuser bo'lishiga tayanardi, RDS/Cloud SQL'da master superuser emas → platform paneli jimgina bo'sh qaytarardi. Endi `setup-roles.js` deploy paytida tushunarli xato bilan to'xtatadi
+- [ ] **Prod sirlar va real deploy** — `.env` prod qiymatlari (JWT/postgres/minio parollari hali default), SSL bootstrap, GHCR prefiks, SSH sekretlar, Uptime Kuma portini yopish, frontend `VITE_*` build-arg'lari
+- [ ] ✅ **Natija: RLS ikkinchi himoya qavati sifatida haqiqatan ishlaydi** — mahalliy Postgres 17'da to'liq tasdiqlangan (`db:verify-rls` 15/15 + API orqali uchidan-uchiga: ikki kompaniya bir-birini ko'rmaydi, begona ID 404). Real serverda hali sinalmagan
+
 ---
 
 ## 🔁 Har faza yopilishida (takrorlanuvchi)

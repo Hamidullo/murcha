@@ -58,9 +58,17 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.SSH_HOST != '' }}
+    # `secrets` konteksti NA job darajasidagi `if`da, NA qadam darajasidagi
+    # `if`da mavjud emas (ikkalasida ham "context secrets is not allowed").
+    # `jobs.<id>.env`da esa mavjud — shuning uchun sir shu yerda env'ga
+    # o'tkaziladi, qadam esa `env`ni tekshiradi (u `if`da ruxsat etilgan).
+    # SSH_HOST sozlanmagan bo'lsa qadam jim o'tkazib yuboriladi, image'lar
+    # baribir GHCR'ga push bo'ladi.
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
     steps:
       - name: Zero-downtime deploy (rolling — Docker Compose)
+        if: ${{ env.SSH_HOST != '' }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -69,5 +77,8 @@ jobs:
           script: |
             cd /opt/murcha
             docker compose -f docker-compose.prod.yml pull
+            # `--no-deps` bog'liqliklarni ishga tushirmaydi, shuning uchun
+            # migratsiya alohida va oldin bajariladi (idempotent).
+            docker compose -f docker-compose.prod.yml run --rm migrate
             docker compose -f docker-compose.prod.yml up -d --no-deps --wait api worker web shop landing
             docker image prune -f

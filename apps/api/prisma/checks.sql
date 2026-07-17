@@ -1,3 +1,15 @@
+-- =========================================================================
+-- DIQQAT — BU FAYL QO'LLANMAYDI (Faza 13, /code-review topilmasi).
+--
+-- Mazmuni `migrations/20260717090000_init/migration.sql` oxiriga NUSXALANGAN
+-- va HAQIQATDA O'SHA NUSXA bajariladi. Bu fayl faqat tarixiy hujjat —
+-- birinchi migratsiya qanday yig'ilganini ko'rsatadi.
+--
+-- Shu faylni tahrirlash HECH NARSAGA TA'SIR QILMAYDI (jim no-op).
+-- Yangi qoida kerak bo'lsa — YANGI migratsiya fayli yozing.
+-- (`rls.sql`/`search.sql` esa boshqacha: ular har deploy'da qo'llanadi.)
+-- =========================================================================
+
 -- MURCHA — CHECK cheklovlari. Prisma schema.prisma'da native CHECK sintaksisi
 -- yo'q, shuning uchun bu SQL birinchi migratsiya generatsiya qilingach
 -- (`prisma migrate dev --create-only`) migration.sql fayliga qo'lda qo'shiladi,

@@ -2,15 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const executeRaw = vi.fn().mockResolvedValue(undefined);
 const fakeTx = { $executeRaw: executeRaw };
+const bypassTx = { $executeRaw: executeRaw };
 
 vi.mock("./prisma.js", () => ({
   prisma: {
     $transaction: vi.fn((callback) => callback(fakeTx)),
   },
+  prismaBypass: {
+    $transaction: vi.fn((callback) => callback(bypassTx)),
+  },
 }));
 
-const { withTenant, withUserContext, withoutTenant } = await import("./tenant-context.js");
-const { prisma } = await import("./prisma.js");
+const { withTenant, withUserContext, withoutTenant, withBypass } =
+  await import("./tenant-context.js");
+const { prisma, prismaBypass } = await import("./prisma.js");
 
 describe("withTenant", () => {
   beforeEach(() => {
@@ -65,6 +70,35 @@ describe("withoutTenant", () => {
 
     expect(executeRaw).not.toHaveBeenCalled();
     expect(callback).toHaveBeenCalledWith(fakeTx);
+    expect(result).toBe("natija");
+  });
+
+  it("ODDIY (murcha_app) client'da ishlaydi — RLS'ni chetlab o'tmaydi", async () => {
+    await withoutTenant(vi.fn().mockResolvedValue(null));
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prismaBypass.$transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("withBypass", () => {
+  beforeEach(() => {
+    executeRaw.mockClear();
+    prismaBypass.$transaction.mockClear();
+    prisma.$transaction.mockClear();
+  });
+
+  it("BYPASS (owner) client'ida ishlaydi, set_config qilmaydi", async () => {
+    const callback = vi.fn().mockResolvedValue("natija");
+
+    const result = await withBypass(callback);
+
+    // Muhim: oddiy client ISHLATILMAYDI — aks holda cross-tenant so'rov
+    // RLS'ga urilib bo'sh natija qaytarardi (platform paneli bo'sh chiqardi).
+    expect(prismaBypass.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(executeRaw).not.toHaveBeenCalled();
+    expect(callback).toHaveBeenCalledWith(bypassTx);
     expect(result).toBe("natija");
   });
 });

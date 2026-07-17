@@ -1,3 +1,15 @@
+-- =========================================================================
+-- DIQQAT — BU FAYL QO'LLANMAYDI (Faza 13, /code-review topilmasi).
+--
+-- Mazmuni `migrations/20260717090000_init/migration.sql` oxiriga NUSXALANGAN
+-- va HAQIQATDA O'SHA NUSXA bajariladi. Bu fayl faqat tarixiy hujjat —
+-- birinchi migratsiya qanday yig'ilganini ko'rsatadi.
+--
+-- Shu faylni tahrirlash HECH NARSAGA TA'SIR QILMAYDI (jim no-op).
+-- Yangi qoida kerak bo'lsa — YANGI migratsiya fayli yozing.
+-- (`rls.sql`/`search.sql` esa boshqacha: ular har deploy'da qo'llanadi.)
+-- =========================================================================
+
 -- MURCHA — `stock.unique(warehouse_id, product_id, variant_id, batch_id)`ni
 -- NULLS NOT DISTINCT qiladi. Postgres standart bo'yicha NULL ustunlarni "teng
 -- emas" deb hisoblaydi, ya'ni variant/partiya yuritilmaydigan mahsulotlarda
@@ -9,6 +21,10 @@
 -- hisoblanardi. Postgres 17'da qo'llab-quvvatlanadi (15+). Birinchi
 -- migratsiya generatsiya qilingach migration.sql'ga checks.sql bilan birga
 -- qo'lda qo'shiladi (`prisma/README.md`).
-ALTER TABLE stock DROP CONSTRAINT stock_warehouse_id_product_id_variant_id_batch_id_key;
-ALTER TABLE stock ADD CONSTRAINT stock_warehouse_id_product_id_variant_id_batch_id_key
-  UNIQUE NULLS NOT DISTINCT (warehouse_id, product_id, variant_id, batch_id);
+--
+-- DIQQAT: Prisma `@@unique`ni CONSTRAINT emas, UNIQUE INDEX qilib yaratadi
+-- (`CREATE UNIQUE INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key"`),
+-- shuning uchun `DROP INDEX` ishlatiladi — `DROP CONSTRAINT` bu yerda xato beradi.
+DROP INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key";
+CREATE UNIQUE INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key"
+  ON "stock" ("warehouse_id", "product_id", "variant_id", "batch_id") NULLS NOT DISTINCT;

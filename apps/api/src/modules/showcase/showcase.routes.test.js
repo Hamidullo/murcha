@@ -12,8 +12,11 @@ const fakeTx = {
   productImage: { findMany: vi.fn() },
   lead: { create: vi.fn() },
 };
+// Vitrina ikki client ishlatadi: slug qidiruvi `prismaBypass` (owner),
+// katalog/lid esa `prisma` (`withTenant`) — `lib/tenant-context.js`.
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },
+  prismaBypass: { $transaction: vi.fn((callback) => callback(fakeTx)) },
 }));
 
 const presignedGetObject = vi.fn();

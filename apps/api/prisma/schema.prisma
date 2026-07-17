@@ -12,9 +12,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// `url` — ishlash vaqti (Prisma Client): `murcha_app` roli, NOBYPASSRLS,
+// RLS policy'lari shunga qo'llanadi. `directUrl` — Prisma Migrate/Introspect:
+// owner roli (DDL huquqi kerak, RLS'ni chetlab o'tadi). Faza 13, prisma/roles.sql.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_ADMIN_URL")
 }
 
 // =========================================================================

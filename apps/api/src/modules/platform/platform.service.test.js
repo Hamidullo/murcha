@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const fakeTx = {};
-const withoutTenant = vi.fn((callback) => callback(fakeTx));
-vi.mock("../../lib/tenant-context.js", () => ({ withoutTenant }));
+// Cross-tenant modul — `withBypass` (owner roli, RLS chetlab o'tiladi).
+const withBypass = vi.fn((callback) => callback(fakeTx));
+vi.mock("../../lib/tenant-context.js", () => ({ withBypass }));
 
 const { PlatformService } = await import("./platform.service.js");
 const { NotFoundError } = await import("../../lib/errors.js");
@@ -12,7 +13,7 @@ describe("PlatformService", () => {
   let service;
 
   beforeEach(() => {
-    withoutTenant.mockClear();
+    withBypass.mockClear();
     platformRepository = {
       listCompanies: vi.fn(),
       getCompany: vi.fn(),
@@ -22,12 +23,12 @@ describe("PlatformService", () => {
   });
 
   describe("listCompanies", () => {
-    it("withoutTenant orqali repository.listCompanies'ni chaqiradi", async () => {
+    it("withBypass orqali repository.listCompanies'ni chaqiradi", async () => {
       platformRepository.listCompanies.mockResolvedValue([{ id: "c1" }]);
 
       const result = await service.listCompanies({ search: "Murcha" });
 
-      expect(withoutTenant).toHaveBeenCalledTimes(1);
+      expect(withBypass).toHaveBeenCalledTimes(1);
       expect(platformRepository.listCompanies).toHaveBeenCalledWith(fakeTx, { search: "Murcha" });
       expect(result).toEqual([{ id: "c1" }]);
     });

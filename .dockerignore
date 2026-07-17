@@ -1,0 +1,35 @@
+# Docker build konteksti (Faza 13 Task 3).
+#
+# NEGA KERAK: Dockerfile'lar `deps` bosqichida `pnpm install` qilib, so'ng
+# `COPY apps/api ./apps/api` bilan manba kodni ko'chiradi. Bu fayl bo'lmasa
+# host'dagi `node_modules` ham kontekstga tushib, `deps`dan kelgan TO'G'RI
+# symlink'lar ustiga yoziladi — Windows'da yaratilgan pnpm link'lari esa
+# Linux konteynerida ishlamaydi (natija: `Cannot find module .../prisma`).
+# Bundan tashqari kontekst hajmini keskin kamaytiradi (build tezligi).
+
+**/node_modules
+**/dist
+**/build
+**/.turbo
+**/coverage
+**/.vite-ssg-temp
+
+.git
+.github
+.claude
+.agents
+graphify-out
+
+**/.env
+**/.env.*
+!**/.env.example
+
+**/*.log
+**/.DS_Store
+**/Thumbs.db
+**/.vscode
+**/.idea
+
+# Hujjatlar — image'ga kerak emas
+*.md
+!apps/*/README.md
