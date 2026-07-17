@@ -9,6 +9,10 @@
 -- hisoblanardi. Postgres 17'da qo'llab-quvvatlanadi (15+). Birinchi
 -- migratsiya generatsiya qilingach migration.sql'ga checks.sql bilan birga
 -- qo'lda qo'shiladi (`prisma/README.md`).
-ALTER TABLE stock DROP CONSTRAINT stock_warehouse_id_product_id_variant_id_batch_id_key;
-ALTER TABLE stock ADD CONSTRAINT stock_warehouse_id_product_id_variant_id_batch_id_key
-  UNIQUE NULLS NOT DISTINCT (warehouse_id, product_id, variant_id, batch_id);
+--
+-- DIQQAT: Prisma `@@unique`ni CONSTRAINT emas, UNIQUE INDEX qilib yaratadi
+-- (`CREATE UNIQUE INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key"`),
+-- shuning uchun `DROP INDEX` ishlatiladi — `DROP CONSTRAINT` bu yerda xato beradi.
+DROP INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key";
+CREATE UNIQUE INDEX "stock_warehouse_id_product_id_variant_id_batch_id_key"
+  ON "stock" ("warehouse_id", "product_id", "variant_id", "batch_id") NULLS NOT DISTINCT;

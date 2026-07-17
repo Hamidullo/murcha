@@ -1,4 +1,4 @@
-import { prisma } from "./prisma.js";
+import { prisma, prismaBypass } from "./prisma.js";
 
 /**
  * Har tenant so'rovi shu wrapper orqali o'tadi: Prisma tranzaksiyasi
@@ -47,13 +47,38 @@ export async function withUserContext(userId, callback) {
 
 /**
  * Hech qanday tenant/user kontekst o'rnatmaydi — faqat chinakam global
- * (RLS'siz) jadvallar uchun: `users`, `permissions` (DATABASE.md 9-bo'lim
- * istisnolari). Masalan login boshida telefon bo'yicha user qidirish —
- * userId hali noma'lum, `withUserContext` chaqirib bo'lmaydi.
+ * (RLS'siz) jadvallar uchun: `users`, `permissions`, `push_subscriptions`
+ * (DATABASE.md 9-bo'lim istisnolari). Masalan login boshida telefon bo'yicha
+ * user qidirish — userId hali noma'lum, `withUserContext` chaqirib bo'lmaydi.
+ *
+ * DIQQAT: oddiy (`murcha_app`, NOBYPASSRLS) client'da ishlaydi — RLS'li
+ * jadvalga bu yerdan murojaat qilinsa NOL qator qaytadi, xato emas. Ya'ni bu
+ * "RLS'ni chetlab o'tish" DEGANI EMAS; cross-tenant o'qish uchun
+ * `withBypass()` ishlatiladi.
  * @template T
  * @param {(tx: import("@prisma/client").Prisma.TransactionClient) => Promise<T>} callback
  * @returns {Promise<T>}
  */
 export async function withoutTenant(callback) {
   return prisma.$transaction(callback);
+}
+
+/**
+ * RLS'ni CHETLAB O'TADI (owner roli, `DATABASE_ADMIN_URL` — `lib/prisma.js`).
+ * Faqat chinakam cross-tenant yo'llar uchun, ya'ni `app.company_id` tanlash
+ * mumkin bo'lmagan joyda:
+ *   - `platform` moduli — super-admin barcha kompaniyalarni ko'radi
+ *   - `showcase` — slug bo'yicha kompaniya qidirish (qaysi kompaniya ekani
+ *     aynan shu so'rov natijasida ma'lum bo'ladi)
+ *
+ * Yangi joyda ishlatishdan oldin o'ylang: kompaniya ID'si ma'lum bo'lsa
+ * `withTenant()` to'g'ri tanlov. Bu funksiya himoya qatlamini o'chiradi —
+ * so'rov qamrovini iloji boricha tor tuting (showcase namunasi: faqat slug
+ * qidiruvi bypass, katalog esa topilgan kompaniya kontekstida).
+ * @template T
+ * @param {(tx: import("@prisma/client").Prisma.TransactionClient) => Promise<T>} callback
+ * @returns {Promise<T>}
+ */
+export async function withBypass(callback) {
+  return prismaBypass.$transaction(callback);
 }

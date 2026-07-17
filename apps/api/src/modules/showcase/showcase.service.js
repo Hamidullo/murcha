@@ -1,5 +1,5 @@
 import { uuidv7 } from "uuidv7";
-import { withoutTenant } from "../../lib/tenant-context.js";
+import { withBypass, withTenant } from "../../lib/tenant-context.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { minioClient, MINIO_BUCKET } from "../../lib/minio.js";
 import { domainEvents } from "../../lib/events.js";
@@ -8,14 +8,14 @@ const PRESIGNED_URL_TTL_SECONDS = 15 * 60;
 
 /**
  * BIZNES LOGIKA (CLAUDE.md qatlam qoidasi). Autentifikatsiyasiz — kompaniya
- * `slug` orqali topiladi, `withoutTenant` (`lib/tenant-context.js`, login'ning
- * boshlang'ich telefon-qidiruvi bilan bir xil "hali company_id noma'lum"
- * naqshi) + har so'rovda qo'lda `companyId` filtri. Mavjud
- * `products`/`product-prices`/`product-images`/`price-types` repositorylari
- * `companyId`ni to'g'ridan-to'g'ri `where`da qabul qiladi (RLS session
- * o'zgaruvchisiga tayanmaydi) — shu sababli `withoutTenant` tx bilan
- * xavfsiz qayta ishlatiladi (`ShopCatalogService`dagi bilan bir xil
- * repository-only aggregatsiya qolipi).
+ * `slug` orqali topiladi, ya'ni `company_id` so'rov BOSHIDA noma'lum.
+ *
+ * Ikki bosqichli kontekst (Faza 13, RLS `FORCE` qilingandan keyin):
+ *   1. `withBypass` — FAQAT slug bo'yicha kompaniya qidirish. `companies`
+ *      RLS bilan himoyalangan va bu yerda kontekst tanlab bo'lmaydi.
+ *   2. `withTenant(company.id)` — katalog o'qish / lid yozish. Ochiq
+ *      (autentifikatsiyasiz) endpoint bypass client'da TURMAYDI: kompaniya
+ *      aniqlangach RLS himoyasi qayta yoqiladi.
  */
 export class ShowcaseService {
   /**
@@ -45,12 +45,13 @@ export class ShowcaseService {
   }
 
   /**
-   * @param {import("@prisma/client").Prisma.TransactionClient} txClient
+   * Yagona bypass yo'li — qamrovi ataylab tor: bitta `companies` qatori.
+   * Qolgan hamma ish `withTenant(company.id)` ichida bajariladi.
    * @param {string} slug
    * @returns {Promise<import("@prisma/client").Company>}
    */
-  async #findEnabledCompany(txClient, slug) {
-    const company = await this.companiesRepository.findBySlug(txClient, slug);
+  async #findEnabledCompany(slug) {
+    const company = await withBypass((tx) => this.companiesRepository.findBySlug(tx, slug));
     if (!company || !company.showcaseSettings?.enabled) {
       throw new NotFoundError("Vitrina topilmadi");
     }
@@ -65,14 +66,16 @@ export class ShowcaseService {
    * }>}
    */
   async getShowcase(slug) {
+    const company = await this.#findEnabledCompany(slug);
+
     // DB o'qishlar — tranzaksiya ICHIDA, hammasi batch (`{in: [...]}`,
     // N+1 emas). MinIO presign (tarmoq I/O) tranzaksiyadan TASHQARIDA,
     // parallel — aks holda ko'p mahsulotli katalogda ketma-ket MinIO
-    // so'rovlari `withoutTenant`ning Prisma interaktiv tranzaksiya
-    // standart muddatidan (5s) oshib, butun ochiq (autentifikatsiyasiz)
-    // sahifani P2028 bilan yiqitishi mumkin edi.
-    const { company, catalogDraft } = await withoutTenant(async (tx) => {
-      const foundCompany = await this.#findEnabledCompany(tx, slug);
+    // so'rovlari Prisma interaktiv tranzaksiyaning standart muddatidan (5s)
+    // oshib, butun ochiq (autentifikatsiyasiz) sahifani P2028 bilan
+    // yiqitishi mumkin edi.
+    const catalogDraft = await withTenant(company.id, null, async (tx) => {
+      const foundCompany = company;
       const settings = foundCompany.showcaseSettings;
 
       const priceTypes = await this.priceTypesRepository.list(tx, foundCompany.id);
@@ -119,7 +122,7 @@ export class ShowcaseService {
         }
       }
 
-      return { company: foundCompany, catalogDraft: draft };
+      return draft;
     });
 
     const [catalog, logoUrl] = await Promise.all([
@@ -158,8 +161,9 @@ export class ShowcaseService {
    * @returns {Promise<import("@prisma/client").Lead>}
    */
   async createLead(slug, dto) {
-    const lead = await withoutTenant(async (tx) => {
-      const company = await this.#findEnabledCompany(tx, slug);
+    const company = await this.#findEnabledCompany(slug);
+
+    const lead = await withTenant(company.id, null, async (tx) => {
       return this.showcaseRepository.createLead(tx, {
         id: uuidv7(),
         companyId: company.id,

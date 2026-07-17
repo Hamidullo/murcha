@@ -1,8 +1,8 @@
 /**
  * Faqat DB so'rovlari (CLAUDE.md qatlam qoidasi). Cross-tenant — `tx` doim
- * `withoutTenant` orqali keladi (`platform.service.js`), RLS'ni chetlab
- * o'tish shu modulning butun maqsadi (super-admin barcha kompaniyalarni
- * ko'rishi kerak).
+ * `withBypass` orqali keladi (`platform.service.js`), ya'ni owner roli bilan,
+ * RLS'ni chetlab o'tib. Shu modulning butun maqsadi aynan shu (super-admin
+ * barcha kompaniyalarni ko'rishi kerak).
  */
 export class PlatformRepository {
   /**

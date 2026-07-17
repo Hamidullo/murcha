@@ -16,7 +16,21 @@ Bu hujjat Faza 12'da o'tkazilgan kod darajasidagi xavfsizlik auditini qayd etadi
 - **SQL in'ektsiya**: Prisma parametrlashtirilgan so'rovlar, xom SQL faqat `prisma/*.sql` migratsiya fayllarida (RLS/immutable trigger), ilova kodida yo'q.
 - **XSS**: Vue shablonlarida `v-html` butun kod bazasida ishlatilmaydi (tekshirildi — 0 ta natija) — barcha chiqish standart interpolatsiya orqali avtomatik ekranlanadi. Server tomonida xom HTML qaytaradigan yagona joy — `showcase.html.js` (vitrina `GET /:slug`) — kompaniya/mahsulot nomi kabi foydalanuvchi boshqaradigan matnlarni `escapeHtml()` orqali o'tkazadi (tekshirildi, to'g'ri qo'llanilgan). `helmet()` CSP header ham qo'shimcha qavat.
 - **Mass assignment**: barcha yozuv endpoint'lari Zod DTO orqali (`packages/shared/schemas`) — faqat sxemada e'lon qilingan maydonlar qabul qilinadi.
-- **Multi-tenant izolatsiya**: har so'rov `withTenant`/RLS (`set_config('app.company_id', ...)`) bilan ikki qavatli himoyalangan. `withoutTenant` bir nechta joyda (auth, notifications, push-subscriptions, platform, showcase) ataylab ishlatiladi — har birida servis qatlamida `companyId`/`userId` bilan qo'lda scope qilingan (tekshirilgan). `showcase.service.js`dagi holat allaqachon `BACKLOG.md`da alohida hujjatlashtirilgan (ochiq vitrina, `company_id` slug orqali aniqlanadi, RLS ikkinchi qavati shu yo'lda yo'q).
+- **Multi-tenant izolatsiya**: har so'rov `withTenant`/RLS (`set_config('app.company_id', ...)`) bilan ikki qavatli himoyalangan.
+
+  > **Faza 13 tuzatishi.** Bundan oldin RLS qatlami aslida **ishlamasdi**: Postgres'da jadval egasi va superuser policy'larni chetlab o'tadi, API esa aynan owner/superuser (`POSTGRES_USER`) roli bilan ulanardi. Policy'lar mavjud edi, lekin hech qachon qo'llanmasdi — ya'ni himoya bitta qavatdan (ORM `companyId` filtri) iborat edi. DATABASE.md 9-bo'lim buni allaqachon talab qilgan (`NOBYPASSRLS`), amalga oshirilmagan edi.
+  >
+  > Endi: API `murcha_app` roli bilan ulanadi (LOGIN, `NOBYPASSRLS`, jadval egasi emas — `prisma/roles.sql`), har RLS jadvaliga `FORCE ROW LEVEL SECURITY` qo'yilgan. Owner roli (`DATABASE_ADMIN_URL`) faqat migratsiya va `withBypass()` uchun.
+
+  Kontekst funksiyalari (`lib/tenant-context.js`) uch xil:
+  - `withTenant(companyId, userId)` — normal yo'l, RLS to'liq kuchda.
+  - `withoutTenant()` — RLS'siz **global** jadvallar uchun (`users`, `permissions`, `push_subscriptions`): auth, notifications, push-subscriptions. Oddiy (NOBYPASSRLS) client'da ishlaydi — chetlab o'tish emas.
+  - `withBypass()` — owner client, RLS chetlab o'tiladi. Ikki joyda: `platform` (super-admin, cross-tenant — moduldan maqsad shu) va `showcase` slug qidiruvi (bitta `companies` qatori). Vitrinaning qolgan qismi (katalog, lid) endi `withTenant(company.id)` ichida — ochiq endpoint bypass client'da turmaydi.
+
+  `WITH CHECK` `USING`dan alohida yozilgan joylar (Postgres aks holda `USING`ni yozish uchun ham ishlatadi):
+  - `company_members` — `USING`da `user_id` filiali bor (login oqimi uchun kerak), lekin `WITH CHECK`da yo'q: aks holda foydalanuvchi o'zini istalgan kompaniyaga a'zo qilib qo'sha olardi.
+  - `roles`/`units`/`exchange_rates` — `USING` tizim qatorlarini (`company_id IS NULL`) o'qishga ruxsat beradi, `WITH CHECK` esa ularni yozishni taqiqlaydi: aks holda tenant hammaga ko'rinadigan "tizim" roli yarata olardi. Tizim qatorlarini faqat `seed.js` (owner roli) qo'yadi.
+
 - **CSRF**: aksariyat state-o'zgartiruvchi endpointlar `Authorization: Bearer` header talab qiladi (cookie yolg'iz yetarli emas). Faqat cookie bilan ishlaydigan ikkitasi — `/auth/refresh`, `/auth/logout` — `sameSite: "lax"` bilan himoyalangan (bu cookie cross-site fetch/XHR so'rovlariga biriktirilmaydi, faqat top-level GET navigatsiyada — klassik forma-CSRF samarasiz).
 
 ## Qamrovdan tashqari (real infratuzilma/server talab qiladi)

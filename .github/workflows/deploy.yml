@@ -58,9 +58,12 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.SSH_HOST != '' }}
     steps:
+      # `secrets` konteksti job darajasidagi `if`da mavjud emas (faqat github/
+      # needs/vars/inputs) — shuning uchun shart qadam darajasida tekshiriladi:
+      # SSH_HOST sozlanmagan bo'lsa qadam jim o'tkazib yuboriladi.
       - name: Zero-downtime deploy (rolling — Docker Compose)
+        if: ${{ secrets.SSH_HOST != '' }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -69,5 +72,8 @@ jobs:
           script: |
             cd /opt/murcha
             docker compose -f docker-compose.prod.yml pull
+            # `--no-deps` bog'liqliklarni ishga tushirmaydi, shuning uchun
+            # migratsiya alohida va oldin bajariladi (idempotent).
+            docker compose -f docker-compose.prod.yml run --rm migrate
             docker compose -f docker-compose.prod.yml up -d --no-deps --wait api worker web shop landing
             docker image prune -f

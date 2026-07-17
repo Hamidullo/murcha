@@ -8,8 +8,11 @@ const fakeTx = {
   company: { findMany: vi.fn(), findUnique: vi.fn() },
   subscription: { upsert: vi.fn() },
 };
+// `platform` cross-tenant modul — `withBypass()` orqali `prismaBypass`
+// (owner roli) client'ini ishlatadi (`lib/tenant-context.js`).
 vi.mock("../../lib/prisma.js", () => ({
   prisma: { $transaction: vi.fn((callback) => callback(fakeTx)) },
+  prismaBypass: { $transaction: vi.fn((callback) => callback(fakeTx)) },
 }));
 
 const { createApp } = await import("../../app.js");

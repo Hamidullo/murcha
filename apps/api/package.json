@@ -10,6 +10,9 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:roles": "node prisma/setup-roles.js",
+    "db:verify-rls": "node prisma/verify-rls.js",
     "db:seed": "node prisma/seed.js"
   },
   "prisma": {

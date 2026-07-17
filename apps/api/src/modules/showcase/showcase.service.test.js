@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const fakeTx = {};
-const withoutTenant = vi.fn((callback) => callback(fakeTx));
-vi.mock("../../lib/tenant-context.js", () => ({ withoutTenant }));
+// Ikki bosqich (Faza 13): slug qidiruvi `withBypass`, qolgani `withTenant`.
+const withBypass = vi.fn((callback) => callback(fakeTx));
+const withTenant = vi.fn((_companyId, _userId, callback) => callback(fakeTx));
+vi.mock("../../lib/tenant-context.js", () => ({ withBypass, withTenant }));
 
 const presignedGetObject = vi.fn().mockResolvedValue("https://minio/signed-url");
 vi.mock("../../lib/minio.js", () => ({
@@ -26,7 +28,8 @@ describe("ShowcaseService", () => {
   let service;
 
   beforeEach(() => {
-    withoutTenant.mockClear();
+    withBypass.mockClear();
+    withTenant.mockClear();
     presignedGetObject.mockClear();
     domainEvents.emit.mockClear();
     companiesRepository = { findBySlug: vi.fn() };

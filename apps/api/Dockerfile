@@ -16,8 +16,13 @@ FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=deps /repo/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /repo/packages ./packages
+# Manba kod kontekstdan olinadi — `deps` bosqichida faqat package.json'lar bor
+# (workspace symlink `node_modules/@murcha/shared` shu papkaga ko'rsatadi).
+COPY packages ./packages
 COPY apps/api ./apps/api
 WORKDIR /repo/apps/api
+# Prisma Client generatsiya qilinmasa `new PrismaClient()` ishga tushishda xato
+# beradi — sxema shu bosqichda mavjud, shuning uchun bu yerda chaqiriladi.
+RUN pnpm exec prisma generate
 
 CMD ["node", "src/index.js"]

@@ -5,7 +5,13 @@
 import { PrismaClient } from "@prisma/client";
 import { uuidv7 } from "uuidv7";
 
-const prisma = new PrismaClient();
+// Owner roli bilan (Faza 13): tizim qatorlari `company_id = NULL` bilan
+// yoziladi, `prisma/rls.sql`dagi `WITH CHECK` esa buni tenant roliga
+// (`murcha_app`) ataylab taqiqlaydi — aks holda har qanday kompaniya
+// hammaga ko'rinadigan "tizim" roli yarata olardi.
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_ADMIN_URL ?? process.env.DATABASE_URL } },
+});
 
 const SYSTEM_ROLES = [
   "owner",
