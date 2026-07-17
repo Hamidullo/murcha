@@ -75,15 +75,14 @@ export class ShowcaseService {
     // oshib, butun ochiq (autentifikatsiyasiz) sahifani P2028 bilan
     // yiqitishi mumkin edi.
     const catalogDraft = await withTenant(company.id, null, async (tx) => {
-      const foundCompany = company;
-      const settings = foundCompany.showcaseSettings;
+      const settings = company.showcaseSettings;
 
-      const priceTypes = await this.priceTypesRepository.list(tx, foundCompany.id);
+      const priceTypes = await this.priceTypesRepository.list(tx, company.id);
       const priceTypeId = settings.priceTypeId ?? priceTypes.find((p) => p.isDefault)?.id ?? null;
 
       const draft = [];
       if (priceTypeId) {
-        const products = await this.productsRepository.list(tx, foundCompany.id, {
+        const products = await this.productsRepository.list(tx, company.id, {
           categoryId: settings.categoryId ?? undefined,
         });
         const activeProducts = products.filter((p) => p.status === "active");

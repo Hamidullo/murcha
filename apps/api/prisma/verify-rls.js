@@ -126,6 +126,47 @@ console.log("\nRLS tekshiruvi (murcha_app roli nomidan):\n");
 try {
   await seedFixtures();
 
+  // Admin rol RLS'ni CHETLAB O'TISHI kerak — `rls.sql`dagi FORCE jadval
+  // egasiga ham qo'llanadi, faqat superuser/BYPASSRLS chetlab o'tadi. Bu
+  // yiqilsa `withBypass()` (platform, vitrina) jimgina nol qator qaytaradi
+  // va seed.js yiqiladi. Boshqarilayotgan Postgres'da (RDS/Cloud SQL) "master"
+  // odatda superuser EMAS — shuning uchun alohida tasdiq.
+  await check("admin roli RLS'ni chetlab o'ta oladi (superuser yoki BYPASSRLS)", async () => {
+    const [row] = await admin.$queryRaw`
+      SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user
+    `;
+    assert(
+      row.rolsuper || row.rolbypassrls,
+      `admin roli ${row.rolname}: rolsuper=${row.rolsuper}, rolbypassrls=${row.rolbypassrls} — ` +
+        "withBypass() ishlamaydi (platform bo'sh, vitrina 404, seed yiqiladi)",
+    );
+  });
+
+  // `roles.sql`dagi ALTER DEFAULT PRIVILEGES yangi jadvalga GRANT'ni AVTOMATIK
+  // beradi, `rls.sql`dagi jadval ro'yxati esa QO'LDA. Ikkovi ajralib ketsa
+  // yangi jadval himoyasiz qoladi. (`rls.sql` oxirida ham shu tekshiruv bor —
+  // bu yerda takrorlanadi, chunki rls.sql qo'llanmay qolgan bo'lishi mumkin.)
+  await check("company_id ustuni bor HAR jadvalda RLS + FORCE + policy bor", async () => {
+    const gaps = await admin.$queryRaw`
+      SELECT c.relname AS table_name
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND EXISTS (
+          SELECT 1 FROM pg_attribute a
+          WHERE a.attrelid = c.oid AND a.attname = 'company_id'
+            AND a.attnum > 0 AND NOT a.attisdropped
+        )
+        AND (
+          NOT c.relrowsecurity
+          OR NOT c.relforcerowsecurity
+          OR NOT EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid)
+        )
+    `;
+    assert(gaps.length === 0, `himoyasiz jadvallar: ${gaps.map((g) => g.table_name).join(", ")}`);
+  });
+
   // 0. Rolning o'zi — asosiy shart. Bu yiqilsa qolgani ma'nosiz.
   await check("murcha_app roli superuser EMAS va BYPASSRLS'siz", async () => {
     const [row] = await app.$queryRaw`
@@ -230,6 +271,49 @@ try {
       tx.companyMember.findMany({ where: { userId: userA } }),
     );
     assert(rows.length === 1, `${rows.length} qator (1 kutilgan) — login oqimi buziladi`);
+  });
+
+  // 9. Login `include: { company: true, role: true }` qiladi — bog'liq qatorlar
+  //    ham ko'rinishi shart, aks holda Prisma "Field company is required to
+  //    return data" bilan yiqiladi (aynan shu bug Task 3'da topilgan).
+  await check("withUserContext: a'zolik bilan birga company/role ham ko'rinadi", async () => {
+    const rows = await asApp({ userId: userA }, (tx) =>
+      tx.companyMember.findMany({
+        where: { userId: userA },
+        include: { company: true, role: true },
+      }),
+    );
+    assert(rows.length === 1, `${rows.length} qator (1 kutilgan)`);
+    assert(rows[0].company !== null, "company null — login yiqiladi");
+    assert(rows[0].role !== null, "role null — login yiqiladi");
+  });
+
+  // 10. `units` — company_id NULL bo'ladigan jadvallar guruhi (roles'dan
+  //     alohida policy, shuning uchun alohida sinaladi).
+  await check("units: tizim qatorlari ko'rinadi, soxta tizim qatori yozilmaydi", async () => {
+    const visible = await asApp({ companyId: companyA }, (tx) =>
+      tx.unit.findMany({ where: { companyId: null } }),
+    );
+    assert(visible.length > 0, "tizim birliklari ko'rinmadi — seed bajarilganini tekshiring");
+
+    let rejected = false;
+    try {
+      await asApp({ companyId: companyA }, (tx) =>
+        tx.unit.create({
+          data: { id: uuidv7(), companyId: null, name: `${marker}-fake`, short: "x" },
+        }),
+      );
+    } catch {
+      rejected = true;
+    }
+    assert(rejected, "company_id = NULL bilan birlik yozib bo'ldi — eskalatsiya ochiq");
+  });
+
+  // 11. `withBypass()` yo'li (platform paneli, vitrina slug qidiruvi) —
+  //     admin client RLS'ni chetlab o'tib IKKALA kompaniyani ko'rishi kerak.
+  await check("withBypass (admin client) cross-tenant o'qiy oladi", async () => {
+    const rows = await admin.company.findMany({ where: { name: { contains: marker } } });
+    assert(rows.length === 2, `admin ${rows.length} kompaniya ko'rdi (2 kutilgan)`);
   });
 } finally {
   await cleanup();

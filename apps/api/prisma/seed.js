@@ -9,8 +9,19 @@ import { uuidv7 } from "uuidv7";
 // yoziladi, `prisma/rls.sql`dagi `WITH CHECK` esa buni tenant roliga
 // (`murcha_app`) ataylab taqiqlaydi — aks holda har qanday kompaniya
 // hammaga ko'rinadigan "tizim" roli yarata olardi.
+//
+// `DATABASE_URL`ga JIM qaytish yo'q: u holda seed `murcha_app` bilan ishlab,
+// asl sabab (yo'q env o'zgaruvchisi) o'rniga tushunarsiz `WITH CHECK` policy
+// xatosi bilan yiqilardi. `lib/prisma.js` ham shu shartda qattiq to'xtaydi.
+if (!process.env.DATABASE_ADMIN_URL) {
+  throw new Error(
+    "DATABASE_ADMIN_URL kerak: seed tizim qatorlarini (company_id = NULL) yozadi, " +
+      "buni `murcha_app` roli prisma/rls.sql dagi WITH CHECK tufayli qila olmaydi.",
+  );
+}
+
 const prisma = new PrismaClient({
-  datasources: { db: { url: process.env.DATABASE_ADMIN_URL ?? process.env.DATABASE_URL } },
+  datasources: { db: { url: process.env.DATABASE_ADMIN_URL } },
 });
 
 const SYSTEM_ROLES = [

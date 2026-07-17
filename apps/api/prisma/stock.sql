@@ -1,3 +1,15 @@
+-- =========================================================================
+-- DIQQAT — BU FAYL QO'LLANMAYDI (Faza 13, /code-review topilmasi).
+--
+-- Mazmuni `migrations/20260717090000_init/migration.sql` oxiriga NUSXALANGAN
+-- va HAQIQATDA O'SHA NUSXA bajariladi. Bu fayl faqat tarixiy hujjat —
+-- birinchi migratsiya qanday yig'ilganini ko'rsatadi.
+--
+-- Shu faylni tahrirlash HECH NARSAGA TA'SIR QILMAYDI (jim no-op).
+-- Yangi qoida kerak bo'lsa — YANGI migratsiya fayli yozing.
+-- (`rls.sql`/`search.sql` esa boshqacha: ular har deploy'da qo'llanadi.)
+-- =========================================================================
+
 -- MURCHA — `stock.unique(warehouse_id, product_id, variant_id, batch_id)`ni
 -- NULLS NOT DISTINCT qiladi. Postgres standart bo'yicha NULL ustunlarni "teng
 -- emas" deb hisoblaydi, ya'ni variant/partiya yuritilmaydigan mahsulotlarda

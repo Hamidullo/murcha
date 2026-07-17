@@ -165,3 +165,43 @@ CREATE POLICY tenant_isolation ON roles
     )
   )
   WITH CHECK (company_id = NULLIF(current_setting('app.company_id', true), '')::uuid);
+
+-- =========================================================================
+-- QAMROV TEKSHIRUVI (Faza 13, /code-review topilmasi)
+--
+-- Yuqoridagi jadval ro'yxatlari QO'LDA yoziladi, `roles.sql`dagi
+-- `ALTER DEFAULT PRIVILEGES` esa yangi jadvallarga `murcha_app` huquqlarini
+-- AVTOMATIK beradi. Ya'ni kelajakdagi migratsiya `company_id`li jadval
+-- qo'shsa va uni shu fayldagi ro'yxatga qo'shish unutilsa — jadval GRANT
+-- oladi, lekin RLS'siz qoladi va butun tenant izolyatsiyasi ORM filtriga
+-- qolib ketadi (aynan Faza 13 yopmoqchi bo'lgan zaiflik).
+--
+-- Shu blok buni deploy paytida to'xtatadi: `company_id` ustuni bor har
+-- jadvalda RLS + FORCE + policy borligini talab qiladi. Yangi jadval
+-- qo'shgan dasturchi ro'yxatni yangilamasa, migrate xizmati shu yerda
+-- tushunarli xato bilan yiqiladi.
+-- =========================================================================
+DO $$
+DECLARE
+  gap text;
+BEGIN
+  SELECT string_agg(c.relname, ', ' ORDER BY c.relname) INTO gap
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind = 'r'
+    AND EXISTS (
+      SELECT 1 FROM pg_attribute a
+      WHERE a.attrelid = c.oid AND a.attname = 'company_id' AND a.attnum > 0 AND NOT a.attisdropped
+    )
+    AND (
+      NOT c.relrowsecurity
+      OR NOT c.relforcerowsecurity
+      OR NOT EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid)
+    );
+
+  IF gap IS NOT NULL THEN
+    RAISE EXCEPTION
+      'RLS qamrovida teshik — `company_id` ustuni bor, lekin RLS/FORCE/policy to''liq emas: %. Shu jadvallarni prisma/rls.sql dagi tegishli ro''yxatga qo''shing.', gap;
+  END IF;
+END $$;

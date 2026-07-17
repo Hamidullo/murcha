@@ -1,3 +1,4 @@
+import { URL } from "node:url";
 import { PrismaClient } from "@prisma/client";
 
 /**
@@ -20,12 +21,21 @@ export const prisma = new PrismaClient();
  */
 export const prismaBypass = createBypassClient();
 
+/**
+ * Bypass client kamdan-kam ishlatiladi (super-admin paneli, vitrina slug
+ * qidiruvi), lekin Prisma standart pool'i `num_cpus * 2 + 1` ta ulanish
+ * oladi. Cheklamasak 8 yadroli serverda har jarayon (api + worker) ikki
+ * baravar ulanish egallardi va Postgres'ning standart `max_connections=100`
+ * chegarasiga behuda yaqinlashardi.
+ */
+const BYPASS_CONNECTION_LIMIT = 2;
+
 /** @returns {PrismaClient} */
 function createBypassClient() {
   const adminUrl = process.env.DATABASE_ADMIN_URL;
 
   if (adminUrl) {
-    return new PrismaClient({ datasources: { db: { url: adminUrl } } });
+    return new PrismaClient({ datasources: { db: { url: withConnectionLimit(adminUrl) } } });
   }
 
   if (process.env.NODE_ENV === "production") {
@@ -42,4 +52,24 @@ function createBypassClient() {
       "Faqat dev/test uchun: bu holatda RLS izolyatsiyasi tekshirilmaydi.",
   );
   return prisma;
+}
+
+/**
+ * URL'ga `connection_limit` qo'shadi, mavjud query parametrlarini
+ * (`?schema=public`) buzmasdan. Foydalanuvchi o'zi belgilagan bo'lsa tegilmaydi.
+ * @param {string} url
+ * @returns {string}
+ */
+function withConnectionLimit(url) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has("connection_limit")) {
+      parsed.searchParams.set("connection_limit", String(BYPASS_CONNECTION_LIMIT));
+    }
+    return parsed.toString();
+  } catch {
+    // URL parse qilinmasa (masalan socket yo'li) — o'zgartirmasdan qaytaramiz,
+    // ulanishni buzgandan ko'ra ortiqcha pool afzal.
+    return url;
+  }
 }

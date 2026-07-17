@@ -34,14 +34,50 @@ const sql = await readFile(sqlPath, "utf8");
 const prisma = new PrismaClient({ datasources: { db: { url: adminUrl } } });
 
 try {
+  await assertAdminCanBypassRls();
+
   // Bitta tranzaksiya — `set_config` va DO bloki AYNI ulanishda bajarilishi
   // shart (Prisma pool aks holda boshqa ulanish berishi mumkin).
   await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('murcha.role_name', ${roleName}, false)`;
-    await tx.$executeRaw`SELECT set_config('murcha.role_password', ${password}, false)`;
+    // `is_local = true` — qiymat faqat shu tranzaksiyada yashaydi. `false`
+    // bo'lsa parol commit'dan keyin ham sessiyada qolib, `current_setting()`
+    // bilan o'qilishi va `log_statement='all'` bo'lsa logga tushishi mumkin edi.
+    await tx.$executeRaw`SELECT set_config('murcha.role_name', ${roleName}, true)`;
+    await tx.$executeRaw`SELECT set_config('murcha.role_password', ${password}, true)`;
     await tx.$executeRawUnsafe(sql);
   });
   console.log(`DB roli tayyor: ${roleName} (NOBYPASSRLS)`);
 } finally {
   await prisma.$disconnect();
+}
+
+/**
+ * `DATABASE_ADMIN_URL` roli RLS'ni CHETLAB O'TA OLISHINI tekshiradi.
+ *
+ * Nima uchun: `rls.sql` har jadvalga `FORCE ROW LEVEL SECURITY` qo'yadi — u
+ * jadval EGASIGA ham qo'llanadi. Faqat `rolsuper` yoki `rolbypassrls` roli
+ * chetlab o'tadi. Ya'ni admin rol shulardan biri bo'lmasa, `withBypass()`
+ * (platform paneli, vitrina slug qidiruvi) JIMGINA nol qator qaytaradi va
+ * `seed.js` `company_id = NULL` qatorlarini yozolmaydi. Boshqarilayotgan
+ * Postgres'da (RDS/Cloud SQL/Neon) "master" foydalanuvchi odatda superuser
+ * EMAS — shuning uchun bu deploy paytida, tushunarli xato bilan to'xtaydi.
+ * @returns {Promise<void>}
+ */
+async function assertAdminCanBypassRls() {
+  const [row] = await prisma.$queryRaw`
+    SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user
+  `;
+
+  if (!row.rolsuper && !row.rolbypassrls) {
+    throw new Error(
+      `DATABASE_ADMIN_URL roli (${row.rolname}) RLS'ni chetlab o'tolmaydi: ` +
+        `rolsuper=false, rolbypassrls=false.\n` +
+        `prisma/rls.sql FORCE ROW LEVEL SECURITY ishlatadi — u jadval egasiga ham ` +
+        `qo'llanadi, shuning uchun bu rol bilan platform paneli bo'sh qaytadi, ` +
+        `vitrina 404 beradi va seed.js yiqiladi.\n` +
+        `Yechim: superuser bilan \`ALTER ROLE ${row.rolname} BYPASSRLS;\` bajaring ` +
+        `(boshqarilayotgan Postgres'da provayder hujjatiga qarang) yoki ` +
+        `DATABASE_ADMIN_URL'ni superuser/BYPASSRLS roliga ko'rsating.`,
+    );
+  }
 }
