@@ -36,7 +36,85 @@ jobs:
 
       - run: pnpm format:check
 
+      # Workflow fayllarining o'zini tekshiradi. Kerakligi amalda isbotlangan:
+      # `deploy.yml`dagi `if: ${{ secrets.SSH_HOST != '' }}` ikki marta noto'g'ri
+      # yozildi (`secrets` konteksti na job, na qadam darajasidagi `if`da
+      # mavjud) — ikkalasida ham butun workflow parse bo'lmasdi va buni faqat
+      # `main`ga merge qilgandan keyin bilgan bo'lardik.
+      - name: GitHub Actions workflow tekshiruvi
+        uses: docker://rhysd/actionlint:latest
+        with:
+          args: -color
+
       - name: Prisma sxema tekshiruvi
         run: pnpm --filter @murcha/api db:validate
 
       - run: pnpm test
+
+  # Multi-tenant izolyatsiyani HAQIQIY Postgres'da tekshiradi.
+  #
+  # Nima uchun alohida job: `lint-test`dagi 990 test repositorylarni mock
+  # qiladi — DB rol huquqi, `FORCE ROW LEVEL SECURITY`, `USING`/`WITH CHECK`
+  # xatti-harakati mock qilinmaydi. Ya'ni RLS butunlay buzilgan bo'lsa ham
+  # o'sha testlar yashil qolaveradi (Faza 13'gacha aynan shunday edi — RLS
+  # bitta ham qator filtrlamasdi va hech kim sezmadi).
+  rls:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: murcha
+          POSTGRES_USER: murcha
+          POSTGRES_PASSWORD: murcha
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Ikki rol — `prisma/roles.sql` naqshi. `murcha_app` (NOBYPASSRLS)
+      # `db:roles` qadamida yaratiladi.
+      DATABASE_URL: postgresql://murcha_app:murcha_app@localhost:5432/murcha?schema=public
+      DATABASE_ADMIN_URL: postgresql://murcha:murcha@localhost:5432/murcha?schema=public
+      APP_DB_USER: murcha_app
+      APP_DB_PASSWORD: murcha_app
+    steps:
+      - uses: actions/checkout@v4
+
+      # Versiya berilmaydi — `packageManager` yagona manba (`lint-test`dagi
+      # bilan bir xil sabab: ikkalasi ko'rsatilsa action xato beradi).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # `setup-roles.js`/`seed.js`/`verify-rls.js` `@prisma/client`ni import
+      # qiladi — generatsiya ulardan OLDIN bo'lishi shart.
+      - run: pnpm --filter @murcha/api run db:generate
+
+      # Tartib `prisma/README.md`dagi bilan bir xil (docker-compose.prod.yml
+      # `migrate` xizmati ham shu ketma-ketlikni bajaradi).
+      - name: Migratsiya
+        run: pnpm --filter @murcha/api run db:migrate:deploy
+
+      - name: RLS policy'lar (+ qamrov tekshiruvi)
+        run: pnpm --filter @murcha/api exec prisma db execute --file prisma/rls.sql --schema prisma/schema.prisma
+
+      - name: Trigram indeks
+        run: pnpm --filter @murcha/api exec prisma db execute --file prisma/search.sql --schema prisma/schema.prisma
+
+      - name: DB rollari (murcha_app — NOBYPASSRLS)
+        run: pnpm --filter @murcha/api run db:roles
+
+      - name: Seed (tizim rollari/birliklari)
+        run: pnpm --filter @murcha/api run db:seed
+
+      - name: RLS izolyatsiyasi tekshiruvi
+        run: pnpm --filter @murcha/api run db:verify-rls

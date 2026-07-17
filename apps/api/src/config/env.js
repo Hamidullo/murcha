@@ -1,3 +1,36 @@
+/**
+ * Prod'da dev standartlari bilan ishga tushishni taqiqlaydi (Faza 13 Task 4).
+ *
+ * `docker-compose.prod.yml` `POSTGRES_PASSWORD`/`MINIO_ROOT_PASSWORD`ni `:?`
+ * bilan majburiy qiladi, lekin `JWT_ACCESS_SECRET` `env_file` orqali keladi —
+ * compose uning QIYMATINI tekshira olmaydi. `.env.example`dagi
+ * `dev-only-change-me` nusxalanib qolsa, tokenlarni hamma imzolay olardi.
+ * Shu sababli tekshiruv ilova darajasida.
+ */
+function assertProductionSecrets() {
+  if ((process.env.NODE_ENV ?? "development") !== "production") return;
+
+  const secret = process.env.JWT_ACCESS_SECRET;
+  const problems = [];
+
+  if (!secret) {
+    problems.push("JWT_ACCESS_SECRET sozlanmagan");
+  } else if (secret === "dev-only-change-me") {
+    problems.push("JWT_ACCESS_SECRET hali .env.example dagi standart qiymatda");
+  } else if (secret.length < 32) {
+    problems.push(`JWT_ACCESS_SECRET juda qisqa (${secret.length} belgi, kamida 32 kerak)`);
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `Prod konfiguratsiyasi xavfsiz emas:\n  - ${problems.join("\n  - ")}\n` +
+        "Yangi kalit: openssl rand -hex 32",
+    );
+  }
+}
+
+assertProductionSecrets();
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.API_PORT ?? process.env.PORT ?? 3000),
