@@ -21,6 +21,18 @@ COPY --from=deps /repo/apps/web/node_modules ./apps/web/node_modules
 COPY packages ./packages
 COPY apps/web ./apps/web
 WORKDIR /repo/apps/web
+
+# Vite `import.meta.env.VITE_*`ni build VAQTIDA statik qiymatga almashtiradi —
+# konteyner ishga tushganda o'rnatilgan env ta'sir qilmaydi. Shu sababli
+# `PushSubscribeButton.vue` ishlashi uchun kalit shu yerda berilishi kerak
+# (`.github/workflows/deploy.yml` `build-args` orqali uzatadi).
+# Bo'sh qoldirilsa build o'tadi, faqat Web Push o'chiq bo'ladi — kalit
+# ixtiyoriy (`.env.example`).
+# VAPID PUBLIC kaliti — nomiga mos ravishda ochiq, brauzerga baribir
+# yuboriladi. Maxfiy `VAPID_PRIVATE_KEY` esa faqat API'da, bu yerda emas.
+ARG VITE_VAPID_PUBLIC_KEY=""
+ENV VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
+
 RUN pnpm build
 
 FROM nginx:1.27-alpine AS runner

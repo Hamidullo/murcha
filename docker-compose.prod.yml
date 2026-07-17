@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-murcha}
       POSTGRES_USER: ${POSTGRES_USER:-murcha}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-murcha}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da majburiy — prod'da standart parol bilan ishga tushmaydi}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -39,7 +39,7 @@ services:
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-murcha}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-murcha123}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD .env da majburiy — prod'da standart parol bilan ishga tushmaydi}
     volumes:
       - minio_data:/data
     restart: unless-stopped
@@ -54,7 +54,7 @@ services:
   # ikkala konteyner bir vaqtda migratsiya qilishga urinishi (poyga) oldi olinadi.
   # Har uch qadam idempotent, shuning uchun har deploy'da qayta ishlatilaveradi.
   migrate:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/api:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/api:latest
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -82,7 +82,7 @@ services:
     restart: "no"
 
   api:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/api:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/api:latest
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -111,7 +111,7 @@ services:
       retries: 5
 
   worker:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/api:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/api:latest
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -130,21 +130,21 @@ services:
     restart: unless-stopped
 
   web:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/web:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile.prod
     restart: unless-stopped
 
   shop:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/shop:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/shop:latest
     build:
       context: .
       dockerfile: apps/shop/Dockerfile
     restart: unless-stopped
 
   landing:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/murcha}/landing:latest
+    image: ${GHCR_IMAGE_PREFIX:?GHCR_IMAGE_PREFIX .env da sozlanishi kerak, masalan ghcr.io/hamidullo/murcha}/landing:latest
     build:
       context: .
       dockerfile: apps/landing/Dockerfile
@@ -189,7 +189,11 @@ services:
     volumes:
       - uptime_kuma_data:/app/data
     ports:
-      - "3001:3001"
+      # FAQAT localhost. Ilgari "3001:3001" edi — ya'ni 0.0.0.0, monitoring
+      # paneli (o'z login/parol bazasi bilan, nginx SSL'idan tashqarida)
+      # butun internetga ochiq bo'lardi. Kirish uchun SSH tunnel:
+      #   ssh -L 3001:localhost:3001 <user>@<server>  → http://localhost:3001
+      - "127.0.0.1:3001:3001"
     restart: unless-stopped
 
 volumes:

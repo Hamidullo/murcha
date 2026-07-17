@@ -46,6 +46,10 @@ Faza 12 oxirida "deployga tayormi?" tekshiruvi bir nechta bloklovchi kamchilikni
 
   Muhit eslatmasi: mashinada PostgreSQL 18 xizmati 5432 portini egallagan, shuning uchun Docker Postgres'i **55432**'ga ko'chirildi (`.env` `POSTGRES_PORT`)
 
-- [ ] **Task 4 — Prod sirlar va deploy**: `.env` prod qiymatlari (JWT/postgres/minio parollari hali default), SSL bootstrap, GHCR prefiks, SSH sekretlar, Uptime Kuma portini yopish
+- [x] **Task 4 — Prod konfig (kod qismi)**: `docker-compose.prod.yml` — `POSTGRES_PASSWORD`/`MINIO_ROOT_PASSWORD`/`GHCR_IMAGE_PREFIX` `:?` bilan majburiy (ilgari `murcha`/`murcha123`/`ghcr.io/murcha` standartlari bilan jimgina ishga tushardi), Uptime Kuma `127.0.0.1:3001` (ilgari `0.0.0.0` — monitoring paneli internetga ochiq edi); `src/config/env.js` prod'da `JWT_ACCESS_SECRET` standart/qisqa bo'lsa ishga tushmaydi (compose `env_file` qiymatini tekshira olmaydi); `apps/web/Dockerfile.prod` + `deploy.yml` `VITE_VAPID_PUBLIC_KEY` build-arg (Vite `VITE_*`ni build vaqtida qotiradi — konteyner env'i kech; bundle'ga tushishi tasdiqlandi); CI'ga Postgres servisi bilan `rls` job'i (`db:verify-rls` — ilgari CI RLS'ni umuman tekshirmasdi) va `actionlint`; `DEPLOY.md` runbook
+
+  **actionlint asl bugni topdi**: `deploy.yml`dagi `if: ${{ secrets.SSH_HOST != '' }}` Task 1'da job darajasidan qadam darajasiga ko'chirilgan edi, lekin `secrets` konteksti **ikkalasida ham** mavjud emas — workflow hali ham parse bo'lmasdi. To'g'ri yechim: sirni `jobs.<id>.env`ga o'tkazib, `if`da `env`ni tekshirish. Shu sababli actionlint CI'ga qo'shildi.
+
+- [ ] **Task 5 — Real deploy (odam qismi)**: `DEPLOY.md` bo'yicha — server, DNS, sirlar generatsiyasi, SSL bootstrap, GitHub secrets/variables, birinchi deploy va `verify-rls` tekshiruvi. Birinchi qaror: prod Postgres qaysi (boshqarilayotgan bo'lsa `BYPASSRLS` kerak)
 
 Faza 12 (kod qismi) "Natija": demo-rejim bilan yangi kompaniya bir necha soniyada namunaviy ma'lumot bilan sinab ko'radi; `apps/web`/`apps/shop` to'liq uz/ru; ikkala PWA offline'da ishlaydi va aloqa tiklanganda avtomatik sinxronlanadi; prod deploy uchun barcha konfig fayllar tayyor (real ishga tushirish keyingi bosqich).
