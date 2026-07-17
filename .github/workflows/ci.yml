@@ -10,13 +10,20 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://murcha:murcha@localhost:5432/murcha?schema=public
+      # `prisma validate` DB'ga ulanmaydi, lekin `schema.prisma`dagi HAR
+      # `env(...)` mavjud bo'lishini talab qiladi — `directUrl` qo'shilgach
+      # `DATABASE_ADMIN_URL` ham kerak bo'ldi (aks holda P1012). Qiymatlar
+      # shu job'da ishlatilmaydi (Postgres yo'q) — haqiqiy DB `rls` job'ida.
+      DATABASE_URL: postgresql://murcha_app:murcha_app@localhost:5432/murcha?schema=public
+      DATABASE_ADMIN_URL: postgresql://murcha:murcha@localhost:5432/murcha?schema=public
     steps:
       - uses: actions/checkout@v4
 
+      # Versiya BERILMAYDI — `package.json`dagi `packageManager: pnpm@11.11.0`
+      # yagona manba. Ikkalasi ko'rsatilsa `pnpm/action-setup@v4` xato beradi:
+      #   "Multiple versions of pnpm specified" → CI setup bosqichida yiqiladi.
+      # Shu sababli CI 2026-07-12 dan beri BIRON MARTA ham yashil bo'lmagan.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
